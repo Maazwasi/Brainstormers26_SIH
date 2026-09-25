@@ -16,6 +16,7 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(os.path.join(edge, 'launch', 'stage5_conflict_detection.launch.py')),
             launch_arguments={
                 'scenario': 'negotiation', 'negotiation': 'true',
+                'apply_spawn_transform': 'false',
                 'enabled': LaunchConfiguration('enabled'),
                 'use_rviz': LaunchConfiguration('use_rviz'),
             }.items())

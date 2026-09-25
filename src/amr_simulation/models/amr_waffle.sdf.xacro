@@ -147,7 +147,7 @@
       <link name="wheel_left_link">
 
         <inertial>
-          <pose>0 0 0 0 0 0</pose>
+          <pose>0 0 0 -1.57 0 0</pose>
           <inertia>
             <ixx>0.001</ixx>
             <ixy>0.000</ixy>
@@ -160,7 +160,7 @@
         </inertial>
 
         <collision name="wheel_left_collision">
-          <pose>0 0 0 0 0 0</pose>
+          <pose>0 0 0 -1.57 0 0</pose>
           <geometry>
             <cylinder>
               <radius>0.033</radius>
@@ -194,7 +194,7 @@
         </collision>
 
         <visual name="wheel_left_visual">
-          <pose>0 0 0 0 0 0</pose>
+          <pose>0 0 0 -1.57 0 0</pose>
           <geometry>
             <mesh>
               <uri>package://nav2_minimal_tb3_sim/models/turtlebot3_model/meshes/tire.dae</uri>
@@ -210,7 +210,7 @@
       <link name="wheel_right_link">
 
         <inertial>
-          <pose>0 0 0 0 0 0</pose>
+          <pose>0 0 0 -1.57 0 0</pose>
           <inertia>
             <ixx>0.001</ixx>
             <ixy>0.000</ixy>

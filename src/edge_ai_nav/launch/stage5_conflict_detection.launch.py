@@ -39,7 +39,8 @@ def create(context):
         actions.append(Node(package='edge_ai_nav', executable='peer_state_node', namespace=rid,
             name='peer_state', output='screen', parameters=[{'robot_id':logical,
             'config_file':config_file, 'conflict_detection':True,
-            'negotiation':LaunchConfiguration('negotiation')}]))
+            'negotiation':LaunchConfiguration('negotiation'),
+            'apply_spawn_transform':LaunchConfiguration('apply_spawn_transform')}]))
         actions.append(TimerAction(period=7.0, actions=[Node(package='edge_ai_nav',
             executable='local_waypoint_controller', namespace=rid, name='local_controller',
             output='screen', parameters=[{'robot_id':rid, 'config_file':config_file,
@@ -61,4 +62,5 @@ def generate_launch_description():
     return LaunchDescription([DeclareLaunchArgument('scenario', default_value='safe',
         choices=['safe','crossing','different_time','negotiation']), DeclareLaunchArgument('enabled', default_value='false'),
         DeclareLaunchArgument('negotiation', default_value='false'),
+        DeclareLaunchArgument('apply_spawn_transform', default_value='true'),
         DeclareLaunchArgument('use_rviz', default_value='true'), OpaqueFunction(function=create)])

@@ -17,7 +17,8 @@ class PeerState(Node):
         super().__init__('peer_state')
         for name, value in {'robot_id':'ALPHA', 'config_file':'', 'publish_rate_hz':5.0,
                             'peer_stale_warning':1.0, 'peer_remove_timeout':2.0,
-                            'conflict_detection':False, 'negotiation':False}.items():
+                            'conflict_detection':False, 'negotiation':False,
+                            'apply_spawn_transform':True}.items():
             self.declare_parameter(name, value)
         p = {n:self.get_parameter(n).value for n in ('robot_id','config_file','publish_rate_hz','peer_stale_warning','peer_remove_timeout')}
         self.robot_id, self.p = p['robot_id'], p
@@ -74,11 +75,15 @@ class PeerState(Node):
         math = __import__('math')
         local_yaw = math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z))
         sx, sy, spawn_yaw = self.spawn
-        # Only this robot's odometry plus its immutable configured spawn is
-        # used.  No other robot's odometry is ever consumed.
-        x = sx + math.cos(spawn_yaw)*pos.x - math.sin(spawn_yaw)*pos.y
-        y = sy + math.sin(spawn_yaw)*pos.x + math.cos(spawn_yaw)*pos.y
-        yaw = math.atan2(math.sin(spawn_yaw + local_yaw), math.cos(spawn_yaw + local_yaw))
+        # Stage 4 used local isolated odometry. Stage 6A's Gazebo physical
+        # OdometryPublisher already emits warehouse/world coordinates, so
+        # applying this transform there would move every peer twice.
+        if self.get_parameter('apply_spawn_transform').value:
+            x = sx + math.cos(spawn_yaw)*pos.x - math.sin(spawn_yaw)*pos.y
+            y = sy + math.sin(spawn_yaw)*pos.x + math.cos(spawn_yaw)*pos.y
+            yaw = math.atan2(math.sin(spawn_yaw + local_yaw), math.cos(spawn_yaw + local_yaw))
+        else:
+            x, y, yaw = pos.x, pos.y, local_yaw
         index = int(self.status.get('waypoint', 0))
         route = self.cfg['stage3_missions'][self.meta['namespace'].lstrip('/')]
         goal = route[min(index, len(route)-1)]
