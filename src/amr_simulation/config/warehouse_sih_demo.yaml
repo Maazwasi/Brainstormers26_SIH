@@ -1,0 +1,161 @@
+warehouse:
+  world_file: warehouse_sih_demo.sdf
+  bounds:
+    x: [-12.0, 12.0]
+    y: [-9.0, 9.0]
+  amr_footprint_diameter_m: 0.36
+
+  zones:
+    loading_bay:
+      center: [-9.2, 0.0]
+      bounds: {x: [-11.5, -7.0], y: [-8.4, 8.4]}
+    main_corridor:
+      center: [2.5, 0.0]
+      bounds: {x: [-6.5, 11.5], y: [-1.22, 1.22]}
+    intersection_A:
+      center: [0.0, 0.0]
+      radius: 1.05
+    intersection_B:
+      center: [5.0, 0.0]
+      radius: 1.10
+    narrow_aisle_1:
+      entrance_a: [8.0, 1.05]
+      entrance_b: [8.0, 7.85]
+      center: [8.0, 4.45]
+      clear_width_m: 0.90
+      length_m: 6.30
+    obstacle_demo_area:
+      center: [-3.0, 0.0]
+      bounds: {x: [-4.5, -1.5], y: [-1.1, 1.1]}
+      dynamic_obstacle_spawn: [-3.0, 0.0, 0.32]
+
+  localization_regions:
+    gnss_good:
+      bounds: {x: [-11.5, -7.0], y: [-8.4, 8.4]}
+      mode: GNSS_FIX
+    gnss_degraded:
+      bounds: {x: [-7.0, -5.0], y: [-8.4, 8.4]}
+      mode: GNSS_DEGRADED
+    gnss_outage:
+      bounds: {x: [-5.0, 11.5], y: [-8.4, 8.4]}
+      mode: IDR_ACTIVE
+
+  task_stations:
+    pickup_A: [-9.2, -4.8]
+    pickup_B: [-9.2, 4.8]
+    drop_A: [5.2, -3.4]
+    drop_B: [10.2, -6.5]
+    charging_station: [-9.8, 0.0]
+
+  robot_spawns:
+    amr_alpha: [-9.2, -4.8, 0.0]
+    amr_bravo: [-9.2, 4.8, -1.5708]
+    amr_charlie: [-10.2, 2.8, 0.0]
+    amr_delta: [8.0, 0.65, 1.5708]
+    amr_echo: [8.0, 8.15, -1.5708]
+
+  robot_visuals:
+    amr_alpha: {label: ALPHA, colour: [1.0, 0.05, 0.05]}
+    amr_bravo: {label: BRAVO, colour: [0.05, 0.20, 1.0]}
+    amr_charlie: {label: CHARLIE, colour: [0.05, 0.95, 0.15]}
+    amr_delta: {label: DELTA, colour: [1.0, 0.35, 0.02]}
+    amr_echo: {label: ECHO, colour: [0.65, 0.05, 0.85]}
+
+  stage3_missions:
+    amr_alpha: [[-6.2, -4.8], [-5.0, 0.0], [-1.0, 1.5]]
+    amr_bravo: [[-6.2, 4.8], [-5.3, 2.2]]
+    amr_charlie: [[-8.0, 2.8], [-7.2, 1.5]]
+    amr_delta: [[8.0, 2.5]]
+    amr_echo: [[8.0, 7.95]]
+
+  stage4_peer_metadata:
+    ALPHA: {namespace: /amr_alpha, priority: 3, next_zone: obstacle_area}
+    BRAVO: {namespace: /amr_bravo, priority: 4, next_zone: main_corridor}
+    CHARLIE: {namespace: /amr_charlie, priority: 5, next_zone: loading_bay}
+    DELTA: {namespace: /amr_delta, priority: 2, next_zone: narrow_aisle_1}
+    ECHO: {namespace: /amr_echo, priority: 1, next_zone: narrow_aisle_1}
+
+  mission_zones:
+    amr_alpha: ['', obstacle_area, intersection_A]
+    amr_bravo: ['', '']
+    amr_charlie: ['', '']
+    amr_delta: [narrow_aisle_1]
+    amr_echo: ['']
+
+  stage5:
+    prediction: {horizon: 6.0, buffer: 0.75, minimum_speed: 0.25}
+    scenarios:
+      safe: {}
+      crossing:
+        robot_spawns:
+          amr_alpha: [-2.5, 0.0, 0.0]
+          amr_bravo: [0.0, -2.5, 1.57079632679]
+        stage3_missions:
+          amr_alpha: [[-1.5, 0.0]]
+          amr_bravo: [[0.0, -1.5]]
+        mission_zones:
+          amr_alpha: [intersection_A]
+          amr_bravo: [intersection_A]
+      different_time:
+        robot_spawns:
+          amr_alpha: [-2.5, 0.0, 0.0]
+          amr_bravo: [0.0, -5.0, 1.57079632679]
+        stage3_missions:
+          amr_alpha: [[-1.5, 0.0]]
+          amr_bravo: [[0.0, -4.0]]
+        mission_zones:
+          amr_alpha: [intersection_A]
+          amr_bravo: [intersection_A]
+
+      negotiation:
+        robot_spawns:
+          amr_alpha: [-2.5, 0.0, 0.0]
+          amr_bravo: [0.0, -2.5, 1.57079632679]
+        stage3_missions:
+          amr_alpha: [[2.5, 0.0]]
+          amr_bravo: [[0.0, 2.5]]
+        mission_zones:
+          amr_alpha: [intersection_A]
+          amr_bravo: [intersection_A]
+
+  stage6:
+    # Bounds in metres; retained in the derived launch config used by all nodes.
+    hold_margin: 0.40
+    exit_margin: 0.40
+    waiting_cap: 30.0
+    waiting_quantum: 1.0
+    eta_quantum: 0.25
+
+  golden_routes:
+    amr_alpha:
+      - [-9.2, -4.8]
+      - [-6.2, -2.0]
+      - [-3.0, 0.0]
+      - [0.0, 0.0]
+      - [5.0, 0.0]
+      - [5.2, -3.4]
+    amr_bravo:
+      - [-9.2, 4.8]
+      - [-6.2, 0.0]
+      - [0.0, 0.0]
+      - [5.0, 0.0]
+      - [10.2, -6.5]
+    amr_charlie:
+      - [-10.2, 2.8]
+      - [-7.0, 1.5]
+      - [-5.0, 0.0]
+      - [5.0, 0.0]
+      - [-6.0, 0.0]
+    amr_delta:
+      - [8.0, 0.65]
+      - [8.0, 4.45]
+      - [8.0, 7.85]
+    amr_echo:
+      - [8.0, 8.15]
+      - [8.0, 4.45]
+      - [8.0, 1.05]
+
+  recommended_cameras:
+    top_down: {pose: [0.0, 0.0, 25.0, 0.0, 1.5708, 0.0]}
+    isometric_overview: {pose: [-17.0, -18.0, 18.0, 0.0, 0.62, 0.78]}
+    intersection_closeup: {pose: [-2.5, -5.5, 6.0, 0.0, 0.65, 0.70]}

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edge AI + GNSS/IDR Navigation Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <span style="font-size: 1.5rem;">🛰️</span>
+      <h1>EDGE AI + GNSS / INTELLIGENT DEAD RECKONING</h1>
+      <span id="system-badge" class="badge badge-green">GNSS ACTIVE</span>
+    </div>
+    <div class="controls">
+      <button id="btn-outage" class="btn-outage" onclick="triggerOutage()">⚡ Simulate Outage (Tunnel)</button>
+      <button id="btn-restore" class="btn-restore" onclick="restoreGNSS()">🔄 Restore GNSS</button>
+      <button onclick="window.open('/mobile', '_blank')">📱 Connect Phone</button>
+    </div>
+  </header>
+
+  <div class="dashboard-container">
+    <div id="map-container">
+      <div id="map"></div>
+      <div class="map-overlay-legend">
+        <div class="legend-item"><div class="legend-line line-fused"></div> <span>Fused Path (EKF)</span></div>
+        <div class="legend-item"><div class="legend-line line-raw"></div> <span>Raw GNSS Fixes</span></div>
+        <div class="legend-item"><div class="legend-line line-idr"></div> <span>IDR (Dead Reckoning)</span></div>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <!-- Edge AI Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>🧠 Edge AI Environment Classifier</span>
+          <span id="ai-latency" style="font-family: var(--font-mono); color: var(--accent-cyan);">0.04 ms</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin: 6px 0;">
+          <span id="ai-condition" style="font-size: 1.1rem; font-weight: 700; color: var(--accent-green);">OPEN_SKY_NORMAL</span>
+          <span id="ai-confidence" style="font-family: var(--font-mono); font-size: 0.95rem;">98.5%</span>
+        </div>
+        <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+          <div id="ai-bar" style="background: var(--accent-green); width: 98%; height: 100%; transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+
+      <!-- Real-time Position & Kinematics -->
+      <div class="card">
+        <div class="card-title"><span>📍 Estimated Position (Fused)</span></div>
+        <div class="metric-group">
+          <div class="metric-box">
+            <div class="metric-label">LATITUDE</div>
+            <div id="val-lat" class="metric-val">28.6139000</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">LONGITUDE</div>
+            <div id="val-lon" class="metric-val">77.2090000</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">SPEED</div>
+            <div id="val-speed" class="metric-val" style="color: var(--accent-cyan);">0.0 m/s</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">HEADING</div>
+            <div id="val-heading" class="metric-val">0.0°</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GNSS Status -->
+      <div class="card">
+        <div class="card-title"><span>🛰️ GNSS Receiver Status</span></div>
+        <div class="metric-group">
+          <div class="metric-box">
+            <div class="metric-label">SATELLITES</div>
+            <div id="val-sats" class="metric-val" style="color: var(--accent-green);">11</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">HDOP PRECISION</div>
+            <div id="val-hdop" class="metric-val">0.8</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">SIGNAL INTEGRITY</div>
+            <div id="val-gnss-status" class="metric-val" style="color: var(--accent-green); font-size: 0.95rem;">LOCKED</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">OUTAGE TIMER</div>
+            <div id="val-outage-time" class="metric-val" style="color: var(--accent-yellow);">0.0 s</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Intelligent Dead Reckoning & IMU -->
+      <div class="card">
+        <div class="card-title"><span>🧭 IDR Subsystem & IMU Dynamics</span></div>
+        <div class="metric-group" style="margin-bottom: 8px;">
+          <div class="metric-box">
+            <div class="metric-label">ESTIMATED DRIFT</div>
+            <div id="val-drift" class="metric-val" style="color: var(--accent-yellow);">0.00 m</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">ZUPT (STANDSTILL)</div>
+            <div id="val-zupt" class="metric-val" style="color: var(--accent-green); font-size: 0.95rem;">YES</div>
+          </div>
+        </div>
+        <div class="metric-label">ACCELERATION (AX/AY/AZ m/s²)</div>
+        <div id="val-imu-accel" style="font-family: var(--font-mono); font-size: 0.85rem; margin-bottom: 4px;">Ax: +0.00 | Ay: +0.00 | Az: +9.81</div>
+        <div class="metric-label">ANGULAR RATE (GX/GY/GZ rad/s)</div>
+        <div id="val-imu-gyro" style="font-family: var(--font-mono); font-size: 0.85rem;">Gx: +0.000 | Gy: +0.000 | Gz: +0.000</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

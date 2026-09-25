@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <world name="warehouse_sih_demo">
+    <physics name="fast_stable" type="ode">
+      <max_step_size>0.002</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>500</real_time_update_rate>
+    </physics>
+
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+
+    <scene>
+      <ambient>0.55 0.58 0.62 1</ambient>
+      <background>0.12 0.15 0.20 1</background>
+      <shadows>true</shadows>
+    </scene>
+    <light name="sun" type="directional">
+      <pose>0 0 14 0 0 0</pose>
+      <diffuse>0.95 0.95 0.92 1</diffuse>
+      <specular>0.25 0.25 0.25 1</specular>
+      <direction>-0.35 0.25 -0.9</direction>
+      <cast_shadows>true</cast_shadows>
+    </light>
+    <light name="interior_fill" type="point">
+      <pose>2 0 7 0 0 0</pose><diffuse>0.8 0.85 1 1</diffuse>
+      <attenuation><range>30</range><constant>0.4</constant><linear>0.02</linear><quadratic>0.001</quadratic></attenuation>
+    </light>
+
+    <!-- 24 m x 18 m floor and collision walls. -->
+    <model name="warehouse_floor"><static>true</static><link name="floor">
+      <collision name="collision"><geometry><box><size>24 18 0.10</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>24 18 0.10</size></box></geometry>
+        <material><ambient>0.30 0.32 0.35 1</ambient><diffuse>0.38 0.40 0.43 1</diffuse></material></visual>
+    </link></model>
+    <model name="wall_north"><static>true</static><pose>0 9 1.25 0 0 0</pose><link name="wall">
+      <collision name="collision"><geometry><box><size>24 0.20 2.5</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>24 0.20 2.5</size></box></geometry><material><ambient>0.72 0.76 0.80 1</ambient><diffuse>0.72 0.76 0.80 1</diffuse></material></visual>
+    </link></model>
+    <model name="wall_south"><static>true</static><pose>0 -9 1.25 0 0 0</pose><link name="wall">
+      <collision name="collision"><geometry><box><size>24 0.20 2.5</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>24 0.20 2.5</size></box></geometry><material><ambient>0.72 0.76 0.80 1</ambient><diffuse>0.72 0.76 0.80 1</diffuse></material></visual>
+    </link></model>
+    <model name="wall_east"><static>true</static><pose>12 0 1.25 0 0 0</pose><link name="wall">
+      <collision name="collision"><geometry><box><size>0.20 18 2.5</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>0.20 18 2.5</size></box></geometry><material><ambient>0.72 0.76 0.80 1</ambient><diffuse>0.72 0.76 0.80 1</diffuse></material></visual>
+    </link></model>
+    <model name="wall_west"><static>true</static><pose>-12 0 1.25 0 0 0</pose><link name="wall">
+      <collision name="collision"><geometry><box><size>0.20 18 2.5</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>0.20 18 2.5</size></box></geometry><material><ambient>0.72 0.76 0.80 1</ambient><diffuse>0.72 0.76 0.80 1</diffuse></material></visual>
+    </link></model>
+
+    <!-- Non-colliding floor overlays make the demo zones readable from above. -->
+    <model name="zone_loading_bay"><static>true</static><pose>-9.2 0 0.061 0 0 0</pose><link name="mark"><visual name="visual">
+      <geometry><box><size>5.4 16.8 0.012</size></box></geometry><material><ambient>0.12 0.28 0.46 1</ambient><diffuse>0.12 0.28 0.46 1</diffuse></material>
+    </visual></link></model>
+    <model name="zone_gnss_transition"><static>true</static><pose>-6.0 0 0.063 0 0 0</pose><link name="mark"><visual name="visual">
+      <geometry><box><size>2.0 16.8 0.014</size></box></geometry><material><ambient>0.58 0.42 0.08 1</ambient><diffuse>0.58 0.42 0.08 1</diffuse></material>
+    </visual></link></model>
+    <model name="zone_gnss_denied"><static>true</static><pose>3.5 0 0.061 0 0 0</pose><link name="mark"><visual name="visual">
+      <geometry><box><size>17.0 16.8 0.012</size></box></geometry><material><ambient>0.30 0.20 0.22 1</ambient><diffuse>0.30 0.20 0.22 1</diffuse></material>
+    </visual></link></model>
+    <model name="main_corridor_marking"><static>true</static><pose>2.5 0 0.070 0 0 0</pose><link name="mark"><visual name="visual">
+      <geometry><box><size>18.0 2.45 0.016</size></box></geometry><material><ambient>0.38 0.42 0.46 1</ambient><diffuse>0.38 0.42 0.46 1</diffuse></material>
+    </visual></link></model>
+    <model name="intersection_A_marking"><static>true</static><pose>0 0 0.081 0 0 0</pose><link name="mark"><visual name="visual">
+      <geometry><box><size>1.8 1.8 0.018</size></box></geometry><material><ambient>0.95 0.72 0.05 1</ambient><diffuse>0.95 0.72 0.05 1</diffuse></material>
+    </visual></link></model>
+    <model name="intersection_B_marking"><static>true</static><pose>5.0 0 0.081 0 0 0</pose><link name="mark"><visual name="visual">
+      <geometry><box><size>1.8 1.8 0.018</size></box></geometry><material><ambient>0.95 0.45 0.05 1</ambient><diffuse>0.95 0.45 0.05 1</diffuse></material>
+    </visual></link></model>
+    <model name="narrow_aisle_marking"><static>true</static><pose>8.0 4.45 0.081 0 0 0</pose><link name="mark"><visual name="visual">
+      <geometry><box><size>0.90 6.30 0.018</size></box></geometry><material><ambient>0.48 0.10 0.10 1</ambient><diffuse>0.48 0.10 0.10 1</diffuse></material>
+    </visual></link></model>
+
+    <!-- Six lightweight storage blocks form two rack groups and one choke point. -->
+    <model name="rack_A1"><static>true</static><pose>-2.5 4.45 1.10 0 0 0</pose><link name="rack">
+      <collision name="collision"><geometry><box><size>3.0 6.1 2.2</size></box></geometry></collision>
+      <visual name="frame"><geometry><box><size>3.0 6.1 2.2</size></box></geometry><material><ambient>0.18 0.28 0.38 1</ambient><diffuse>0.18 0.32 0.48 1</diffuse></material></visual>
+      <visual name="stripe"><pose>0 0 1.12 0 0 0</pose><geometry><box><size>3.04 6.14 0.10</size></box></geometry><material><ambient>0.95 0.55 0.05 1</ambient><diffuse>0.95 0.55 0.05 1</diffuse></material></visual>
+    </link></model>
+    <model name="rack_A2"><static>true</static><pose>2.5 4.45 1.10 0 0 0</pose><link name="rack">
+      <collision name="collision"><geometry><box><size>3.0 6.1 2.2</size></box></geometry></collision>
+      <visual name="frame"><geometry><box><size>3.0 6.1 2.2</size></box></geometry><material><ambient>0.18 0.28 0.38 1</ambient><diffuse>0.18 0.32 0.48 1</diffuse></material></visual>
+      <visual name="stripe"><pose>0 0 1.12 0 0 0</pose><geometry><box><size>3.04 6.14 0.10</size></box></geometry><material><ambient>0.95 0.55 0.05 1</ambient><diffuse>0.95 0.55 0.05 1</diffuse></material></visual>
+    </link></model>
+    <model name="rack_B1"><static>true</static><pose>-2.5 -4.45 1.10 0 0 0</pose><link name="rack">
+      <collision name="collision"><geometry><box><size>3.0 6.1 2.2</size></box></geometry></collision>
+      <visual name="frame"><geometry><box><size>3.0 6.1 2.2</size></box></geometry><material><ambient>0.22 0.30 0.34 1</ambient><diffuse>0.22 0.34 0.42 1</diffuse></material></visual>
+      <visual name="stripe"><pose>0 0 1.12 0 0 0</pose><geometry><box><size>3.04 6.14 0.10</size></box></geometry><material><ambient>0.15 0.75 0.80 1</ambient><diffuse>0.15 0.75 0.80 1</diffuse></material></visual>
+    </link></model>
+    <model name="rack_B2"><static>true</static><pose>2.5 -4.45 1.10 0 0 0</pose><link name="rack">
+      <collision name="collision"><geometry><box><size>3.0 6.1 2.2</size></box></geometry></collision>
+      <visual name="frame"><geometry><box><size>3.0 6.1 2.2</size></box></geometry><material><ambient>0.22 0.30 0.34 1</ambient><diffuse>0.22 0.34 0.42 1</diffuse></material></visual>
+      <visual name="stripe"><pose>0 0 1.12 0 0 0</pose><geometry><box><size>3.04 6.14 0.10</size></box></geometry><material><ambient>0.15 0.75 0.80 1</ambient><diffuse>0.15 0.75 0.80 1</diffuse></material></visual>
+    </link></model>
+    <model name="rack_choke_left"><static>true</static><pose>7.0 4.45 1.10 0 0 0</pose><link name="rack">
+      <collision name="collision"><geometry><box><size>1.10 6.1 2.2</size></box></geometry></collision>
+      <visual name="frame"><geometry><box><size>1.10 6.1 2.2</size></box></geometry><material><ambient>0.32 0.22 0.18 1</ambient><diffuse>0.48 0.30 0.18 1</diffuse></material></visual>
+    </link></model>
+    <model name="rack_choke_right"><static>true</static><pose>9.0 4.45 1.10 0 0 0</pose><link name="rack">
+      <collision name="collision"><geometry><box><size>1.10 6.1 2.2</size></box></geometry></collision>
+      <visual name="frame"><geometry><box><size>1.10 6.1 2.2</size></box></geometry><material><ambient>0.32 0.22 0.18 1</ambient><diffuse>0.48 0.30 0.18 1</diffuse></material></visual>
+    </link></model>
+
+    <!-- Loading dock bumpers and task pads. Pads are visual-only and drivable. -->
+    <model name="loading_dock"><static>true</static><pose>-11.35 0 0.45 0 0 0</pose><link name="dock">
+      <collision name="collision"><geometry><box><size>0.45 4.5 0.9</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>0.45 4.5 0.9</size></box></geometry><material><ambient>0.12 0.14 0.16 1</ambient><diffuse>0.12 0.14 0.16 1</diffuse></material></visual>
+    </link></model>
+    <model name="pickup_A_pad"><static>true</static><pose>-9.2 -4.8 0.075 0 0 0</pose><link name="pad"><visual name="visual"><geometry><cylinder><radius>0.65</radius><length>0.02</length></cylinder></geometry><material><ambient>0.05 0.85 0.25 1</ambient><diffuse>0.05 0.85 0.25 1</diffuse></material></visual></link></model>
+    <model name="pickup_B_pad"><static>true</static><pose>-9.2 4.8 0.075 0 0 0</pose><link name="pad"><visual name="visual"><geometry><cylinder><radius>0.65</radius><length>0.02</length></cylinder></geometry><material><ambient>0.05 0.65 0.95 1</ambient><diffuse>0.05 0.65 0.95 1</diffuse></material></visual></link></model>
+    <model name="drop_A_pad"><static>true</static><pose>5.2 -3.4 0.075 0 0 0</pose><link name="pad"><visual name="visual"><geometry><cylinder><radius>0.65</radius><length>0.02</length></cylinder></geometry><material><ambient>0.95 0.25 0.15 1</ambient><diffuse>0.95 0.25 0.15 1</diffuse></material></visual></link></model>
+    <model name="drop_B_pad"><static>true</static><pose>10.2 -6.5 0.075 0 0 0</pose><link name="pad"><visual name="visual"><geometry><cylinder><radius>0.65</radius><length>0.02</length></cylinder></geometry><material><ambient>0.75 0.15 0.85 1</ambient><diffuse>0.75 0.15 0.85 1</diffuse></material></visual></link></model>
+    <model name="charging_station_pad"><static>true</static><pose>-9.8 0 0.075 0 0 0</pose><link name="pad"><visual name="visual"><geometry><box><size>1.2 1.2 0.02</size></box></geometry><material><ambient>0.15 0.95 0.95 1</ambient><diffuse>0.15 0.95 0.95 1</diffuse></material></visual></link></model>
+  </world>
+</sdf>

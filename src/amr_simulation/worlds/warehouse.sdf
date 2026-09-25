@@ -1,0 +1,407 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+
+  <world name="warehouse">
+
+    <!-- ===================================================== -->
+    <!-- PHYSICS                                               -->
+    <!-- ===================================================== -->
+
+    <physics name="default_physics" type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+
+    <!-- Gazebo Sensors system -->
+    <plugin
+      filename="gz-sim-sensors-system"
+      name="gz::sim::systems::Sensors">
+    </plugin>
+
+    <!-- Gazebo IMU system -->
+    <plugin
+      filename="gz-sim-imu-system"
+      name="gz::sim::systems::Imu">
+    </plugin>
+
+
+    <!-- ===================================================== -->
+    <!-- LIGHTING                                               -->
+    <!-- ===================================================== -->
+
+    <light name="sun" type="directional">
+      <pose>-6 0 1 0 0 0</pose>
+
+      <cast_shadows>true</cast_shadows>
+
+      <diffuse>1 1 1 1</diffuse>
+      <specular>0.5 0.5 0.5 1</specular>
+
+      <attenuation>
+        <range>1000</range>
+        <constant>0.5</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+
+      <direction>-0.3 0.3 -1</direction>
+    </light>
+
+    <light name="warehouse_light_1" type="point">
+      <pose>-6 0 1 0 0 0</pose>
+      <diffuse>1 1 1 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+
+      <attenuation>
+        <range>30</range>
+        <constant>0.5</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+
+      <cast_shadows>true</cast_shadows>
+    </light>
+
+
+    <!-- ===================================================== -->
+    <!-- GROUND                                                 -->
+    <!-- ===================================================== -->
+
+    <model name="ground">
+
+      <static>true</static>
+
+      <link name="link">
+
+        <collision name="collision">
+
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>30 30</size>
+            </plane>
+          </geometry>
+
+        </collision>
+
+        <visual name="visual">
+
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>30 30</size>
+            </plane>
+          </geometry>
+
+          <material>
+            <ambient>0.7 0.7 0.7 1</ambient>
+            <diffuse>0.7 0.7 0.7 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+
+        </visual>
+
+      </link>
+
+    </model>
+
+
+    <!-- ===================================================== -->
+    <!-- NORTH WALL                                             -->
+    <!-- ===================================================== -->
+
+    <model name="wall_north">
+
+      <static>true</static>
+
+<pose>0 10 1 0 0 0</pose>
+      <link name="link">
+
+        <collision name="collision">
+
+          <geometry>
+            <box>
+              <size>20 0.2 2</size>
+            </box>
+          </geometry>
+
+        </collision>
+
+        <visual name="visual">
+
+          <geometry>
+            <box>
+              <size>20 0.2 2</size>
+            </box>
+          </geometry>
+
+        </visual>
+
+      </link>
+
+    </model>
+
+
+    <!-- ===================================================== -->
+    <!-- SOUTH WALL                                             -->
+    <!-- ===================================================== -->
+
+    <model name="wall_south">
+
+      <static>true</static>
+
+     <pose>0 -10 1 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+
+          <geometry>
+            <box>
+              <size>20 0.2 2</size>
+            </box>
+          </geometry>
+
+        </collision>
+
+        <visual name="visual">
+
+          <geometry>
+            <box>
+              <size>20 0.2 2</size>
+            </box>
+          </geometry>
+
+        </visual>
+
+      </link>
+
+    </model>
+
+
+    <!-- ===================================================== -->
+    <!-- EAST WALL                                              -->
+    <!-- ===================================================== -->
+
+    <model name="wall_east">
+
+      <static>true</static>
+
+      <pose>10 0 1 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+
+          <geometry>
+            <box>
+              <size>0.2 20 2</size>
+            </box>
+          </geometry>
+
+        </collision>
+
+        <visual name="visual">
+
+          <geometry>
+            <box>
+              <size>0.2 20 2</size>
+            </box>
+          </geometry>
+
+        </visual>
+
+      </link>
+
+    </model>
+
+
+    <!-- ===================================================== -->
+    <!-- WEST WALL                                              -->
+    <!-- ===================================================== -->
+
+    <model name="wall_west">
+
+      <static>true</static>
+
+      <pose>-10 0 1 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+
+          <geometry>
+            <box>
+              <size>0.2 20 2</size>
+            </box>
+          </geometry>
+
+        </collision>
+
+        <visual name="visual">
+
+          <geometry>
+            <box>
+              <size>0.2 20 2</size>
+            </box>
+          </geometry>
+
+        </visual>
+
+      </link>
+
+    </model>
+
+
+    <!-- ===================================================== -->
+    <!-- WAREHOUSE SHELF ROW 1                                 -->
+    <!-- ===================================================== -->
+
+    <model name="shelf_row_1">
+
+      <static>true</static>
+
+      <pose>-7 0 1 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+
+          <geometry>
+            <box>
+              <size>1 12 2</size>
+            </box>
+          </geometry>
+
+        </collision>
+
+        <visual name="visual">
+
+          <geometry>
+            <box>
+              <size>1 12 2</size>
+            </box>
+          </geometry>
+
+        </visual>
+
+      </link>
+
+    </model>
+
+
+    <!-- ===================================================== -->
+    <!-- WAREHOUSE SHELF ROW 2                                 -->
+    <!-- ===================================================== -->
+
+    <model name="shelf_row_2">
+
+      <static>true</static>
+
+      <pose>-3 0 1 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+
+          <geometry>
+            <box>
+              <size>1 12 2</size>
+            </box>
+          </geometry>
+
+        </collision>
+
+        <visual name="visual">
+
+          <geometry>
+            <box>
+              <size>1 12 2</size>
+            </box>
+          </geometry>
+
+        </visual>
+
+      </link>
+
+    </model>
+
+
+    <!-- ===================================================== -->
+    <!-- WAREHOUSE SHELF ROW 3                                 -->
+    <!-- ===================================================== -->
+
+    <model name="shelf_row_3">
+
+      <static>true</static>
+
+      <pose>3 0 1 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+
+          <geometry>
+            <box>
+              <size>1 12 2</size>
+            </box>
+          </geometry>
+
+        </collision>
+
+        <visual name="visual">
+
+          <geometry>
+            <box>
+              <size>1 12 2</size>
+            </box>
+          </geometry>
+
+        </visual>
+
+      </link>
+
+    </model>
+
+
+    <!-- ===================================================== -->
+    <!-- WAREHOUSE SHELF ROW 4                                 -->
+    <!-- ===================================================== -->
+
+    <model name="shelf_row_4">
+
+      <static>true</static>
+
+      <pose>7 0 1 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+
+          <geometry>
+            <box>
+              <size>1 12 2</size>
+            </box>
+          </geometry>
+
+        </collision>
+
+        <visual name="visual">
+
+          <geometry>
+            <box>
+              <size>1 12 2</size>
+            </box>
+          </geometry>
+
+        </visual>
+
+      </link>
+
+    </model>
+
+
+  </world>
+
+</sdf>

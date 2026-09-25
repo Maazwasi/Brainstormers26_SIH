@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mobile Sensor Streamer — Edge AI Navigation</title>
+  <style>
+    body {
+      background: #0a0e17;
+      color: #f0f4f8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      margin: 0;
+      text-align: center;
+    }
+    h2 {
+      color: #00d2ff;
+      margin-bottom: 8px;
+    }
+    .status-card {
+      background: #121a29;
+      border: 1px solid #243552;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+    .btn {
+      background: #00e676;
+      color: #0a0e17;
+      border: none;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 14px 28px;
+      border-radius: 30px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .btn.stop {
+      background: #ff3d71;
+      color: #fff;
+    }
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-family: monospace;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <h2>📱 Phone Sensor Streamer</h2>
+  <p style="color: #8c9ba5; font-size: 0.9rem;">Stream live GPS + IMU directly into the Edge AI Navigation Engine</p>
+
+  <button id="stream-btn" class="btn" onclick="toggleStreaming()">Start Streaming Sensors</button>
+
+  <div class="status-card">
+    <div class="metric"><span>Stream Status</span><span id="st-status" style="color: #ffb300;">IDLE</span></div>
+    <div class="metric"><span>Packets Sent</span><span id="st-count">0</span></div>
+    <div class="metric"><span>GPS Lat/Lon</span><span id="st-gps">Waiting...</span></div>
+    <div class="metric"><span>GPS Accuracy</span><span id="st-acc">--</span></div>
+    <div class="metric"><span>Speed</span><span id="st-speed">--</span></div>
+    <div class="metric"><span>Accel (X, Y, Z)</span><span id="st-accel">--</span></div>
+    <div class="metric"><span>Gyro (X, Y, Z)</span><span id="st-gyro">--</span></div>
+  </div>
+
+  <script>
+    let isStreaming = false;
+    let packetCount = 0;
+    let watchId = null;
+    let sendInterval = null;
+
+    let sensorData = {
+      lat: 0.0,
+      lon: 0.0,
+      alt: 0.0,
+      speed: 0.0,
+      heading: 0.0,
+      accuracy: 5.0,
+      ax: 0.0,
+      ay: 0.0,
+      az: 9.81,
+      gx: 0.0,
+      gy: 0.0,
+      gz: 0.0
+    };
+
+    function handleMotion(e) {
+      if (e.accelerationIncludingGravity) {
+        sensorData.ax = e.accelerationIncludingGravity.x || 0.0;
+        sensorData.ay = e.accelerationIncludingGravity.y || 0.0;
+        sensorData.az = e.accelerationIncludingGravity.z || 9.81;
+      }
+      if (e.rotationRate) {
+        // deg/s
+        sensorData.gx = (e.rotationRate.beta || 0.0) * Math.PI / 180.0;
+        sensorData.gy = (e.rotationRate.gamma || 0.0) * Math.PI / 180.0;
+        sensorData.gz = (e.rotationRate.alpha || 0.0) * Math.PI / 180.0;
+      }
+      document.getElementById('st-accel').textContent = `${sensorData.ax.toFixed(1)}, ${sensorData.ay.toFixed(1)}, ${sensorData.az.toFixed(1)}`;
+      document.getElementById('st-gyro').textContent = `${sensorData.gx.toFixed(2)}, ${sensorData.gy.toFixed(2)}, ${sensorData.gz.toFixed(2)}`;
+    }
+
+    async function sendPacket() {
+      if (!isStreaming) return;
+      try {
+        await fetch('/api/sensor_stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sensorData)
+        });
+        packetCount++;
+        document.getElementById('st-count').textContent = packetCount;
+      } catch (err) {}
+    }
+
+    async function toggleStreaming() {
+      const btn = document.getElementById('stream-btn');
+      const st = document.getElementById('st-status');
+
+      if (!isStreaming) {
+        // Request iOS motion permissions if required
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+          try {
+            const perm = await DeviceMotionEvent.requestPermission();
+            if (perm !== 'granted') {
+              alert('Motion sensor permission denied');
+              return;
+            }
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+
+        // Start Geolocation
+        if ('geolocation' in navigator) {
+          watchId = navigator.geolocation.watchPosition(pos => {
+            sensorData.lat = pos.coords.latitude;
+            sensorData.lon = pos.coords.longitude;
+            sensorData.alt = pos.coords.altitude || 0.0;
+            sensorData.speed = pos.coords.speed || 0.0;
+            sensorData.heading = pos.coords.heading || 0.0;
+            sensorData.accuracy = pos.coords.accuracy || 5.0;
+
+            document.getElementById('st-gps').textContent = `${sensorData.lat.toFixed(5)}, ${sensorData.lon.toFixed(5)}`;
+            document.getElementById('st-acc').textContent = `±${sensorData.accuracy.toFixed(1)} m`;
+            document.getElementById('st-speed').textContent = `${sensorData.speed.toFixed(1)} m/s`;
+          }, err => console.warn(err), {
+            enableHighAccuracy: true,
+            maximumAge: 500,
+            timeout: 5000
+          });
+        }
+
+        window.addEventListener('devicemotion', handleMotion);
+        sendInterval = setInterval(sendPacket, 50); // 20 Hz
+
+        isStreaming = true;
+        btn.textContent = 'Stop Streaming';
+        btn.className = 'btn stop';
+        st.textContent = 'STREAMING LIVE (20 Hz)';
+        st.style.color = '#00e676';
+      } else {
+        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        window.removeEventListener('devicemotion', handleMotion);
+        clearInterval(sendInterval);
+
+        isStreaming = false;
+        btn.textContent = 'Start Streaming Sensors';
+        btn.className = 'btn';
+        st.textContent = 'STOPPED';
+        st.style.color = '#ffb300';
+      }
+    }
+  </script>
+</body>
+</html>
