@@ -1,0 +1,124 @@
+{
+  "disabled_false_conflicts": {
+    "alpha": 0,
+    "bravo": 0,
+    "charlie": 0,
+    "delta": 0,
+    "echo": 0
+  },
+  "bilateral": {
+    "alpha": {
+      "robot_id": "ALPHA",
+      "active_conflicts": 1,
+      "conflicts": [
+        {
+          "conflict_id": "intersection_A:ALPHA:BRAVO",
+          "peer": "BRAVO",
+          "zone": "intersection_A",
+          "my_eta": 5.566000000045533,
+          "peer_eta": 5.580000000044371,
+          "my_distance": 1.3915000000113833,
+          "peer_distance": 1.3950000000110927,
+          "overlap_seconds": 9.136000000001161,
+          "state": "PREDICTED",
+          "conflict_first_detected_time": 1790338265.2908702
+        }
+      ],
+      "event_count": 1
+    },
+    "bravo": {
+      "robot_id": "BRAVO",
+      "active_conflicts": 1,
+      "conflicts": [
+        {
+          "conflict_id": "intersection_A:ALPHA:BRAVO",
+          "peer": "ALPHA",
+          "zone": "intersection_A",
+          "my_eta": 5.580000000044371,
+          "peer_eta": 5.616000000041985,
+          "my_distance": 1.3950000000110927,
+          "peer_distance": 1.4040000000104962,
+          "overlap_seconds": 9.114000000002385,
+          "state": "PREDICTED",
+          "conflict_first_detected_time": 1790338265.1567857
+        }
+      ],
+      "event_count": 1
+    }
+  },
+  "moving": {
+    "alpha": {
+      "state": "WAYPOINT_TRACK",
+      "waypoint": 0,
+      "pose": [
+        0.05849999998861665,
+        -7.396978360891017e-15,
+        -2.150573542589324e-13
+      ],
+      "scan": {
+        "front": 4.054231643676758,
+        "left": 1.4121378660202026,
+        "right": 1.4146078824996948
+      },
+      "linear": 0.25,
+      "angular": 3.7895370321029945e-13
+    },
+    "bravo": {
+      "state": "WAYPOINT_TRACK",
+      "waypoint": 0,
+      "pose": [
+        0.06749999998802016,
+        1.0991389181510268e-13,
+        2.33997877222977e-12
+      ],
+      "scan": {
+        "front": 4.118397235870361,
+        "left": 1.007816195487976,
+        "right": 1.0114659070968628
+      },
+      "linear": 0.25,
+      "angular": 4.748414045449879e-12
+    }
+  },
+  "other_detectors": {
+    "charlie": {
+      "robot_id": "CHARLIE",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    },
+    "delta": {
+      "robot_id": "DELTA",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    },
+    "echo": {
+      "robot_id": "ECHO",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    }
+  },
+  "peer_loss_alpha": {
+    "robot_id": "ALPHA",
+    "active_conflicts": 0,
+    "conflicts": [],
+    "event_count": 1
+  },
+  "cleared": {
+    "alpha": {
+      "robot_id": "ALPHA",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 1
+    },
+    "bravo": {
+      "robot_id": "BRAVO",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 1
+    }
+  },
+  "pass": true
+}

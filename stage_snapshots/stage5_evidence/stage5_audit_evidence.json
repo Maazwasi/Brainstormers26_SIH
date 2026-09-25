@@ -1,0 +1,392 @@
+{
+  "tables": {
+    "DELTA": {
+      "robot_id": "DELTA",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    },
+    "CHARLIE": {
+      "robot_id": "CHARLIE",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    },
+    "ALPHA": {
+      "robot_id": "ALPHA",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    },
+    "ECHO": {
+      "robot_id": "ECHO",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    },
+    "BRAVO": {
+      "robot_id": "BRAVO",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    }
+  },
+  "predictions": [],
+  "packets": {
+    "ECHO": {
+      "first": {
+        "robot_id": "ECHO",
+        "timestamp": 1790338619.1023643,
+        "x": 8.0,
+        "y": 8.150000000007363,
+        "yaw": -1.570799999999898,
+        "linear_velocity": -1.2394513373888742e-13,
+        "angular_velocity": -1.2543161786806367e-16,
+        "goal_x": 8.0,
+        "goal_y": 7.95,
+        "next_zone": "",
+        "task_priority": 1,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      },
+      "last": {
+        "robot_id": "ECHO",
+        "timestamp": 1790338623.1017764,
+        "x": 8.0,
+        "y": 8.150000000007557,
+        "yaw": -1.5707999999998983,
+        "linear_velocity": -1.2394619845822613e-13,
+        "angular_velocity": -1.2534953309444795e-16,
+        "goal_x": 8.0,
+        "goal_y": 7.95,
+        "next_zone": "",
+        "task_priority": 1,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      }
+    },
+    "DELTA": {
+      "first": {
+        "robot_id": "DELTA",
+        "timestamp": 1790338619.107906,
+        "x": 8.0,
+        "y": 0.64999999999263,
+        "yaw": 1.570800000000102,
+        "linear_velocity": -1.2394516444021284e-13,
+        "angular_velocity": -1.2533230035266053e-16,
+        "goal_x": 8.0,
+        "goal_y": 2.5,
+        "next_zone": "",
+        "task_priority": 2,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      },
+      "last": {
+        "robot_id": "DELTA",
+        "timestamp": 1790338623.107817,
+        "x": 8.0,
+        "y": 0.6499999999924378,
+        "yaw": 1.5708000000001017,
+        "linear_velocity": -1.239462461125132e-13,
+        "angular_velocity": -1.2526474150873003e-16,
+        "goal_x": 8.0,
+        "goal_y": 2.5,
+        "next_zone": "",
+        "task_priority": 2,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      }
+    },
+    "CHARLIE": {
+      "first": {
+        "robot_id": "CHARLIE",
+        "timestamp": 1790338619.1310203,
+        "x": -10.20000000000737,
+        "y": 2.8,
+        "yaw": 1.0198732473544112e-13,
+        "linear_velocity": -1.2394515878796008e-13,
+        "angular_velocity": -1.2526131105995165e-16,
+        "goal_x": -8.0,
+        "goal_y": 2.8,
+        "next_zone": "",
+        "task_priority": 5,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      },
+      "last": {
+        "robot_id": "CHARLIE",
+        "timestamp": 1790338623.1301632,
+        "x": -10.200000000007561,
+        "y": 2.8,
+        "yaw": 1.0179305880965061e-13,
+        "linear_velocity": -1.2394623826778753e-13,
+        "angular_velocity": -1.2526179967654825e-16,
+        "goal_x": -8.0,
+        "goal_y": 2.8,
+        "next_zone": "",
+        "task_priority": 5,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      }
+    },
+    "ALPHA": {
+      "first": {
+        "robot_id": "ALPHA",
+        "timestamp": 1790338619.1658125,
+        "x": -1.651736651938672,
+        "y": -1.8866359437689643e-13,
+        "yaw": 3.2803802249044363e-13,
+        "linear_velocity": -1.1657341758564144e-13,
+        "angular_velocity": 0.0,
+        "goal_x": -1.5,
+        "goal_y": 0.0,
+        "next_zone": "",
+        "task_priority": 3,
+        "waiting_time": 0.0,
+        "local_nav_state": "MISSION_COMPLETE",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      },
+      "last": {
+        "robot_id": "ALPHA",
+        "timestamp": 1790338623.1654496,
+        "x": -1.6517366519388452,
+        "y": -1.8866359437695596e-13,
+        "yaw": 3.2803802249044363e-13,
+        "linear_velocity": -1.1657341758564144e-13,
+        "angular_velocity": 0.0,
+        "goal_x": -1.5,
+        "goal_y": 0.0,
+        "next_zone": "",
+        "task_priority": 3,
+        "waiting_time": 0.0,
+        "local_nav_state": "MISSION_COMPLETE",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      }
+    },
+    "BRAVO": {
+      "first": {
+        "robot_id": "BRAVO",
+        "timestamp": 1790338619.2064667,
+        "x": 3.110792470305148e-13,
+        "y": -4.149172505870707,
+        "yaw": 1.5707963267960208,
+        "linear_velocity": -1.1657341758564144e-13,
+        "angular_velocity": 0.0,
+        "goal_x": 0.0,
+        "goal_y": -4.0,
+        "next_zone": "",
+        "task_priority": 4,
+        "waiting_time": 0.0,
+        "local_nav_state": "MISSION_COMPLETE",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      },
+      "last": {
+        "robot_id": "BRAVO",
+        "timestamp": 1790338623.0068517,
+        "x": 3.110792470308977e-13,
+        "y": -4.149172505870868,
+        "yaw": 1.5707963267960203,
+        "linear_velocity": -1.1934897514720433e-13,
+        "angular_velocity": -1.9341864540507955e-14,
+        "goal_x": 0.0,
+        "goal_y": -4.0,
+        "next_zone": "",
+        "task_priority": 4,
+        "waiting_time": 0.0,
+        "local_nav_state": "MISSION_COMPLETE",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      }
+    }
+  },
+  "publishers": 5,
+  "peer_subscribers": 5,
+  "peer_node_publishers": {
+    "alpha": [
+      [
+        "/amr_alpha/conflict_status",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/amr_alpha/peer_diagnostics",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/fleet/peer_state",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/parameter_events",
+        [
+          "rcl_interfaces/msg/ParameterEvent"
+        ]
+      ],
+      [
+        "/rosout",
+        [
+          "rcl_interfaces/msg/Log"
+        ]
+      ]
+    ],
+    "bravo": [
+      [
+        "/amr_bravo/conflict_status",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/amr_bravo/peer_diagnostics",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/fleet/peer_state",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/parameter_events",
+        [
+          "rcl_interfaces/msg/ParameterEvent"
+        ]
+      ],
+      [
+        "/rosout",
+        [
+          "rcl_interfaces/msg/Log"
+        ]
+      ]
+    ],
+    "charlie": [
+      [
+        "/amr_charlie/conflict_status",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/amr_charlie/peer_diagnostics",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/fleet/peer_state",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/parameter_events",
+        [
+          "rcl_interfaces/msg/ParameterEvent"
+        ]
+      ],
+      [
+        "/rosout",
+        [
+          "rcl_interfaces/msg/Log"
+        ]
+      ]
+    ],
+    "delta": [
+      [
+        "/amr_delta/conflict_status",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/amr_delta/peer_diagnostics",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/fleet/peer_state",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/parameter_events",
+        [
+          "rcl_interfaces/msg/ParameterEvent"
+        ]
+      ],
+      [
+        "/rosout",
+        [
+          "rcl_interfaces/msg/Log"
+        ]
+      ]
+    ],
+    "echo": [
+      [
+        "/amr_echo/conflict_status",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/amr_echo/peer_diagnostics",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/fleet/peer_state",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/parameter_events",
+        [
+          "rcl_interfaces/msg/ParameterEvent"
+        ]
+      ],
+      [
+        "/rosout",
+        [
+          "rcl_interfaces/msg/Log"
+        ]
+      ]
+    ]
+  },
+  "rtf": 0.38721440039369326
+}

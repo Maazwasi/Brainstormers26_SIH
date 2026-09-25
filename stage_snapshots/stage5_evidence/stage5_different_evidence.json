@@ -1,0 +1,230 @@
+{
+  "tables": {
+    "CHARLIE": {
+      "robot_id": "CHARLIE",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    },
+    "BRAVO": {
+      "robot_id": "BRAVO",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    },
+    "ALPHA": {
+      "robot_id": "ALPHA",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    },
+    "DELTA": {
+      "robot_id": "DELTA",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    },
+    "ECHO": {
+      "robot_id": "ECHO",
+      "active_conflicts": 0,
+      "conflicts": [],
+      "event_count": 0
+    }
+  },
+  "predictions": [],
+  "packets": {
+    "CHARLIE": {
+      "first": {
+        "robot_id": "CHARLIE",
+        "timestamp": 1790338579.7295966,
+        "x": -10.200000000005735,
+        "y": 2.8,
+        "yaw": 8.830262155235605e-14,
+        "linear_velocity": -1.0966197911491062e-13,
+        "angular_velocity": 1.0214745532717706e-15,
+        "goal_x": -8.0,
+        "goal_y": 2.8,
+        "next_zone": "",
+        "task_priority": 5,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      },
+      "last": {
+        "robot_id": "CHARLIE",
+        "timestamp": 1790338588.531862,
+        "x": -10.200000000006119,
+        "y": 2.8,
+        "yaw": 9.187765021233772e-14,
+        "linear_velocity": -1.0966227375177785e-13,
+        "angular_velocity": 1.0214300572156374e-15,
+        "goal_x": -8.0,
+        "goal_y": 2.8,
+        "next_zone": "",
+        "task_priority": 5,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      }
+    },
+    "BRAVO": {
+      "first": {
+        "robot_id": "BRAVO",
+        "timestamp": 1790338579.606331,
+        "x": -2.793760855827748e-23,
+        "y": -5.0000000000057625,
+        "yaw": 1.5707963267900886,
+        "linear_velocity": -1.0966201682947959e-13,
+        "angular_velocity": 1.0215155144570299e-15,
+        "goal_x": 0.0,
+        "goal_y": -4.0,
+        "next_zone": "",
+        "task_priority": 4,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      },
+      "last": {
+        "robot_id": "BRAVO",
+        "timestamp": 1790338588.6061893,
+        "x": 4.2266747113417263e-13,
+        "y": -4.263418208400492,
+        "yaw": 1.5707963267956602,
+        "linear_velocity": 0.1629632122265412,
+        "angular_velocity": 6.189396652962546e-13,
+        "goal_x": 0.0,
+        "goal_y": -4.0,
+        "next_zone": "intersection_A",
+        "task_priority": 4,
+        "waiting_time": 0.0,
+        "local_nav_state": "WAYPOINT_TRACK",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      }
+    },
+    "ECHO": {
+      "first": {
+        "robot_id": "ECHO",
+        "timestamp": 1790338579.9020023,
+        "x": 8.0,
+        "y": 8.150000000005736,
+        "yaw": -1.5707999999999116,
+        "linear_velocity": -1.096619827165794e-13,
+        "angular_velocity": 1.0214261779770187e-15,
+        "goal_x": 8.0,
+        "goal_y": 7.95,
+        "next_zone": "",
+        "task_priority": 1,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      },
+      "last": {
+        "robot_id": "ECHO",
+        "timestamp": 1790338588.5014238,
+        "x": 8.0,
+        "y": 8.150000000006115,
+        "yaw": -1.570799999999908,
+        "linear_velocity": -1.0966224544723653e-13,
+        "angular_velocity": 1.021454608370119e-15,
+        "goal_x": 8.0,
+        "goal_y": 7.95,
+        "next_zone": "",
+        "task_priority": 1,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      }
+    },
+    "DELTA": {
+      "first": {
+        "robot_id": "DELTA",
+        "timestamp": 1790338579.9080083,
+        "x": 8.0,
+        "y": 0.6499999999942593,
+        "yaw": 1.5708000000000883,
+        "linear_velocity": -1.0966199565393864e-13,
+        "angular_velocity": 1.0214426072878871e-15,
+        "goal_x": 8.0,
+        "goal_y": 2.5,
+        "next_zone": "",
+        "task_priority": 2,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      },
+      "last": {
+        "robot_id": "DELTA",
+        "timestamp": 1790338588.5094938,
+        "x": 8.0,
+        "y": 0.6499999999938809,
+        "yaw": 1.570800000000092,
+        "linear_velocity": -1.0966226555014879e-13,
+        "angular_velocity": 1.0214565411639945e-15,
+        "goal_x": 8.0,
+        "goal_y": 2.5,
+        "next_zone": "",
+        "task_priority": 2,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      }
+    },
+    "ALPHA": {
+      "first": {
+        "robot_id": "ALPHA",
+        "timestamp": 1790338580.1655247,
+        "x": -2.50000000000579,
+        "y": -2.824584067457617e-25,
+        "yaw": 8.881342964623101e-14,
+        "linear_velocity": -1.0966203310682289e-13,
+        "angular_velocity": 1.0214864801889829e-15,
+        "goal_x": -1.5,
+        "goal_y": 0.0,
+        "next_zone": "",
+        "task_priority": 3,
+        "waiting_time": 0.0,
+        "local_nav_state": "DISABLED",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      },
+      "last": {
+        "robot_id": "ALPHA",
+        "timestamp": 1790338588.5653503,
+        "x": -1.7657336056975772,
+        "y": -2.1185190146358425e-13,
+        "yaw": 2.2823400041225118e-14,
+        "linear_velocity": 0.16443334395121745,
+        "angular_velocity": 4.06179155350667e-13,
+        "goal_x": -1.5,
+        "goal_y": 0.0,
+        "next_zone": "intersection_A",
+        "task_priority": 3,
+        "waiting_time": 0.0,
+        "local_nav_state": "WAYPOINT_TRACK",
+        "localization_mode": "ODOM",
+        "localization_confidence": 1.0,
+        "coordination_state": "NONE"
+      }
+    }
+  },
+  "publishers": 5,
+  "peer_subscribers": 5,
+  "rtf": 0.40547628785274387
+}
