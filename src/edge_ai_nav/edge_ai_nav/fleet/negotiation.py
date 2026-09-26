@@ -9,46 +9,77 @@ class Decision:
     loser: str
     reason: str
     details: dict
+    loser_action: str = 'YIELD_AND_WAIT'
 
     def dictionary(self):
         return asdict(self)
 
 
-def choose_winner(a, b, etas, waiting_cap=30.0, waiting_quantum=1.0,
-                  eta_quantum=0.25):
-    """Return an invocation-order-independent winner for two published states."""
+def _active(state):
+    return state.get('local_nav_state') not in (
+        'DISABLED', 'MISSION_COMPLETE', 'PARKED', 'AVAILABLE', 'UNKNOWN')
+
+
+def resolve_conflict(a, b, zone, route_costs=None, etas=None, waiting_cap=30.0,
+                     waiting_quantum=1.0, eta_quantum=0.25):
+    """Resolve a peer conflict with one deterministic, shared hierarchy.
+
+    ``route_costs`` is keyed by robot ID and contains measured/graph-derived
+    ``wait`` and ``reroute`` seconds plus an optional alternate route.  It is
+    used only after safety, reservation, priority, activity and commitment.
+    """
     states = sorted((a, b), key=lambda state: state['robot_id'])
     first, second = states
-    p1, p2 = int(first['task_priority']), int(second['task_priority'])
-    if p1 != p2:
-        winner = first if p1 > p2 else second
-        reason = 'TASK_PRIORITY'
-        details = {'priorities': {s['robot_id']: int(s['task_priority']) for s in states}}
-    else:
-        waits = {s['robot_id']: min(waiting_cap, max(0.0, float(s.get('waiting_time', 0.0))))
-                 for s in states}
-        wait_buckets = {rid: math.floor(value/waiting_quantum) for rid, value in waits.items()}
-        if len(set(wait_buckets.values())) > 1:
-            # The second tuple element keeps equal buckets lexical and therefore
-            # independent of dict insertion order.
-            rid = sorted(wait_buckets, key=lambda key: (-wait_buckets[key], key))[0]
-            winner = next(s for s in states if s['robot_id'] == rid)
-            reason = 'WAITING_TIME'
-            details = {'waiting_seconds_capped': waits, 'waiting_buckets': wait_buckets}
-        else:
-            eta_buckets = {s['robot_id']: round(float(etas[s['robot_id']])/eta_quantum)
-                           for s in states}
-            if len(set(eta_buckets.values())) > 1:
-                rid = min(eta_buckets, key=lambda key: (eta_buckets[key], key))
-                winner = next(s for s in states if s['robot_id'] == rid)
-                reason = 'ETA'
-                details = {'eta_seconds': dict(etas), 'eta_buckets': eta_buckets}
-            else:
-                winner = first
-                reason = 'ROBOT_ID'
-                details = {'lexical_rule': 'lower robot ID wins'}
+    etas = etas or {s['robot_id']: float(s.get('eta') or 1e6) for s in states}
+    route_costs = route_costs or {}
+    waits = {s['robot_id']: min(waiting_cap, max(0.0, float(s.get('waiting_time', 0.0))))
+             for s in states}
+    values = {
+        'safety': {s['robot_id']: bool(s.get('safety_emergency')) for s in states},
+        'reserved': {s['robot_id']: bool(s.get('zone_reserved')) for s in states},
+        'priority': {s['robot_id']: int(s.get('task_priority', 0)) if _active(s) else 0 for s in states},
+        'active': {s['robot_id']: _active(s) for s in states},
+        'committed': {s['robot_id']: bool(s.get('zone_committed')) for s in states},
+        'eta': {s['robot_id']: round(float(etas.get(s['robot_id'], 1e6))/eta_quantum) for s in states},
+        'waiting': {rid: math.floor(value/waiting_quantum) for rid, value in waits.items()},
+    }
+    # A robot already committed owns the zone even when a later urgent task
+    # arrives.  A safety-stopped robot cannot be instructed to proceed.
+    hierarchy = (
+        ('SAFETY', lambda s: not values['safety'][s['robot_id']]),
+        ('ACTIVE_RESERVATION', lambda s: values['reserved'][s['robot_id']]),
+        ('ZONE_COMMITTED', lambda s: values['committed'][s['robot_id']]),
+        ('TASK_PRIORITY', lambda s: values['priority'][s['robot_id']]),
+        ('EXECUTING_OVER_IDLE', lambda s: values['active'][s['robot_id']]),
+        ('WAITING_TIME', lambda s: values['waiting'][s['robot_id']]),
+        ('ETA', lambda s: -values['eta'][s['robot_id']]),
+    )
+    winner = None; reason = 'ROBOT_ID'
+    candidates = states
+    for label, key in hierarchy:
+        scores = [key(s) for s in candidates]
+        if scores[0] != scores[1]:
+            winner = candidates[scores.index(max(scores))]; reason = label; break
+    if winner is None:
+        winner = first
     loser = second if winner is first else first
-    return Decision(winner['robot_id'], loser['robot_id'], reason, details)
+    costs = route_costs.get(loser['robot_id'], {})
+    wait_cost = float(costs.get('wait', 0.0))
+    reroute_cost = float(costs.get('reroute', 1e9))
+    action = 'REROUTE' if costs.get('route') and reroute_cost < wait_cost else 'YIELD_AND_WAIT'
+    details = dict(values, zone=zone, wait_cost=wait_cost,
+                   reroute_cost=reroute_cost,
+                   reroute_route=costs.get('route'),
+                   extra_detour_m=costs.get('extra_detour_m'),
+                   decision_basis=reason)
+    return Decision(winner['robot_id'], loser['robot_id'], reason, details, action)
+
+
+def choose_winner(a, b, etas, waiting_cap=30.0, waiting_quantum=1.0,
+                  eta_quantum=0.25):
+    """Compatibility wrapper using the canonical hierarchy."""
+    return resolve_conflict(a, b, '', etas=etas, waiting_cap=waiting_cap,
+                            waiting_quantum=waiting_quantum, eta_quantum=eta_quantum)
 
 
 class NegotiationBook:
@@ -56,9 +87,10 @@ class NegotiationBook:
     def __init__(self):
         self._decisions = {}
 
-    def decide(self, conflict_id, a, b, etas, now, first_detected, **policy):
+    def decide(self, conflict_id, a, b, etas, now, first_detected,
+               zone='', route_costs=None, **policy):
         if conflict_id not in self._decisions:
-            decision = choose_winner(a, b, etas, **policy)
+            decision = resolve_conflict(a, b, zone, route_costs, etas, **policy)
             self._decisions[conflict_id] = {
                 **decision.dictionary(), 'conflict_id': conflict_id,
                 'decision_time': now, 'first_detected_time': first_detected,
@@ -93,3 +125,11 @@ def motion_gate(front, stop_distance, coordination_hold):
     if coordination_hold:
         return 'COORDINATION_HOLD'
     return 'NAVIGATE'
+
+
+def bid_eligible(controller_state, has_pending_assignment, pose_fresh):
+    """Parking/repositioning is interruptible; an assigned task is not."""
+    return (controller_state in ('DISABLED','MISSION_COMPLETE',
+            'POST_TASK_REPOSITION','RETURNING_TO_CHARGE','GOING_TO_CHARGE',
+            'CHARGING','PARKED','AVAILABLE','MOVE_ASIDE')
+            and not has_pending_assignment and pose_fresh)

@@ -17,6 +17,7 @@ def generate_launch_description():
             launch_arguments={
                 'scenario': 'negotiation', 'negotiation': 'true',
                 'apply_spawn_transform': 'false',
+                'odom_coordinates': 'world',
                 'enabled': LaunchConfiguration('enabled'),
                 'use_rviz': LaunchConfiguration('use_rviz'),
             }.items())

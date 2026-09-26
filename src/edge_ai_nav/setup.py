@@ -35,6 +35,8 @@ setup(
             'centralized_baseline = edge_ai_nav.fleet.centralized_baseline:main',
             'fleet_visualizer = edge_ai_nav.fleet.fleet_visualizer:main',
             'five_amr_spawn_observer = edge_ai_nav.visualization.five_amr_spawn_observer:main',
+            'fleet_dashboard = edge_ai_nav.visualization.fleet_dashboard_node:main',
+            'task_bidder = edge_ai_nav.fleet.task_bidder_node:main',
         ],
     },
 )

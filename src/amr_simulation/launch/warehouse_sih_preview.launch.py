@@ -17,7 +17,7 @@ def generate_launch_description():
     sim_share = get_package_share_directory("amr_simulation")
     edge_share = get_package_share_directory("edge_ai_nav")
     world = os.path.join(sim_share, "worlds", "warehouse_sih_demo.sdf")
-    robot_sdf = os.path.join(sim_share, "models", "amr_waffle.sdf.xacro")
+    robot_sdf = os.path.join(sim_share, "models", "warehouse_amr.sdf.xacro")
     bridge_config = os.path.join(edge_share, "config", "five_amr_bridge.yaml")
 
     alpha_actions = [

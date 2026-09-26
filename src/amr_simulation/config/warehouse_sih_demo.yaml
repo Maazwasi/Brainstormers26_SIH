@@ -45,12 +45,14 @@ warehouse:
     pickup_B: [-9.2, 4.8]
     drop_A: [5.2, -3.4]
     drop_B: [10.2, -6.5]
-    charging_station: [-9.8, 0.0]
+    charging_station: [-10.2, 0.0]
 
   robot_spawns:
     amr_alpha: [-9.2, -4.8, 0.0]
     amr_bravo: [-9.2, 4.8, -1.5708]
-    amr_charlie: [-10.2, 2.8, 0.0]
+    # Kept outside the charging-station footprint; it previously spawned
+    # inside a docking slot and A* correctly—but undesirably—attached to it.
+    amr_charlie: [-8.0, 2.8, 0.0]
     amr_delta: [8.0, 0.65, 1.5708]
     amr_echo: [8.0, 8.15, -1.5708]
 
@@ -83,7 +85,7 @@ warehouse:
     amr_echo: ['']
 
   stage5:
-    prediction: {horizon: 6.0, buffer: 0.75, minimum_speed: 0.25}
+    prediction: {horizon: 6.0, buffer: 0.75, minimum_speed: 0.35}
     scenarios:
       safe: {}
       crossing:
@@ -125,6 +127,135 @@ warehouse:
     waiting_cap: 30.0
     waiting_quantum: 1.0
     eta_quantum: 0.25
+    maximum_reroute_detour_m: 2.5
+
+  dashboard_tasks:
+    PICKUP_A_TO_DROP_A: [[-9.2, -4.8], [-6.2, -4.8], [-3.0, 0.0], [0.0, 0.0], [5.2, -3.4]]
+    PICKUP_B_TO_DROP_B: [[-9.2, 4.8], [-6.2, 4.8], [-3.0, 0.0], [0.0, 0.0], [5.0, 0.0], [10.2, -6.5]]
+    GO_TO_LOADING_BAY: [[-9.2, 0.0]]
+    INSPECT_INTERSECTION_A: [[-1.5, 0.0], [0.0, 0.0], [1.5, 0.0]]
+    DELIVER_ROUTE_ALPHA: [[-6.2, -2.0], [-3.0, 0.0], [0.0, 0.0], [5.2, -3.4]]
+    DELIVER_ROUTE_BRAVO: [[-6.2, 0.0], [0.0, 0.0], [5.0, 0.0], [10.2, -6.5]]
+    NARROW_AISLE_PASS: [[8.0, 1.05], [8.0, 4.45], [8.0, 7.85]]
+    WAREHOUSE_TRANSFER_1: [[-5.0, 0.0], [0.0, 0.0], [5.0, 0.0]]
+    WAREHOUSE_TRANSFER_2: [[5.0, 0.0], [0.0, 0.0], [-5.0, 0.0]]
+
+  dashboard_locations:
+    PICKUP_A: [-9.2, -4.8]
+    PICKUP_B: [-9.2, 4.8]
+    LOADING_BAY: [-9.2, 0.0]
+    INTERSECTION_A: [0.0, 0.0]
+    NARROW_AISLE: [8.0, 4.45]
+    DROP_A: [5.2, -3.4]
+    DROP_B: [10.2, -6.5]
+    CHARGING_STATION: [-9.8, 0.0]
+    INTERSECTION_B: [5.0, 0.0]
+    AISLE_SOUTH: [6.0, 0.0]
+    AISLE_NORTH: [6.0, 8.2]
+
+  # Navigation metadata only: these coordinates follow the existing rack geometry.
+  route_graph:
+    clearance: 0.36
+    # Shared decentralized refuge resources.  They sit outside stations,
+    # controlled zones, aisle portals and the centreline of travel corridors.
+    parking_hotspots: [PARK_01, PARK_02, PARK_03, PARK_04, PARK_05, PARK_06]
+    charging_station:
+      name: CHARGING_STATION
+      center: [-10.2, 0.0]
+      bounds: {x: [-10.85, -9.55], y: [-4.25, 4.25]}
+      slots: [CHARGE_SLOT_1, CHARGE_SLOT_2, CHARGE_SLOT_3, CHARGE_SLOT_4, CHARGE_SLOT_5]
+    # Optional safe edges exposed only while locally avoiding the named zone.
+    zone_bypasses:
+      intersection_B:
+        - [DROP_A, MAIN_CORRIDOR_EAST]
+    obstacles:
+      - [-4.0, -1.0, 1.4, 7.5]
+      - [1.0, 4.0, 1.4, 7.5]
+      - [-4.0, -1.0, -7.5, -1.4]
+      - [1.0, 4.0, -7.5, -1.4]
+      - [6.45, 7.55, 1.4, 7.5]
+      - [8.45, 9.55, 1.4, 7.5]
+      - [-11.575, -11.125, -2.25, 2.25]
+    nodes:
+      LOADING_BAY: [-9.2, 0.0]
+      PICKUP_A: [-9.2, -4.8]
+      PICKUP_B: [-9.2, 4.8]
+      CHARGING_STATION: [-9.8, 0.0]
+      CHARGING_STATION_ENTRY: [-9.55, 0.0]
+      CHARGE_SLOT_1: [-10.2, -3.6]
+      CHARGE_SLOT_2: [-10.2, -1.8]
+      CHARGE_SLOT_3: [-10.2, 0.0]
+      CHARGE_SLOT_4: [-10.2, 1.8]
+      CHARGE_SLOT_5: [-10.2, 3.6]
+      MAIN_CORRIDOR_WEST: [-5.0, 0.0]
+      INTERSECTION_A_WEST: [-1.8, 0.0]
+      INTERSECTION_A: [0.0, 0.0]
+      INTERSECTION_A_EAST: [1.8, 0.0]
+      INTERSECTION_A_SOUTH: [0.0, -2.5]
+      INTERSECTION_A_NORTH: [0.0, 2.5]
+      MAIN_CORRIDOR_MID: [3.3, 0.0]
+      INTERSECTION_B: [5.0, 0.0]
+      MAIN_CORRIDOR_EAST: [6.8, 0.0]
+      DROP_A: [5.2, -3.4]
+      DROP_B_APPROACH: [10.2, 0.0]
+      DROP_B: [10.2, -6.5]
+      AISLE_SOUTH: [6.0, 0.0]
+      NARROW_AISLE_SOUTH: [8.0, 0.65]
+      NARROW_AISLE_NORTH: [8.0, 8.2]
+      AISLE_NORTH: [6.0, 8.2]
+      AISLE_SOUTH_HOLD: [9.9, 0.65]
+      AISLE_NORTH_HOLD: [9.9, 8.2]
+      PARK_01: [-6.2, 1.0]
+      PARK_02: [-6.2, -1.0]
+      PARK_03: [6.3, 1.0]
+      PARK_04: [6.3, -1.0]
+      PARK_05: [10.5, 1.0]
+      PARK_06: [10.5, -1.0]
+    edges:
+      - [PICKUP_A, LOADING_BAY]
+      - [PICKUP_B, LOADING_BAY]
+      - [CHARGING_STATION, LOADING_BAY]
+      - [LOADING_BAY, CHARGING_STATION_ENTRY]
+      - [CHARGING_STATION_ENTRY, CHARGE_SLOT_1]
+      - [CHARGING_STATION_ENTRY, CHARGE_SLOT_2]
+      - [CHARGING_STATION_ENTRY, CHARGE_SLOT_3]
+      - [CHARGING_STATION_ENTRY, CHARGE_SLOT_4]
+      - [CHARGING_STATION_ENTRY, CHARGE_SLOT_5]
+      - [LOADING_BAY, MAIN_CORRIDOR_WEST]
+      - [MAIN_CORRIDOR_WEST, INTERSECTION_A_WEST]
+      - [INTERSECTION_A_WEST, INTERSECTION_A]
+      - [INTERSECTION_A_SOUTH, INTERSECTION_A]
+      - [INTERSECTION_A_NORTH, INTERSECTION_A]
+      - [INTERSECTION_A, INTERSECTION_A_EAST]
+      - [INTERSECTION_A_EAST, MAIN_CORRIDOR_MID]
+      - [MAIN_CORRIDOR_MID, INTERSECTION_B]
+      - [INTERSECTION_B, MAIN_CORRIDOR_EAST]
+      - [INTERSECTION_B, DROP_A]
+      - [MAIN_CORRIDOR_EAST, AISLE_SOUTH]
+      - [MAIN_CORRIDOR_EAST, NARROW_AISLE_SOUTH]
+      - [MAIN_CORRIDOR_EAST, DROP_B_APPROACH]
+      - [DROP_B_APPROACH, DROP_B]
+      - [DROP_B_APPROACH, AISLE_SOUTH_HOLD]
+      - [AISLE_SOUTH_HOLD, NARROW_AISLE_SOUTH]
+      - [NARROW_AISLE_SOUTH, NARROW_AISLE_NORTH]
+      - [NARROW_AISLE_NORTH, AISLE_NORTH]
+      - [NARROW_AISLE_NORTH, AISLE_NORTH_HOLD]
+      - [MAIN_CORRIDOR_WEST, PARK_01]
+      - [MAIN_CORRIDOR_WEST, PARK_02]
+      - [MAIN_CORRIDOR_EAST, PARK_03]
+      - [MAIN_CORRIDOR_EAST, PARK_04]
+      - [DROP_B_APPROACH, PARK_05]
+      - [DROP_B_APPROACH, PARK_06]
+
+  fleet_task_routes:
+    WAREHOUSE_TRANSFER|PICKUP_A|DROP_A: PICKUP_A_TO_DROP_A
+    WAREHOUSE_TRANSFER|PICKUP_B|DROP_B: PICKUP_B_TO_DROP_B
+    WAREHOUSE_TRANSFER|LOADING_BAY|INTERSECTION_A: WAREHOUSE_TRANSFER_1
+    WAREHOUSE_TRANSFER|INTERSECTION_A|LOADING_BAY: GO_TO_LOADING_BAY
+    DELIVERY|PICKUP_A|DROP_A: DELIVER_ROUTE_ALPHA
+    DELIVERY|PICKUP_B|DROP_B: DELIVER_ROUTE_BRAVO
+    INSPECTION|INTERSECTION_A|INTERSECTION_A: INSPECT_INTERSECTION_A
+    INSPECTION|NARROW_AISLE|NARROW_AISLE: NARROW_AISLE_PASS
 
   golden_routes:
     amr_alpha:

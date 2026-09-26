@@ -30,6 +30,11 @@ def window(state, zone, minimum_speed=0.25, horizon=6.0):
     Stopped but enabled missions use nominal speed. Completed/disabled missions
     outside the zone have no intent; a robot inside still occupies the zone.
     """
+    intent = state.get('zone_intent')
+    if intent and intent.get('zone') == state.get('next_zone'):
+        if intent['eta'] > horizon and intent['zone'] != 'narrow_aisle_1' and not intent['inside']:
+            return None
+        return intent
     x, y = state['x'], state['y']
     cx, cy = zone['center']
     if 'radius' in zone:
@@ -87,7 +92,9 @@ class LocalDetector:
                 theirs = window(peer, zone, self.minimum_speed, self.horizon)
                 if not theirs: continue
                 seconds = overlap(mine['window'], theirs['window'], self.buffer)
-                if seconds <= 0: continue
+                # The aisle is exclusive for its entire traverse, including
+                # opposed entrants whose estimated arrival times differ.
+                if seconds <= 0 and zone_name != 'narrow_aisle_1': continue
                 cid = conflict_id(zone_name, own['robot_id'], peer['robot_id'])
                 predicted[cid] = dict(conflict_id=cid, peer=peer['robot_id'], zone=zone_name,
                     my_eta=mine['eta'], peer_eta=theirs['eta'], my_distance=mine['distance'],

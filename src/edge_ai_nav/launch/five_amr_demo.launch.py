@@ -53,7 +53,7 @@ def generate_launch_description():
         warehouse = yaml.safe_load(stream)["warehouse"]
 
     world = os.path.join(sim_share, "worlds", warehouse["world_file"])
-    robot_sdf = os.path.join(sim_share, "models", "amr_waffle.sdf.xacro")
+    robot_sdf = os.path.join(sim_share, "models", "warehouse_amr.sdf.xacro")
     bridge_config = os.path.join(edge_share, "config", "five_amr_bridge.yaml")
     rviz_config = os.path.join(edge_share, "config", "five_amr_demo.rviz")
 

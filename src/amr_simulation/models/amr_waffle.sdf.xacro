@@ -160,7 +160,7 @@
         </inertial>
 
         <collision name="wheel_left_collision">
-          <pose>0 0 0 -1.57 0 0</pose>
+          <pose>0 0 0 0 0 0</pose>
           <geometry>
             <cylinder>
               <radius>0.033</radius>
@@ -173,8 +173,8 @@
                 <!-- Drive-wheel contact must carry the chassis; non-zero
                      longitudinal slip made command-integrated odom advance
                      while the physical model barely moved. -->
-                <mu>100</mu>
-                <mu2>100</mu2>
+                <mu>5.0</mu>
+                <mu2>1.5</mu2>
                 <slip1>0</slip1>
                 <slip2>0</slip2>
                 <fdir1>0 0 1</fdir1>
@@ -194,7 +194,7 @@
         </collision>
 
         <visual name="wheel_left_visual">
-          <pose>0 0 0 -1.57 0 0</pose>
+          <pose>0 0 0 0 0 0</pose>
           <geometry>
             <mesh>
               <uri>package://nav2_minimal_tb3_sim/models/turtlebot3_model/meshes/tire.dae</uri>
@@ -233,8 +233,8 @@
           <surface>
             <friction>
               <ode>
-                <mu>100</mu>
-                <mu2>100</mu2>
+                <mu>5.0</mu>
+                <mu2>1.5</mu2>
                 <slip1>0</slip1>
                 <slip2>0</slip2>
                 <fdir1>0 0 1</fdir1>
@@ -287,6 +287,7 @@
             </sphere>
           </geometry>
           <surface>
+            <friction><ode><mu>0.08</mu><mu2>0.08</mu2></ode></friction>
             <contact>
               <ode>
                 <soft_cfm>0</soft_cfm>
@@ -321,6 +322,7 @@
             </sphere>
           </geometry>
           <surface>
+            <friction><ode><mu>0.08</mu><mu2>0.08</mu2></ode></friction>
             <contact>
               <ode>
                 <soft_cfm>0</soft_cfm>
@@ -416,12 +418,12 @@
         </axis>
       </joint>
 
-      <joint name='caster_back_right_joint' type='ball'>
+      <joint name='caster_back_right_joint' type='fixed'>
         <parent>base_link</parent>
         <child>caster_back_right_link</child>
       </joint>
 
-      <joint name='caster_back_left_joint' type='ball'>
+      <joint name='caster_back_left_joint' type='fixed'>
         <parent>base_link</parent>
         <child>caster_back_left_link</child>
       </joint>

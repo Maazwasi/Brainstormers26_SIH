@@ -33,7 +33,7 @@ def create(context):
              arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'])]
     for i, (rid, pose) in enumerate(cfg['robot_spawns'].items()):
         actions.append(module.robot_actions(rid, pose, cfg['robot_visuals'][rid]['colour'],
-            os.path.join(sim, 'models', 'amr_waffle.sdf.xacro'),
+            os.path.join(sim, 'models', 'warehouse_amr.sdf.xacro'),
             os.path.join(edge, 'config', 'five_amr_bridge.yaml'), 3.0+0.35*i))
         logical = cfg['robot_visuals'][rid]['label']
         actions.append(Node(package='edge_ai_nav', executable='peer_state_node', namespace=rid,
@@ -41,10 +41,14 @@ def create(context):
             'config_file':config_file, 'conflict_detection':True,
             'negotiation':LaunchConfiguration('negotiation'),
             'apply_spawn_transform':LaunchConfiguration('apply_spawn_transform')}]))
+        actions.append(Node(package='edge_ai_nav', executable='task_bidder', namespace=rid,
+            name='task_bidder', output='screen', parameters=[{'robot_id':rid,
+            'config_file':config_file}]))
         actions.append(TimerAction(period=7.0, actions=[Node(package='edge_ai_nav',
             executable='local_waypoint_controller', namespace=rid, name='local_controller',
             output='screen', parameters=[{'robot_id':rid, 'config_file':config_file,
-                'enabled':LaunchConfiguration('enabled')}])]))
+                'enabled':LaunchConfiguration('enabled'),
+                'odom_coordinates':LaunchConfiguration('odom_coordinates')}])]))
     actions.append(TimerAction(period=5.2, actions=[Node(package='edge_ai_nav',
         executable='five_amr_spawn_observer', name='stage2_spawn_observer',
         parameters=[{'config_file':config_file}]), Node(package='rviz2', executable='rviz2',
@@ -63,4 +67,5 @@ def generate_launch_description():
         choices=['safe','crossing','different_time','negotiation']), DeclareLaunchArgument('enabled', default_value='false'),
         DeclareLaunchArgument('negotiation', default_value='false'),
         DeclareLaunchArgument('apply_spawn_transform', default_value='true'),
+        DeclareLaunchArgument('odom_coordinates', default_value='local'),
         DeclareLaunchArgument('use_rviz', default_value='true'), OpaqueFunction(function=create)])

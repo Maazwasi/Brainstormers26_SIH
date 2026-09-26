@@ -53,7 +53,9 @@ Visualization Manager:
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: Five AMR Fleet Status
-      Namespaces: true
+      Namespaces:
+        Value: true
+        stage2_robot_names: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -128,15 +130,40 @@ Visualization Manager:
       Tree:
         map:
           amr_alpha/odom:
-            {}
+            amr_alpha/base_footprint:
+              amr_alpha/base_link:
+                amr_alpha/base_scan:
+                  {}
+                amr_alpha/imu_link:
+                  {}
           amr_bravo/odom:
-            {}
+            amr_bravo/base_footprint:
+              amr_bravo/base_link:
+                amr_bravo/base_scan:
+                  {}
+                amr_bravo/imu_link:
+                  {}
           amr_charlie/odom:
-            {}
+            amr_charlie/base_footprint:
+              amr_charlie/base_link:
+                amr_charlie/base_scan:
+                  {}
+                amr_charlie/imu_link:
+                  {}
           amr_delta/odom:
-            {}
+            amr_delta/base_footprint:
+              amr_delta/base_link:
+                amr_delta/base_scan:
+                  {}
+                amr_delta/imu_link:
+                  {}
           amr_echo/odom:
-            {}
+            amr_echo/base_footprint:
+              amr_echo/base_link:
+                amr_echo/base_scan:
+                  {}
+                amr_echo/imu_link:
+                  {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -326,7 +353,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0.01000003982335329
+      Angle: 0.035000041127204895
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -336,11 +363,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 25.7695369720459
+      Scale: 13.961822509765625
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz_default_plugins)
-      X: 2.825988531112671
-      Y: 2.512284994125366
+      X: 3.611663818359375
+      Y: 2.7350239753723145
     Saved: ~
 Window Geometry:
   Displays:

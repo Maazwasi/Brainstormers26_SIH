@@ -1,6 +1,6 @@
 import unittest
 
-from edge_ai_nav.fleet.negotiation import (NegotiationBook, choose_winner,
+from edge_ai_nav.fleet.negotiation import (NegotiationBook, choose_winner, resolve_conflict,
                                             motion_gate, outside_with_margin)
 
 
@@ -17,9 +17,28 @@ class NegotiationTest(unittest.TestCase):
         self.assertEqual(first, reverse)
 
     def test_wait_eta_and_id_ties(self):
+        # Starvation/waiting time precedes ETA in the shared hierarchy.
         self.assertEqual('BRAVO', choose_winner(state('ALPHA', 3, 1), state('BRAVO', 3, 4), {'ALPHA': 1, 'BRAVO': 9}).winner)
         self.assertEqual('ALPHA', choose_winner(state('ALPHA'), state('BRAVO'), {'ALPHA': 1, 'BRAVO': 3}).winner)
         self.assertEqual('ALPHA', choose_winner(state('ALPHA'), state('BRAVO'), {'ALPHA': 1, 'BRAVO': 1}).winner)
+
+    def test_hierarchy_activity_commitment_and_cost_action(self):
+        active=lambda rid,p: dict(state(rid,p),local_nav_state='WAYPOINT_TRACK')
+        idle=dict(state('BRAVO',4),local_nav_state='PARKED')
+        self.assertEqual('ALPHA',resolve_conflict(active('ALPHA',1),idle,'intersection_A',
+            etas={'ALPHA':4,'BRAVO':1}).winner)
+        committed=dict(active('BRAVO',1),zone_committed=True)
+        self.assertEqual('BRAVO',resolve_conflict(active('ALPHA',4),committed,'intersection_A',
+            etas={'ALPHA':1,'BRAVO':5}).winner)
+        costs={'ALPHA':{'wait':2,'reroute':99},
+               'BRAVO':{'wait':8,'reroute':3,'route':[[1,0],[2,0]]}}
+        result=resolve_conflict(active('ALPHA',4),active('BRAVO',1),'intersection_B',costs,
+                                {'ALPHA':1,'BRAVO':2})
+        self.assertEqual(('ALPHA','BRAVO','REROUTE'),
+                         (result.winner,result.loser,result.loser_action))
+        costs['BRAVO']={'wait':2,'reroute':20,'route':[[1,0],[2,0]]}
+        self.assertEqual('YIELD_AND_WAIT',resolve_conflict(active('ALPHA',4),active('BRAVO',1),
+            'intersection_B',costs,{'ALPHA':1,'BRAVO':2}).loser_action)
 
     def test_latch_does_not_flip(self):
         book = NegotiationBook(); alpha, bravo = state('ALPHA', 3), state('BRAVO', 4)
