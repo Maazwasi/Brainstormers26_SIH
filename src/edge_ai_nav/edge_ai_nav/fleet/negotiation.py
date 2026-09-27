@@ -1,6 +1,7 @@
 """Deterministic Stage 6 negotiation and local coordination helpers."""
 from dataclasses import dataclass, asdict
 import math
+import time
 
 
 @dataclass(frozen=True)
@@ -66,7 +67,9 @@ def resolve_conflict(a, b, zone, route_costs=None, etas=None, waiting_cap=30.0,
     costs = route_costs.get(loser['robot_id'], {})
     wait_cost = float(costs.get('wait', 0.0))
     reroute_cost = float(costs.get('reroute', 1e9))
-    action = 'REROUTE' if costs.get('route') and reroute_cost < wait_cost else 'YIELD_AND_WAIT'
+    action = ('MOVE_ASIDE' if _active(winner) and not _active(loser) else
+              'REROUTE' if costs.get('route') and reroute_cost < wait_cost else
+              'YIELD_AND_WAIT')
     details = dict(values, zone=zone, wait_cost=wait_cost,
                    reroute_cost=reroute_cost,
                    reroute_route=costs.get('route'),
@@ -88,13 +91,17 @@ class NegotiationBook:
         self._decisions = {}
 
     def decide(self, conflict_id, a, b, etas, now, first_detected,
-               zone='', route_costs=None, **policy):
+               zone='', route_costs=None, detection_monotonic_ns=None, **policy):
         if conflict_id not in self._decisions:
             decision = resolve_conflict(a, b, zone, route_costs, etas, **policy)
+            committed_ns=time.perf_counter_ns()
+            detected_ns=int(detection_monotonic_ns or committed_ns)
             self._decisions[conflict_id] = {
                 **decision.dictionary(), 'conflict_id': conflict_id,
                 'decision_time': now, 'first_detected_time': first_detected,
-                'decision_latency_ms': max(0.0, (now-first_detected)*1000.0),
+                'detection_monotonic_ns': detected_ns,
+                'decision_monotonic_ns': committed_ns,
+                'decision_latency_ms': max(0.0, (committed_ns-detected_ns)/1e6),
                 'winner_entered_zone': False,
             }
         return self._decisions[conflict_id]
@@ -125,6 +132,15 @@ def motion_gate(front, stop_distance, coordination_hold):
     if coordination_hold:
         return 'COORDINATION_HOLD'
     return 'NAVIGATE'
+
+
+def reservation_distance(speed, safe_deceleration=0.65, processing_margin=0.15,
+                         footprint_margin=0.45, safety_margin=0.55,
+                         minimum_distance=1.5, maximum_distance=2.0):
+    """Speed-aware pre-zone hold distance; never reduces the safety minimum."""
+    stopping=max(0.0,float(speed))**2/(2.0*max(0.05,float(safe_deceleration)))
+    required=stopping+processing_margin+footprint_margin+safety_margin
+    return min(maximum_distance,max(minimum_distance,required))
 
 
 def bid_eligible(controller_state, has_pending_assignment, pose_fresh):

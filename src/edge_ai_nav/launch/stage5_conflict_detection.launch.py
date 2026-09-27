@@ -5,8 +5,10 @@ import tempfile
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, OpaqueFunction, TimerAction
+from launch.actions import (DeclareLaunchArgument, ExecuteProcess,
+                            IncludeLaunchDescription, OpaqueFunction, TimerAction)
 from launch.conditions import IfCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -18,6 +20,7 @@ def create(context):
     with open(os.path.join(sim, 'config', 'warehouse_sih_demo.yaml')) as stream:
         config = yaml.safe_load(stream)
     cfg = config['warehouse']
+    slam_config = os.path.join(sim, 'config', 'slam_params.yaml')
     for key, values in cfg['stage5']['scenarios'][scenario].items():
         cfg[key].update(values)
     # One derived configuration is shared by spawn, odometry transforms, routes
@@ -51,9 +54,22 @@ def create(context):
                 'odom_coordinates':LaunchConfiguration('odom_coordinates')}])]))
     actions.append(TimerAction(period=5.2, actions=[Node(package='edge_ai_nav',
         executable='five_amr_spawn_observer', name='stage2_spawn_observer',
-        parameters=[{'config_file':config_file}]), Node(package='rviz2', executable='rviz2',
+        parameters=[{'config_file':config_file, 'slam_robot_id':'amr_alpha'}]),
+        Node(package='rviz2', executable='rviz2',
         arguments=['-d', os.path.join(edge, 'config', 'five_amr_demo.rviz')],
         condition=IfCondition(LaunchConfiguration('use_rviz')))]))
+    # One ALPHA-only live SLAM instance publishes /map for the fleet demo.
+    # The other four namespaced scans remain independent and are not merged.
+    actions.append(TimerAction(period=6.0, actions=[IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('slam_toolbox'), 'launch',
+            'online_async_launch.py')),
+        launch_arguments={
+            'autostart': 'true',
+            'use_lifecycle_manager': 'false',
+            'use_sim_time': 'true',
+            'slam_params_file': slam_config,
+        }.items())]))
     if scenario == 'safe':
         x, y, z = cfg['zones']['obstacle_demo_area']['dynamic_obstacle_spawn']
         actions.append(TimerAction(period=7.0, actions=[Node(package='ros_gz_sim', executable='create',

@@ -1,5 +1,6 @@
 """Stage 5 pure local occupancy prediction. No ROS or motion decisions."""
 import math
+import time
 
 
 def conflict_id(zone, a, b):
@@ -100,7 +101,9 @@ class LocalDetector:
                     my_eta=mine['eta'], peer_eta=theirs['eta'], my_distance=mine['distance'],
                     peer_distance=theirs['distance'], overlap_seconds=seconds,
                     state='ACTIVE' if mine['inside'] and theirs['inside'] else 'PREDICTED',
-                    conflict_first_detected_time=self.active.get(cid, {}).get('conflict_first_detected_time', now))
+                    conflict_first_detected_time=self.active.get(cid, {}).get('conflict_first_detected_time', now),
+                    conflict_first_detected_monotonic_ns=self.active.get(cid, {}).get(
+                        'conflict_first_detected_monotonic_ns',time.perf_counter_ns()))
         events = []
         for cid, record in predicted.items():
             if cid not in self.active:

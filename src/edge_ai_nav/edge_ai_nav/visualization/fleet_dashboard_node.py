@@ -38,10 +38,12 @@ class FleetDashboard(Node):
         self.coordination_events = {}
         self.data = {rid: {'robot_id': rid, 'name': name, 'color': color,
                           'status': 'OFFLINE', 'task': 'NONE', 'battery': battery,
+                          'battery_state': 'NORMAL', 'is_charging': False,
                           'zone': 'UNKNOWN', 'localization': 'ODOM',
                           'coordination': 'NONE', 'peers': 0, 'progress': 0,
                           'last_seen': 0, 'active_since': None,
-                          'x': 0, 'y': 0, 'yaw': 0}
+                          'x': 0, 'y': 0, 'yaw': 0, 'route': [],
+                          'waypoint': 0, 'parking_target': ''}
                      for rid, (name, color, battery) in ROBOTS.items()}
         # Session-scoped, human-readable IDs; time seed avoids reusing an ID
         # when only the dashboard is restarted while AMR bidders stay alive.
@@ -52,8 +54,12 @@ class FleetDashboard(Node):
         self.seen_coordination_events = set()
         self.metrics = {'conflicts_detected':0,'conflicts_resolved':0,
                         'p2p_negotiations':0,'reroutes':0,'move_aside_actions':0,
-                        'deadlocks_prevented':0,'estimated_delay_avoided':0.0}
+                        'deadlocks_prevented':0,'estimated_delay_avoided':0.0,
+                        'last_decision_latency_ms':None,'average_decision_latency_ms':None,
+                        'last_action_latency_ms':None,'average_action_latency_ms':None}
+        self.decision_latencies=[]; self.action_latencies=[]
         self.task_pub = self.create_publisher(String, '/fleet/tasks', 20)
+        self.assignment_pub = self.create_publisher(String, '/fleet/task_assignment', 10)
         self.create_subscription(String, '/fleet/task_bids', self.on_bid, 20)
         self.create_subscription(String, '/fleet/task_claims', self.on_claim, 10)
         self.create_subscription(String, '/fleet/mission_routes', self.on_route, 10)
@@ -103,7 +109,8 @@ class FleetDashboard(Node):
                     route=claim.get('route',[]),
                     reason=claim.get('reason', 'Best deterministic suitability score'),
                     battery=claim.get('battery'), distance=claim.get('distance'),
-                    score=claim.get('score'), bid_count=claim.get('bid_count', 0))
+                    score=claim.get('score'), bid_count=claim.get('bid_count', 0),
+                    assignment_source='AUTO — DECENTRALIZED')
         self.data[rid].update(status='ASSIGNED', task=task['task_id'], progress=0)
         self.event(f"DECENTRALIZED CONSENSUS · {task['bid_count']} bids")
         self.event(f"{task['task_id']} claimed by {ROBOTS[rid][0]}")
@@ -119,12 +126,23 @@ class FleetDashboard(Node):
         d, item = self.decode(msg), self.data[rid]
         previous = item['status']
         state = d.get('state', 'UNKNOWN')
+        mission_kind=d.get('mission_kind','TASK')
         task_id = d.get('active_task', item['task'])
         item.update(last_seen=time.monotonic(), task=task_id,
                     progress=round(float(d.get('task_progress', 0))),
-                    coordination=d.get('coordination_state', item['coordination']))
+                    coordination=d.get('coordination_state', item['coordination']),
+                    route=d.get('route',item['route']),
+                    waypoint=int(d.get('waypoint',item['waypoint'])),
+                    parking_target=d.get('parking_target',item['parking_target']))
+        profile=d.get('performance_profile') or {}
+        item['missions_completed']=int(profile.get('missions_completed',item.get('missions_completed',0)))
+        item['route_efficiency']=d.get('route_efficiency',item.get('route_efficiency'))
+        item['performance_profile']=profile
         if d.get('battery_simulated'):
-            item['battery']=round(float(d.get('battery_pct',item['battery'])))
+            item['battery']=round(float(d.get('battery_percent',
+                d.get('battery_pct',item['battery']))),1)
+            item['battery_state']=d.get('battery_state',item['battery_state'])
+            item['is_charging']=bool(d.get('is_charging',False))
         if previous == 'ASSIGNED' and state == 'DISABLED' and task_id == 'NONE':
             item['task'] = next((t['task_id'] for t in self.tasks.values()
                 if t.get('winner')==rid and t['status']=='CLAIMED'), 'NONE')
@@ -132,17 +150,13 @@ class FleetDashboard(Node):
         item['status'] = ('COMPLETED' if state == 'MISSION_COMPLETE' and task_id != 'NONE' else
                           'CHARGING' if state == 'CHARGING' else
                           'PARKED' if state in ('PARKED','AVAILABLE') else
-                          'RETURNING TO CHARGE' if state in ('GOING_TO_CHARGE','RETURNING_TO_CHARGE','DOCKING') else
+                          'DOCKING' if state == 'DOCKING' else
+                          'RETURNING TO CHARGE' if mission_kind=='CHARGING' and task_id in ('', 'NONE', None) else
+                          'RETURNING TO CHARGE' if state in ('GOING_TO_CHARGE','RETURNING_TO_CHARGE') else
                           'REPOSITIONING' if state in ('CLEARING_DROP_ZONE','POST_TASK_REPOSITION','MOVE_ASIDE','REROUTING') else
                           'WAITING' if state in ('COORDINATION_HOLD', 'OBSTACLE_STOP') else
                           'IDLE' if state in ('DISABLED', 'MISSION_COMPLETE') else 'EXECUTING')
-        if item['status'] in ('EXECUTING', 'WAITING'):
-            if item['active_since'] is None:
-                item['active_since'] = time.monotonic()
-            base = ROBOTS[rid][2]
-            item['battery'] = max(20, base-int((time.monotonic()-item['active_since'])/180))
-        else:
-            item['active_since'] = None
+        item['active_since'] = None
         task = self.tasks.get(task_id)
         # Reattach to an already-running mission after a dashboard-only restart.
         # The controller remains authoritative; no assignment is republished.
@@ -197,11 +211,27 @@ class FleetDashboard(Node):
             self.event(f"EDGE AI CONFLICT DETECTED · {d.get('zone','').upper()} · {robots}")
         elif kind=='NEGOTIATION_COMPLETE':
             self.metrics['p2p_negotiations']+=1
+            latency=d.get('decision_latency_ms')
+            if latency is not None:
+                self.decision_latencies.append(float(latency))
+                self.metrics['last_decision_latency_ms']=round(float(latency),3)
+                self.metrics['average_decision_latency_ms']=round(
+                    sum(self.decision_latencies)/len(self.decision_latencies),3)
             action=d.get('loser_action','YIELD_AND_WAIT')
             if action=='REROUTE': self.metrics['reroutes']+=1
             if d.get('deadlock_prevented'): self.metrics['deadlocks_prevented']+=1
             self.event(f"P2P NEGOTIATION COMPLETE · {self.robot_name(d.get('winner'))} → PROCEED (ORIGINAL A* ROUTE) · {self.robot_name(d.get('loser'))} → {action}")
             self.event(f"DECISION BASIS · {str(d.get('decision_basis','')).replace('_',' ')}")
+            if latency is not None:
+                self.event(f"EDGE AI DECISION COMMITTED · {float(latency):.3f} ms")
+        elif kind=='NEGOTIATION_ACTION_APPLIED':
+            latency=d.get('action_latency_ms')
+            if latency is not None:
+                self.action_latencies.append(float(latency))
+                self.metrics['last_action_latency_ms']=round(float(latency),3)
+                self.metrics['average_action_latency_ms']=round(
+                    sum(self.action_latencies)/len(self.action_latencies),3)
+                self.event(f"EDGE AI CONFLICT ACTION · {self.robot_name(d.get('loser'))} → {d.get('action')} · {float(latency):.3f} ms")
         elif kind=='CONFLICT_RESOLVED':
             self.metrics['conflicts_resolved']+=1
             saved=max(0.,float(d.get('time_saved_s',0.)))
@@ -236,12 +266,23 @@ class FleetDashboard(Node):
             self.event(f"ALTERNATE ROUTE ACTIVE · edge avoided {d.get('blocked_zone')} · route v{d.get('route_version')}")
         elif kind=='DROP_ZONE_CLEARING':
             self.event(f"DROP ZONE CLEARING · {self.robot_name(d.get('robot_id'))} leaving destination")
-        elif kind=='CHARGING_BAY_RESERVED':
-            self.event(f"CHARGING BAY RESERVED · {self.robot_name(d.get('robot_id'))} → {d.get('parking_target')}")
-        elif kind=='ASTAR_POST_TASK_ROUTE':
-            self.event(f"A* POST-TASK ROUTE · {self.robot_name(d.get('robot_id'))} → {d.get('parking_target')}")
+        elif kind in ('CHARGING_BAY_RESERVED','CHARGE_SLOT_RESERVED'):
+            self.event(f"CHARGE SLOT RESERVED · {self.robot_name(d.get('robot_id'))} → {d.get('parking_target')}")
+        elif kind in ('ASTAR_POST_TASK_ROUTE','ASTAR_RETURN_ROUTE'):
+            self.event(f"A* RETURN ROUTE · {self.robot_name(d.get('robot_id'))} → CHARGING STATION · {d.get('parking_target')}")
+        elif kind=='DOCKING':
+            self.event(f"DOCKING · {self.robot_name(d.get('robot_id'))} → {d.get('parking_target')}")
         elif kind=='CHARGING_STARTED':
-            self.event(f"CHARGING STARTED · {self.robot_name(d.get('robot_id'))} at {d.get('parking_target')}")
+            self.event(f"CHARGING STARTED · {self.robot_name(d.get('robot_id'))} at {d.get('parking_target')} · Battery {d.get('battery_percent')}%")
+        elif kind=='BATTERY_FULL':
+            self.event(f"BATTERY FULL · {self.robot_name(d.get('robot_id'))} · 100%")
+        elif kind=='CHARGE_SLOT_RELEASED':
+            self.event(f"CHARGE SLOT RELEASED · {self.robot_name(d.get('robot_id'))} ← {d.get('parking_target')}")
+        elif kind=='SAFE_WAIT_ROUTE':
+            self.event(f"CHARGING FULL · {self.robot_name(d.get('robot_id'))} → SAFE WAIT {d.get('parking_target')}")
+        elif kind=='MISSION_PERFORMANCE':
+            metrics=d.get('metrics',{})
+            self.event(f"PERFORMANCE PROFILE UPDATED · {self.robot_name(d.get('robot_id'))} · route efficiency {100*float(metrics.get('route_efficiency',0)):.1f}%")
 
     def on_peers(self, rid, msg):
         self.data[rid]['peers'] = int(self.decode(msg).get('count', 0))
@@ -260,24 +301,65 @@ class FleetDashboard(Node):
     def create_task(self, payload):
         required = ('type', 'pickup', 'destination', 'priority')
         if not all(payload.get(k) for k in required):
-            return None
+            return {'success':False,'reason':'Missing required task fields'}
         if any(payload[k] not in self.graph.nodes for k in ('pickup','destination')):
-            return None
+            return {'success':False,'reason':'Unknown pickup or destination'}
+        mode=str(payload.get('assignment_mode','AUTO')).upper()
+        manual_robot=payload.get('robot_id')
+        if mode not in ('AUTO','MANUAL'):
+            return {'success':False,'reason':'Invalid assignment mode'}
+        if mode=='MANUAL':
+            if manual_robot not in ROBOTS:
+                return {'success':False,'reason':'Select a valid AMR'}
+            robot=self.data[manual_robot]
+            if time.monotonic()-robot['last_seen']>3 or robot['status']=='OFFLINE':
+                return {'success':False,'reason':f'{ROBOTS[manual_robot][0]} is OFFLINE'}
+            if robot.get('battery_state')=='CRITICAL':
+                return {'success':False,'reason':f'{ROBOTS[manual_robot][0]} has CRITICAL BATTERY'}
+            if robot['status'] in ('EXECUTING','ASSIGNED','WAITING','REPOSITIONING'):
+                return {'success':False,'reason':f'{ROBOTS[manual_robot][0]} is already executing a mission'}
+            if robot['status']=='FAULTED':
+                return {'success':False,'reason':f'{ROBOTS[manual_robot][0]} is FAULTED'}
+            try:
+                plan=self.graph.mission_plan((robot['x'],robot['y']),payload['pickup'],payload['destination'])
+            except ValueError as error:
+                return {'success':False,'reason':f'No safe A* route: {error}'}
         self.task_counter += 1
         task_id = f'TASK-{self.task_counter}'
         task = {'task_id': task_id, 'type': payload['type'],
                 'pickup': payload['pickup'], 'destination': payload['destination'],
                 'priority': int(payload['priority']), 'timestamp': time.time(),
-                'status': 'BIDDING', 'bids': {}, 'available': 0, 'winner': None}
+                'status': 'BIDDING' if mode=='AUTO' else 'CLAIMED',
+                'bids': {}, 'available': 0,
+                'winner': None if mode=='AUTO' else manual_robot,
+                'assignment_source':('AUTO — DECENTRALIZED' if mode=='AUTO'
+                                     else 'MANUAL — OPERATOR OVERRIDE')}
         task['route_name'] = 'DYNAMIC_GRAPH'
-        task['route'] = []  # Only the winning AMR supplies the executable route.
+        task['route'] = [] if mode=='AUTO' else plan['smoothed_waypoints']
         self.tasks[task_id] = task
         self.latest_task_id = task_id
         self.event(f'{task_id} created · {task["pickup"]} → {task["destination"]}')
-        self.event('Fleet task published · AMRs evaluating locally')
-        self.task_pub.publish(String(data=json.dumps({k: task[k] for k in
-            ('task_id', 'type', 'pickup', 'destination', 'priority', 'timestamp')})))
-        return task_id
+        if mode=='AUTO':
+            self.event('Fleet task published · AMRs evaluating locally')
+            self.task_pub.publish(String(data=json.dumps({k: task[k] for k in
+                ('task_id', 'type', 'pickup', 'destination', 'priority', 'timestamp')})))
+        else:
+            robot=self.data[manual_robot]
+            task.update(display_name=ROBOTS[manual_robot][0],
+                        reason='Explicit operator override; local safety remains active',
+                        battery=robot['battery'],distance=round(
+                            self.graph.pickup_distance((robot['x'],robot['y']),task['pickup']),2),
+                        score='OVERRIDE',bid_count=0)
+            robot.update(status='ASSIGNED',task=task_id,progress=0)
+            assignment=dict(robot_id=manual_robot,task=task['type'],task_id=task_id,
+                pickup=task['pickup'],destination=task['destination'],priority=task['priority'],
+                route=plan['smoothed_waypoints'],planner='A*',
+                raw_astar_nodes=plan['raw_astar_nodes'],raw_waypoints=plan['raw_waypoints'],
+                expanded_nodes=plan['expanded_nodes'],raw_route_cost=plan['raw_route_cost'],
+                assignment_source='MANUAL_OPERATOR_OVERRIDE')
+            self.assignment_pub.publish(String(data=json.dumps(assignment)))
+            self.event(f"OPERATOR OVERRIDE · {task_id} assigned to {ROBOTS[manual_robot][0]} · safety layers active")
+        return {'success':True,'task_id':task_id,'assignment_mode':mode}
 
     def snapshot(self):
         now = time.monotonic()
@@ -339,8 +421,8 @@ class FleetDashboard(Node):
                     payload = json.loads(self.rfile.read(int(self.headers.get('Content-Length', 0))))
                 except (ValueError, TypeError):
                     payload = {}
-                task_id = node.create_task(payload)
-                self.send_json({'success': bool(task_id), 'task_id': task_id})
+                result = node.create_task(payload)
+                self.send_json(result)
         return ThreadingHTTPServer(('0.0.0.0', port), Handler)
 
 

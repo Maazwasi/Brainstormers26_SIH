@@ -9,7 +9,7 @@ from rclpy.qos import qos_profile_sensor_data
 from nav_msgs.msg import Odometry
 from std_msgs.msg import String
 from .zone_prediction import LocalDetector, load_zones
-from .negotiation import NegotiationBook, outside_with_margin
+from .negotiation import NegotiationBook, outside_with_margin, reservation_distance
 from .route_graph import WarehouseGraph
 
 
@@ -51,6 +51,13 @@ class PeerState(Node):
         self.hold_margin = max(0.55,float(stage6.get('hold_margin', 0.40)))
         self.exit_margin = max(0.55,float(stage6.get('exit_margin', 0.40)))
         self.maximum_reroute_detour = float(stage6.get('maximum_reroute_detour_m', 2.5))
+        self.reservation_policy=dict(
+            safe_deceleration=float(stage6.get('safe_deceleration',0.65)),
+            processing_margin=float(stage6.get('processing_margin',0.15)),
+            footprint_margin=float(stage6.get('footprint_margin',0.45)),
+            safety_margin=float(stage6.get('safety_margin',0.55)),
+            minimum_distance=float(stage6.get('minimum_negotiation_distance',1.5)),
+            maximum_distance=float(stage6.get('maximum_negotiation_distance',2.0)))
         self.book = NegotiationBook()
         self.pub = self.create_publisher(String, '/fleet/peer_state', qos)
         self.diag = self.create_publisher(String, 'peer_diagnostics', 10)
@@ -149,7 +156,9 @@ class PeerState(Node):
                 if event == 'CONFLICT_PREDICTED' and self.robot_id < record['peer']:
                     self.emit('CONFLICT_DETECTED',event_id=record['conflict_id'],
                               conflict_id=record['conflict_id'],zone=record['zone'],
-                              robots=sorted((self.robot_id,record['peer'])))
+                              robots=sorted((self.robot_id,record['peer'])),
+                              reason='ETA overlap detected',my_eta=record['my_eta'],
+                              peer_eta=record['peer_eta'])
             if self.negotiation_enabled:
                 command = self.negotiate(data, unavailable)
                 data['coordination_state'] = command['state']
@@ -233,7 +242,9 @@ class PeerState(Node):
                 {self.robot_id: own.get('zone_request',{}).get('eta',record['my_eta']),
                  record['peer']: peer.get('zone_request',{}).get('eta',record['peer_eta'])},
                 now, record['conflict_first_detected_time'], zone=record['zone'],
-                route_costs=costs, **self.policy)
+                route_costs=costs,
+                detection_monotonic_ns=record.get('conflict_first_detected_monotonic_ns'),
+                **self.policy)
             if decision['decision_time'] == now:
                 winner_state=a if decision['winner']==a['robot_id'] else b
                 loser_state=b if winner_state is a else a
@@ -249,6 +260,7 @@ class PeerState(Node):
                               conflict_id=cid,zone=record['zone'],winner=decision['winner'],
                               loser=decision['loser'],loser_action=decision['loser_action'],
                               decision_basis=decision['reason'],
+                              decision_latency_ms=round(decision['decision_latency_ms'],3),
                               wait_cost_s=decision['details']['wait_cost'],
                               reroute_cost_s=decision['details']['reroute_cost'],
                               extra_detour_m=decision['details'].get('extra_detour_m'),
@@ -297,14 +309,20 @@ class PeerState(Node):
             state = 'PROCEED'
             self.wait_credit=0.0
         else:
-            state = ('REROUTE' if selected.get('loser_action')=='REROUTE' else
+            state = ('MOVE_ASIDE' if selected.get('loser_action')=='MOVE_ASIDE' else
+                     'REROUTE' if selected.get('loser_action')=='REROUTE' else
                      'WAIT_FOR_CLEAR' if self.status.get('coordination_hold', False) else 'YIELD_AND_WAIT')
+        approach_speed=max(abs(float(own.get('linear_velocity',0.))),
+                           abs(float(peer.get('linear_velocity',0.))) if peer else 0.)
+        dynamic_hold=reservation_distance(approach_speed,**self.reservation_policy)
         command=dict(state=state, conflict_id=selected['conflict_id'], zone=zone_name,
                     winner=selected['winner'], loser=selected['loser'],
-                    hold_margin=self.hold_margin, exit_margin=self.exit_margin,
+                    hold_margin=max(self.hold_margin,dynamic_hold), exit_margin=self.exit_margin,
                     zone_geometry=zone, reason=selected['reason'],
                     decision_latency_ms=selected['decision_latency_ms'],
-                    decision_basis=selected['reason'])
+                    decision_basis=selected['reason'],
+                    detection_monotonic_ns=selected.get('detection_monotonic_ns'),
+                    reservation_distance_m=round(dynamic_hold,3))
         if state=='REROUTE':
             command['route']=selected.get('details',{}).get('reroute_route') or \
                 selected.get('details',{}).get('route')

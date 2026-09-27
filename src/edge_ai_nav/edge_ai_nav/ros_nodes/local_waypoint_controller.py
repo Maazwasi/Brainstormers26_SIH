@@ -1,6 +1,7 @@
 """Local odometry/LaserScan autonomy with a local, non-motion fleet hold input."""
 import json
 import math
+import os
 import time
 import yaml
 import rclpy
@@ -12,6 +13,7 @@ from sensor_msgs.msg import LaserScan
 from std_msgs.msg import String
 from std_srvs.srv import SetBool
 from edge_ai_nav.fleet.negotiation import motion_gate
+from edge_ai_nav.fleet.performance_profile import PerformanceProfile
 from edge_ai_nav.fleet.route_graph import WarehouseGraph
 
 
@@ -44,6 +46,12 @@ class LocalController(Node):
                         lookahead_distance=0.55, linear_acceleration=0.65,
                         controller_trace=False, enable_obstacle_replan=False,
                         diagnostic_mode=False,
+                        battery_low_threshold=30.0,
+                        battery_critical_threshold=15.0,
+                        battery_drain_per_meter=0.08,
+                        battery_charge_per_second=0.25,
+                        charging_slot_tolerance=0.22,
+                        performance_profile_dir='~/.ros/swarmx_profiles',
                         goal_tolerance=0.16, obstacle_stop_distance=0.85,
                         obstacle_prepare_distance=1.25,
                         obstacle_clear_distance=1.10, sensor_timeout=2.0)
@@ -105,7 +113,20 @@ class LocalController(Node):
         self.sim_battery={'amr_alpha':92.,'amr_bravo':87.,'amr_charlie':95.,
                           'amr_delta':81.,'amr_echo':89.}.get(self.rid,90.)
         self.battery_tick=time.monotonic()
+        self.battery_last_pose=None
+        self.battery_full_emitted=False
+        self.docking_event_sent=False
+        self.idle_charge_retry_at=0.0
         self.move_aside_cooldown = 0.0
+        profile_dir=os.path.expanduser(str(self.p['performance_profile_dir']))
+        self.profile_path=os.path.join(profile_dir,self.rid+'.json')
+        self.performance=PerformanceProfile.load(self.rid,self.profile_path)
+        self.mission_metrics=None
+        self.metric_last_pose=None
+        self.metric_tick=time.monotonic()
+        self.metric_last_error=0.0
+        self.metric_last_moving=False
+        self.action_events=set()
         self.pub = self.create_publisher(TwistStamped, 'cmd_vel', 10)
         self.status = self.create_publisher(String, 'local_status', 10)
         self.mission_pub = self.create_publisher(String, '/fleet/mission_routes', 10)
@@ -122,6 +143,18 @@ class LocalController(Node):
     def odom(self, m):
         px, py = m.pose.pose.position.x, m.pose.pose.position.y
         q = m.pose.pose.orientation
+        if self.battery_last_pose is not None and self.state != 'CHARGING':
+            travelled=math.dist(self.battery_last_pose,(px,py))
+            # Ignore spawn/reset discontinuities; drain only for physical travel.
+            if travelled < 1.0:
+                self.sim_battery=max(0.,self.sim_battery-
+                    travelled*float(self.p['battery_drain_per_meter']))
+        self.battery_last_pose=(px,py)
+        if self.mission_metrics is not None and self.metric_last_pose is not None:
+            step=math.dist(self.metric_last_pose,(px,py))
+            if step < 1.0:
+                self.mission_metrics['actual_distance_m'] += step
+        self.metric_last_pose=(px,py)
         self.pose = (px, py,
                      math.atan2(2*(q.w*q.z+q.x*q.y),
                                 1-2*(q.y*q.y+q.z*q.z)))
@@ -139,6 +172,25 @@ class LocalController(Node):
             if isinstance(command, dict) and command.get('state'):
                 self.coordination_command = command
                 self.coordination_received = time.monotonic()
+                action=command.get('state')
+                cid=command.get('conflict_id','')
+                if (cid and action in ('YIELD','YIELD_AND_WAIT','WAIT_FOR_CLEAR','REROUTE','MOVE_ASIDE')
+                        and cid not in self.action_events):
+                    detected_ns=int(command.get('detection_monotonic_ns',0) or 0)
+                    action_latency=(time.perf_counter_ns()-detected_ns)/1e6 if detected_ns else None
+                    self.action_events.add(cid)
+                    self.emit('NEGOTIATION_ACTION_APPLIED',conflict_id=cid,
+                              action=action,action_latency_ms=round(action_latency,3)
+                              if action_latency is not None else None,
+                              decision_latency_ms=command.get('decision_latency_ms'),
+                              winner=command.get('winner'),loser=command.get('loser'),
+                              decision_basis=command.get('decision_basis'))
+                    if self.mission_metrics is not None and action_latency is not None:
+                        self.mission_metrics['conflict_resolution_delay_ms'] += action_latency
+                if (action=='MOVE_ASIDE' and cid and cid not in self.applied_reroutes and
+                        self.active_task in ('', 'NONE', None)):
+                    self.applied_reroutes.add(cid)
+                    self.start_parking('MOVE_ASIDE',command.get('winner'))
                 if command.get('state') == 'REROUTE' and command.get('route'):
                     cid=command.get('conflict_id','')
                     if cid not in self.applied_reroutes:
@@ -151,6 +203,10 @@ class LocalController(Node):
                             'expanded_nodes':command.get('expanded_nodes',0),
                             'raw_route_cost':command.get('raw_route_cost'),
                         }
+                        if self.mission_metrics is not None:
+                            self.mission_metrics['reroute_count'] += 1
+                            self.mission_metrics['distance_rerouted_m'] += float(
+                                command.get('extra_detour_m') or 0.0)
                         self.change('REROUTING')
                         self.emit('REROUTE_STARTED', conflict_id=cid,
                                   zone=command.get('zone'), reason=command.get('reason'),
@@ -273,7 +329,7 @@ class LocalController(Node):
         if length > 1e-9:
             fraction=max(0.,min(1.,((x-a[0])*dx+(y-a[1])*dy)/(length*length)))
             nearest_progress=self.route_cumulative[first]+fraction*length
-        ahead=float(self.p['lookahead_distance'])
+        ahead=float(self.p['lookahead_distance'])*self.performance.lookahead_factor
         # Preserve a warehouse corner and approach it with a shorter target.
         # Once the route index advances, normal 0.55 m look-ahead resumes.
         if 0 < self.index < len(self.route)-1:
@@ -308,11 +364,103 @@ class LocalController(Node):
             base=0.18 if target and math.dist(self.world_pose(),target)<0.80 else 0.28
         elif self.mission_kind=='PARKING': base=0.42
         else: base=0.50
+        base*=self.performance.speed_factor
         magnitude=abs(error)
         if magnitude < .10: return min(base,float(self.p['max_linear_speed']))
         if magnitude < .30: return min(base*.84,float(self.p['max_linear_speed']))
         if magnitude < .55: return min(base*.67,float(self.p['max_linear_speed']))
         return 0.0
+
+    def start_mission_metrics(self):
+        self.mission_metrics=dict(
+            task_id=self.active_task,
+            planned_route_distance_m=self.graph.polyline_length(self.world_route),
+            actual_distance_m=0.0,
+            started_monotonic=time.monotonic(),
+            unnecessary_stop_count=0,
+            align_episodes=0,
+            align_time_s=0.0,
+            turn_overshoot_rad=0.0,
+            heading_correction_count=0,
+            heading_error_sum=0.0,
+            heading_error_samples=0,
+            obstacle_stop_time_s=0.0,
+            negotiation_wait_time_s=0.0,
+            reroute_count=0,
+            distance_rerouted_m=0.0,
+            moving_speed_sum=0.0,
+            moving_speed_samples=0,
+            conflict_resolution_delay_ms=0.0)
+        self.metric_tick=time.monotonic()
+        self.metric_last_pose=self.pose[:2] if self.pose else None
+        self.metric_last_error=0.0
+        self.metric_last_moving=False
+
+    def update_mission_metrics(self, now):
+        if self.mission_metrics is None:
+            self.metric_tick=now
+            return
+        elapsed=max(0.0,min(0.5,now-self.metric_tick)); self.metric_tick=now
+        metric=self.mission_metrics
+        error=abs(float(self.last_heading_error))
+        metric['heading_error_sum']+=error
+        metric['heading_error_samples']+=1
+        if self.aligning:
+            metric['align_time_s']+=elapsed
+        if self.state in ('OBSTACLE_STOP','AVOID_TURN','AVOID_FORWARD'):
+            metric['obstacle_stop_time_s']+=elapsed
+        if self.coordination_holding or self.state=='COORDINATION_HOLD':
+            metric['negotiation_wait_time_s']+=elapsed
+        moving=self.last_linear_command>0.02
+        if moving:
+            metric['moving_speed_sum']+=self.last_linear_command
+            metric['moving_speed_samples']+=1
+        elif self.metric_last_moving and self.state not in (
+                'ALIGN','OBSTACLE_STOP','COORDINATION_HOLD','MISSION_COMPLETE'):
+            metric['unnecessary_stop_count']+=1
+        signed=float(self.last_heading_error)
+        if (abs(signed)>0.08 and abs(self.metric_last_error)>0.08 and
+                signed*self.metric_last_error<0):
+            metric['heading_correction_count']+=1
+            metric['turn_overshoot_rad']=max(metric['turn_overshoot_rad'],abs(signed))
+        self.metric_last_error=signed
+        self.metric_last_moving=moving
+
+    def finish_mission_metrics(self):
+        if self.mission_metrics is None:
+            return None
+        raw=self.mission_metrics; actual=max(raw['actual_distance_m'],1e-6)
+        samples=max(1,raw['heading_error_samples'])
+        speed_samples=max(1,raw['moving_speed_samples'])
+        metrics={
+            'task_id':raw['task_id'],
+            'planned_route_distance_m':round(raw['planned_route_distance_m'],3),
+            'actual_distance_m':round(raw['actual_distance_m'],3),
+            'route_efficiency':round(min(1.0,raw['planned_route_distance_m']/actual),4),
+            'completion_time_s':round(time.monotonic()-raw['started_monotonic'],3),
+            'unnecessary_stop_count':raw['unnecessary_stop_count'],
+            'align_episodes':self.align_episodes,
+            'total_align_time_s':round(raw['align_time_s'],3),
+            'turn_overshoot_rad':round(raw['turn_overshoot_rad'],4),
+            'heading_correction_count':raw['heading_correction_count'],
+            'average_heading_error_rad':round(raw['heading_error_sum']/samples,4),
+            'obstacle_stop_time_s':round(raw['obstacle_stop_time_s'],3),
+            'negotiation_wait_time_s':round(raw['negotiation_wait_time_s'],3),
+            'reroute_count':raw['reroute_count'],
+            'distance_rerouted_m':round(raw['distance_rerouted_m'],3),
+            'average_moving_speed_mps':round(raw['moving_speed_sum']/speed_samples,3),
+            'conflict_resolution_delay_ms':round(raw['conflict_resolution_delay_ms'],3),
+            'task_success':True,
+        }
+        self.performance.record(metrics)
+        try:
+            self.performance.save(self.profile_path)
+        except OSError as error:
+            self.get_logger().warning(f'Performance profile not persisted: {error}')
+        self.mission_metrics=None
+        self.emit('MISSION_PERFORMANCE',metrics=metrics,
+                  profile=self.performance.dictionary())
+        return metrics
 
     def task_assignment(self, msg):
         try:
@@ -327,6 +475,7 @@ class LocalController(Node):
                 points = self.dashboard_tasks[data['task']]
             if not points or any(len(p)!=2 or not all(math.isfinite(float(v)) for v in p) for p in points):
                 return
+            released_slot=self.parking_target if self.parking_state in ('RESERVED','OCCUPIED') else ''
             self.route_version += 1
             self.install_new_route(points,self.route_version)
             self.route_metadata={k:data.get(k) for k in ('planner','raw_astar_nodes',
@@ -339,8 +488,11 @@ class LocalController(Node):
             self.enabled = True
             self.mission_kind = 'TASK'; self.completed_at=None
             self.parking_target=''; self.parking_state='FREE'
+            self.parking_mode=''; self.docking_event_sent=False
             self.coordination_holding = False
             self.obstacle_side = None
+            self.align_episodes=0
+            self.start_mission_metrics()
             self.mission_pub.publish(String(data=json.dumps(dict(robot_id=self.rid,
                 task_id=self.active_task,route=self.world_route,pickup=self.pickup,
                 destination=self.destination,priority=self.task_priority,
@@ -353,6 +505,9 @@ class LocalController(Node):
                       smoothed_waypoints=len(self.world_route),
                       raw_route_cost=self.route_metadata.get('raw_route_cost'),
                       route_version=self.route_version)
+            if released_slot:
+                self.emit('CHARGE_SLOT_RELEASED',parking_target=released_slot,
+                          task_id=self.active_task)
             self.change('WAYPOINT_TRACK')
             self.get_logger().info(f'[{self.rid}] DASHBOARD_TASK_ASSIGNED {self.active_task}')
         except (ValueError, TypeError, KeyError):
@@ -383,6 +538,7 @@ class LocalController(Node):
         m.header.frame_id = self.rid+'/base_footprint'
         m.twist.linear.x, m.twist.angular.z = float(v), float(w)
         self.pub.publish(m)
+        battery_state=self.battery_state()
         self.status.publish(String(data=json.dumps(dict(state=self.state, waypoint=self.index,
                             pose=self.pose, scan=self.scan, linear=v, angular=w,
                             active_task=self.active_task,
@@ -406,7 +562,19 @@ class LocalController(Node):
                             parking_target=self.parking_target,
                             parking_state=self.parking_state,
                             battery_pct=round(self.sim_battery,1),
-                            battery_simulated=True))))
+                            battery_percent=round(self.sim_battery,1),
+                            battery_state=battery_state,
+                            is_charging=self.state=='CHARGING',
+                            battery_simulated=True,
+                            performance_profile=self.performance.dictionary(),
+                            route_efficiency=(round(self.performance.average_route_efficiency*100,1)
+                                if self.performance.missions_completed else None)))))
+
+    def battery_state(self):
+        if self.state == 'CHARGING': return 'CHARGING'
+        if self.sim_battery < float(self.p['battery_critical_threshold']): return 'CRITICAL'
+        if self.sim_battery <= float(self.p['battery_low_threshold']): return 'LOW'
+        return 'NORMAL'
 
     def should_hold_for_coordination(self):
         """Yield only at a pre-zone boundary; PROCEED never bypasses LiDAR."""
@@ -454,7 +622,8 @@ class LocalController(Node):
         candidates=(self.graph.charging_candidates(self.world_pose(),reserved,self.active_peer_routes())
                     if mode=='POST_TASK_REPOSITION' else
                     self.graph.parking_candidates(self.world_pose(),reserved,self.active_peer_routes(),exclude))
-        if not candidates: return False
+        if not candidates:
+            return self.start_safe_wait() if mode=='POST_TASK_REPOSITION' else False
         _,target,route=candidates[0]
         self.route_version += 1
         self.install_new_route(route,self.route_version); self.enabled=True
@@ -462,17 +631,48 @@ class LocalController(Node):
         self.pickup=''; self.destination=target
         self.parking_target=target; self.parking_state='RESERVED'
         self.parking_mode=mode
+        self.docking_event_sent=False
         self.coordination_holding=False; self.completed_at=None
         self.change('RETURNING_TO_CHARGE' if mode=='POST_TASK_REPOSITION' else mode)
         self.mission_pub.publish(String(data=json.dumps(dict(robot_id=self.rid,
             task_id='PARKING',route=self.world_route,destination=target,priority=0,
             route_version=self.route_version))))
-        self.emit('MOVE_ASIDE_STARTED' if mode=='MOVE_ASIDE' else 'CHARGING_BAY_RESERVED',
+        self.emit('MOVE_ASIDE_STARTED' if mode=='MOVE_ASIDE' else 'CHARGE_SLOT_RESERVED',
                   parking_target=target, obstruction=obstruction)
         if mode=='POST_TASK_REPOSITION':
-            self.emit('ASTAR_POST_TASK_ROUTE',parking_target=target,
+            self.emit('ASTAR_RETURN_ROUTE',parking_target=target,
                       route_version=self.route_version)
         return True
+
+    def start_safe_wait(self):
+        """Leave an operational endpoint when every charging slot is busy."""
+        reserved={p.get('parking_target') for p in self.peer_states.values()
+                  if p.get('parking_state') in ('RESERVED','OCCUPIED')}
+        candidates=self.graph.parking_candidates(
+            self.world_pose(),reserved,self.active_peer_routes(),{self.parking_target})
+        if not candidates: return False
+        _,target,route=candidates[0]
+        self.route_version+=1
+        self.install_new_route(route,self.route_version); self.enabled=True
+        self.mission_kind='PARKING'; self.active_task='NONE'; self.task_priority=0
+        self.pickup=''; self.destination=target
+        self.parking_target=target; self.parking_state='RESERVED'
+        self.parking_mode='SAFE_WAIT_FOR_CHARGE'; self.completed_at=None
+        self.coordination_holding=False; self.docking_event_sent=False
+        self.change('SAFE_WAIT_FOR_CHARGE')
+        self.mission_pub.publish(String(data=json.dumps(dict(robot_id=self.rid,
+            task_id='SAFE_WAIT',route=self.world_route,destination=target,priority=0,
+            route_version=self.route_version))))
+        self.emit('SAFE_WAIT_ROUTE',parking_target=target,
+                  route_version=self.route_version)
+        return True
+
+    def at_charging_slot(self):
+        if self.pose is None: return ''
+        position=self.world_pose()
+        return next((name for name in self.graph.charging
+            if math.dist(position,self.graph.nodes[name]) <=
+               float(self.p['charging_slot_tolerance'])), '')
 
     def idle_obstruction(self):
         if self.pose is None or time.monotonic()<self.move_aside_cooldown: return None
@@ -491,7 +691,8 @@ class LocalController(Node):
         return None
 
     def parking_conflict(self):
-        if self.mission_kind!='PARKING' or not self.parking_target: return False
+        if (self.mission_kind not in ('PARKING','CHARGING') or
+                self.parking_state!='RESERVED' or not self.parking_target): return False
         mine=self.graph_robot_id
         return any(p.get('parking_target')==self.parking_target and
                    p.get('parking_state') in ('RESERVED','OCCUPIED') and
@@ -500,13 +701,19 @@ class LocalController(Node):
 
     def tick(self):
         now = time.monotonic()
+        self.update_mission_metrics(now)
         elapsed=now-self.battery_tick
         if elapsed >= 1.0:
             self.battery_tick=now
             # Presentation-only battery simulation: charge rises visibly while
             # parked in a real charging bay; no physical telemetry is claimed.
-            if self.state=='CHARGING': self.sim_battery=min(100.,self.sim_battery+elapsed*1.0)
-            elif self.enabled: self.sim_battery=max(20.,self.sim_battery-elapsed*0.004)
+            if self.state=='CHARGING':
+                before=self.sim_battery
+                self.sim_battery=min(100.,self.sim_battery+
+                    elapsed*float(self.p['battery_charge_per_second']))
+                if before < 100. <= self.sim_battery and not self.battery_full_emitted:
+                    self.battery_full_emitted=True
+                    self.emit('BATTERY_FULL',battery_percent=100.0)
         if not self.p['diagnostic_mode']:
             obstruction=self.idle_obstruction()
             if obstruction and self.start_parking('MOVE_ASIDE',obstruction):
@@ -517,8 +724,23 @@ class LocalController(Node):
                 if self.start_parking(self.parking_mode or 'POST_TASK_REPOSITION'):
                     self.emit('PARKING_RESELECTED',released=old,
                               parking_target=self.parking_target)
+        if (not self.p['diagnostic_mode'] and not self.enabled and
+                self.active_task in ('', 'NONE', None) and self.state!='CHARGING' and
+                self.pose is not None and self.scan is not None and
+                now-min(self.odom_time,self.scan_time) <= self.p['sensor_timeout'] and
+                now >= self.idle_charge_retry_at):
+            slot=self.at_charging_slot()
+            if slot:
+                self.mission_kind='CHARGING'; self.parking_target=slot
+                self.parking_state='OCCUPIED'; self.change('CHARGING')
+                self.battery_full_emitted=self.sim_battery>=100.
+                self.emit('CHARGING_STARTED',parking_target=slot,
+                          battery_percent=round(self.sim_battery,1))
+            elif not self.start_parking('POST_TASK_REPOSITION'):
+                self.idle_charge_retry_at=now+1.0
         if not self.enabled:
-            if self.state == 'PARKED': self.command(0,0); return
+            if self.state in ('PARKED','CHARGING','AVAILABLE'):
+                self.command(0,0); return
             self.change('DISABLED'); self.command(0, 0); return
         if self.pose is None or now-min(self.odom_time, self.scan_time) > self.p['sensor_timeout']:
             self.change('SENSOR_STALE_SAFE_STOP'); self.command(0, 0); return
@@ -528,13 +750,15 @@ class LocalController(Node):
                 self.enabled=False; self.parking_state='OCCUPIED'
                 self.change('CHARGING' if self.mission_kind=='CHARGING' else 'PARKED'); self.command(0,0)
                 self.emit('MOVE_ASIDE_COMPLETE' if completed_mode=='MOVE_ASIDE' else 'CHARGING_STARTED',
-                          parking_target=self.parking_target)
+                          parking_target=self.parking_target,
+                          battery_percent=round(self.sim_battery,1))
                 return
             if self.completed_at is None:
                 self.completed_at=now; self.change('MISSION_COMPLETE')
+                self.finish_mission_metrics()
                 self.emit('TASK_COMPLETED',task_id=self.active_task,destination=self.destination)
             self.command(0,0)
-            if not self.p['diagnostic_mode'] and now-self.completed_at>=1.25:
+            if not self.p['diagnostic_mode'] and now-self.completed_at>=0.10:
                 self.change('CLEARING_DROP_ZONE')
                 self.emit('DROP_ZONE_CLEARING',destination=self.destination)
                 self.start_parking('POST_TASK_REPOSITION')
@@ -592,6 +816,9 @@ class LocalController(Node):
             return
         if self.mission_kind=='CHARGING' and self.index == len(self.route)-1:
             self.change('DOCKING')
+            if not self.docking_event_sent:
+                self.docking_event_sent=True
+                self.emit('DOCKING',parking_target=self.parking_target)
         tx,ty=self.lookahead_target()
         error = wrap(math.atan2(ty-y, tx-x)-yaw)
         self.last_target=(round(tx,3),round(ty,3))
@@ -647,7 +874,8 @@ class LocalController(Node):
         else:
             self.change('WAYPOINT_TRACK')
             v=self.desired_speed(error)
-        w=0.0 if abs(error)<0.05 else max(-self.p['max_angular_speed'], min(self.p['max_angular_speed'],1.25*error))
+        steering_gain=1.25*self.performance.steering_factor
+        w=0.0 if abs(error)<0.05 else max(-self.p['max_angular_speed'], min(self.p['max_angular_speed'],steering_gain*error))
         self.command(v, w)
 
 

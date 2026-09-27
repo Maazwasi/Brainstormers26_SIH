@@ -48,13 +48,14 @@ warehouse:
     charging_station: [-10.2, 0.0]
 
   robot_spawns:
-    amr_alpha: [-9.2, -4.8, 0.0]
-    amr_bravo: [-9.2, 4.8, -1.5708]
-    # Kept outside the charging-station footprint; it previously spawned
-    # inside a docking slot and A* correctly—but undesirably—attached to it.
-    amr_charlie: [-8.0, 2.8, 0.0]
-    amr_delta: [8.0, 0.65, 1.5708]
-    amr_echo: [8.0, 8.15, -1.5708]
+    # Canonical fleet start: one physical AMR per existing charging slot.
+    # Every launch begins from the same 5-bay charging station; an assigned
+    # task is the only way an AMR leaves its dock.
+    amr_alpha: [-10.2, 0.0, 0.0]
+    amr_bravo: [-10.2, 1.8, 0.0]
+    amr_charlie: [-10.2, 3.6, 0.0]
+    amr_delta: [-10.2, -3.6, 0.0]
+    amr_echo: [-10.2, -1.8, 0.0]
 
   robot_visuals:
     amr_alpha: {label: ALPHA, colour: [1.0, 0.05, 0.05]}
@@ -89,9 +90,6 @@ warehouse:
     scenarios:
       safe: {}
       crossing:
-        robot_spawns:
-          amr_alpha: [-2.5, 0.0, 0.0]
-          amr_bravo: [0.0, -2.5, 1.57079632679]
         stage3_missions:
           amr_alpha: [[-1.5, 0.0]]
           amr_bravo: [[0.0, -1.5]]
@@ -99,9 +97,6 @@ warehouse:
           amr_alpha: [intersection_A]
           amr_bravo: [intersection_A]
       different_time:
-        robot_spawns:
-          amr_alpha: [-2.5, 0.0, 0.0]
-          amr_bravo: [0.0, -5.0, 1.57079632679]
         stage3_missions:
           amr_alpha: [[-1.5, 0.0]]
           amr_bravo: [[0.0, -4.0]]
@@ -110,9 +105,6 @@ warehouse:
           amr_bravo: [intersection_A]
 
       negotiation:
-        robot_spawns:
-          amr_alpha: [-2.5, 0.0, 0.0]
-          amr_bravo: [0.0, -2.5, 1.57079632679]
         stage3_missions:
           amr_alpha: [[2.5, 0.0]]
           amr_bravo: [[0.0, 2.5]]
@@ -128,6 +120,13 @@ warehouse:
     waiting_quantum: 1.0
     eta_quantum: 0.25
     maximum_reroute_detour_m: 2.5
+    # Predict/decide early; these affect only the pre-zone negotiation gate.
+    safe_deceleration: 0.65
+    processing_margin: 0.15
+    footprint_margin: 0.45
+    safety_margin: 0.55
+    minimum_negotiation_distance: 1.5
+    maximum_negotiation_distance: 2.0
 
   dashboard_tasks:
     PICKUP_A_TO_DROP_A: [[-9.2, -4.8], [-6.2, -4.8], [-3.0, 0.0], [0.0, 0.0], [5.2, -3.4]]

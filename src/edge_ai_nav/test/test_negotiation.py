@@ -1,7 +1,8 @@
 import unittest
 
 from edge_ai_nav.fleet.negotiation import (NegotiationBook, choose_winner, resolve_conflict,
-                                            motion_gate, outside_with_margin)
+                                            motion_gate, outside_with_margin,
+                                            reservation_distance)
 
 
 def state(robot_id, priority=3, waiting=0):
@@ -46,6 +47,46 @@ class NegotiationTest(unittest.TestCase):
         later = book.decide('intersection_A:ALPHA:BRAVO', alpha, bravo, {'ALPHA': .1, 'BRAVO': 99}, 13, 11)
         self.assertEqual('BRAVO', initial['winner'])
         self.assertEqual(initial, later)
+
+    def test_only_loser_changes_and_idle_moves_aside(self):
+        high=dict(state('ALPHA',4),local_nav_state='WAYPOINT_TRACK')
+        low=dict(state('BRAVO',1),local_nav_state='WAYPOINT_TRACK')
+        decision=resolve_conflict(high,low,'intersection_A',
+            {'BRAVO':{'wait':2.,'reroute':9.}}, {'ALPHA':2.,'BRAVO':2.})
+        self.assertEqual(('ALPHA','BRAVO','YIELD_AND_WAIT'),
+                         (decision.winner,decision.loser,decision.loser_action))
+        idle=dict(state('BRAVO',4),local_nav_state='AVAILABLE')
+        decision=resolve_conflict(high,idle,'intersection_A',etas={'ALPHA':3.,'BRAVO':1.})
+        self.assertEqual(('ALPHA','BRAVO','MOVE_ASIDE'),
+                         (decision.winner,decision.loser,decision.loser_action))
+
+    def test_speed_aware_reservation_is_conservatively_bounded(self):
+        self.assertEqual(1.5,reservation_distance(0.0))
+        self.assertGreaterEqual(reservation_distance(0.5),reservation_distance(0.1))
+        self.assertLessEqual(reservation_distance(4.0),2.0)
+
+    def test_connected_three_robot_pairs_remain_asymmetric(self):
+        alpha=dict(state('ALPHA',4),local_nav_state='WAYPOINT_TRACK')
+        bravo=dict(state('BRAVO',2),local_nav_state='WAYPOINT_TRACK')
+        charlie=dict(state('CHARLIE',1),local_nav_state='WAYPOINT_TRACK')
+        first=resolve_conflict(alpha,bravo,'intersection_A',etas={'ALPHA':2,'BRAVO':2})
+        second=resolve_conflict(bravo,charlie,'intersection_B',etas={'BRAVO':2,'CHARLIE':2})
+        self.assertEqual(('ALPHA','BRAVO'),(first.winner,first.loser))
+        self.assertEqual(('BRAVO','CHARLIE'),(second.winner,second.loser))
+        self.assertNotEqual(first.winner,first.loser)
+        self.assertNotEqual(second.winner,second.loser)
+
+    def test_narrow_aisle_has_one_latched_winner_with_measured_clock(self):
+        book=NegotiationBook()
+        alpha=dict(state('ALPHA',3),local_nav_state='WAYPOINT_TRACK')
+        bravo=dict(state('BRAVO',3),local_nav_state='WAYPOINT_TRACK')
+        decision=book.decide('narrow_aisle_1:ALPHA:BRAVO',alpha,bravo,
+            {'ALPHA':3,'BRAVO':3},now=10.,first_detected=10.,
+            zone='narrow_aisle_1')
+        self.assertEqual('ALPHA',decision['winner'])
+        self.assertEqual('BRAVO',decision['loser'])
+        self.assertGreater(decision['detection_monotonic_ns'],0)
+        self.assertGreaterEqual(decision['decision_latency_ms'],0.0)
 
     def test_lidar_precedence_and_clearance_margin(self):
         self.assertEqual('LIDAR_STOP', motion_gate(.2, .65, True))

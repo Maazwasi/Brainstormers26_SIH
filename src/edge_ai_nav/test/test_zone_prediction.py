@@ -37,6 +37,7 @@ class PredictionTests(unittest.TestCase):
         self.assertEqual(detector.update(a, [b], 11), [])
         self.assertEqual(detector.event_count, 1)
         self.assertEqual(next(iter(detector.active.values()))['conflict_first_detected_time'], 10)
+        self.assertGreater(next(iter(detector.active.values()))['conflict_first_detected_monotonic_ns'],0)
         b['next_zone'] = ''
         self.assertEqual(detector.update(a, [b], 12)[0][0], 'CONFLICT_CLEARED')
         b['next_zone'] = 'intersection_A'

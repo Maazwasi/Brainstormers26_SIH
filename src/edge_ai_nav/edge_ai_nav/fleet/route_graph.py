@@ -188,8 +188,8 @@ class WarehouseGraph:
         t=max(0.,min(1.,((point[0]-a[0])*dx+(point[1]-a[1])*dy)/length))
         return math.dist(point,(a[0]+t*dx,a[1]+t*dy))
 
-    def route_to(self, position, destination, zone_penalties=None):
-        """A* route from physical position with optional transient zone costs."""
+    def route_to_with_cost(self, position, destination, zone_penalties=None):
+        """Return graph cost and A* route from the current physical position."""
         penalties=zone_penalties or {}
         candidates=[]
         for node,point in self.nodes.items():
@@ -205,12 +205,16 @@ class WarehouseGraph:
                 continue
             candidates.append((math.dist(position,point)+cost,node,names))
         if not candidates: raise ValueError('No route avoiding controlled zone')
-        _,_,names=min(candidates)
+        total_cost,_,names=min(candidates)
         names=self.smooth_names(names)
         points=[list(position)]
         for name in names:
             if math.dist(points[-1],self.nodes[name])>.03: points.append(list(self.nodes[name]))
-        return points
+        return total_cost,points
+
+    def route_to(self, position, destination, zone_penalties=None):
+        """A* route from physical position with optional transient zone costs."""
+        return self.route_to_with_cost(position,destination,zone_penalties)[1]
 
     def reroute(self, position, remaining, destination, blocked_zone):
         """A* alternate with a temporary controlled-zone exclusion."""
@@ -242,9 +246,9 @@ class WarehouseGraph:
             if name in blocked or any(self.point_segment_distance(point,a,b)<0.8
                                       for route in routes for a,b in zip(route,route[1:])):
                 continue
-            try: route=self.route_to(position,name)
+            try: cost,route=self.route_to_with_cost(position,name)
             except ValueError: continue
-            choices.append((self.polyline_length(route),name,route))
+            choices.append((cost,name,route))
         return sorted(choices,key=lambda item:(item[0],item[1]))
 
     def intent(self,position,remaining):

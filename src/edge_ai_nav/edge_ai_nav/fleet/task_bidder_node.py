@@ -39,6 +39,8 @@ class TaskBidder(Node):
         self.claimed_tasks = set()
         self.task_started = None
         self.assignments = []
+        self.battery_percent = float(BATTERY[self.rid])
+        self.battery_state = 'NORMAL'
         self.bid_pub = self.create_publisher(String, '/fleet/task_bids', 20)
         self.claim_pub = self.create_publisher(String, '/fleet/task_claims', 10)
         self.assignment_pub = self.create_publisher(String, '/fleet/task_assignment', 10)
@@ -57,16 +59,24 @@ class TaskBidder(Node):
             return {}
 
     def battery(self):
-        drain = 0 if self.task_started is None else int((time.monotonic()-self.task_started)/180)
-        return max(20, BATTERY[self.rid]-drain)
+        return round(self.battery_percent, 1)
 
     def on_odom(self, msg):
         self.pose = (msg.pose.pose.position.x, msg.pose.pose.position.y)
         self.pose_received = time.monotonic()
 
     def on_status(self, msg):
-        state = self.decode(msg).get('state', 'UNKNOWN')
+        data=self.decode(msg)
+        state = data.get('state', 'UNKNOWN')
+        if (data.get('mission_kind')=='CHARGING' and
+                data.get('active_task') in ('', 'NONE', None) and
+                state not in ('CHARGING','DOCKING')):
+            state='RETURNING_TO_CHARGE'
         self.controller_state = state
+        if data.get('battery_simulated'):
+            self.battery_percent=float(data.get('battery_percent',
+                data.get('battery_pct',self.battery_percent)))
+            self.battery_state=data.get('battery_state',self.battery_state)
         if state == 'MISSION_COMPLETE':
             self.task_started = None
 
@@ -88,7 +98,8 @@ class TaskBidder(Node):
         # Lower is better. Priority is common to every bidder, while distance,
         # battery and workload make the suitability decision explainable.
         priority = int(task.get('priority', 3))
-        score = round(distance + (100-battery)*0.08 - priority*0.01
+        critical_penalty=500.0 if self.battery_state=='CRITICAL' else 0.0
+        score = round(distance + (100-battery)*0.08 + critical_penalty - priority*0.01
                       + (0 if eligible else 1000), 3)
         self.pending[task_id] = {'task': task, 'bids': {},
                                  'deadline': time.monotonic()+0.65,
@@ -98,6 +109,7 @@ class TaskBidder(Node):
                'priority': priority, 'type': task.get('type'),
                'display_name': DISPLAY[self.rid], 'eligible': eligible,
                'distance_to_pickup': round(distance, 2), 'battery': battery,
+               'battery_state': self.battery_state,
                'score': score, 'timestamp': time.time()}
         self.pending[task_id]['bids'][self.rid] = bid
         self.bid_pub.publish(String(data=json.dumps(bid)))
