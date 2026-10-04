@@ -1,0 +1,169 @@
+{
+  "status": "FAIL",
+  "scenario": "motion",
+  "requested_speed_mps": 0.9,
+  "linear_scale": 2.0,
+  "target_speed_mps": 1.8,
+  "log": "/tmp/swarmx-v2-motion-erm7a4dz.log",
+  "reason": "Interrupted",
+  "latest_tilt_rad": {
+    "alpha_1": 7.522940516450423e-12,
+    "alpha_2": 7.522940764368525e-12,
+    "alpha_3": 5.609718072671595e-11,
+    "alpha_4": 7.522940644559885e-12,
+    "alpha_5": 7.522940501893114e-12
+  },
+  "latest_angular_speed": {
+    "alpha_1": 5.3065795732848e-19,
+    "alpha_2": 1.6037177291006302e-18,
+    "alpha_3": 0.12664297535771812,
+    "alpha_4": 8.555616815306794e-20,
+    "alpha_5": 1.10975984364925e-18
+  },
+  "braking_phase": "COMPLETE",
+  "braking_start_speed_mps": 0.8999999999903538,
+  "measured_stopping_distance_m": 0.5089505280154372,
+  "maximum_tilt_rad": 1.7784690722755523e-09,
+  "maximum_angular_speed_rad_s": 0.46052741642242695,
+  "yield_hold_cycles": {},
+  "maximum_lateral_speed_mps": 0.16910682826280946,
+  "corner_align_cycles": {
+    "alpha_3:1:2": 1,
+    "alpha_3:1:3": 1,
+    "alpha_3:1:4": 1,
+    "alpha_3:1:5": 1
+  },
+  "minimum_sampled_separation_m": 4.8,
+  "minimum_sampled_pair_separations_m": {
+    "alpha_1:alpha_2": 4.799999999999999,
+    "alpha_1:alpha_3": 16.15233400231981,
+    "alpha_1:alpha_4": 14.4,
+    "alpha_1:alpha_5": 19.200000000000003,
+    "alpha_2:alpha_3": 14.189261959017694,
+    "alpha_2:alpha_4": 9.600000000000001,
+    "alpha_2:alpha_5": 14.400000000000002,
+    "alpha_3:alpha_4": 14.847547857470822,
+    "alpha_3:alpha_5": 17.295286600661356,
+    "alpha_4:alpha_5": 4.800000000000001
+  },
+  "minimum_sampled_static_gap_m": 2.11,
+  "peak_physical_speed_mps": 0.9,
+  "pocket_seen": false,
+  "peak_physical_speeds_mps": {
+    "alpha_1": 0.0,
+    "alpha_2": 0.0,
+    "alpha_3": 0.8999999999907979,
+    "alpha_4": 0.0,
+    "alpha_5": 0.0
+  },
+  "mean_moving_physical_speed_mps": 0.398,
+  "completed": [],
+  "events": [],
+  "conflict_metrics": {},
+  "shared_decisions": {},
+  "final": {
+    "alpha_5": {
+      "pose": [
+        34.6,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          34.6,
+          37.4
+        ]
+      ]
+    },
+    "alpha_4": {
+      "pose": [
+        29.8,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          29.8,
+          37.4
+        ]
+      ]
+    },
+    "alpha_2": {
+      "pose": [
+        20.2,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          20.2,
+          37.4
+        ]
+      ]
+    },
+    "alpha_1": {
+      "pose": [
+        15.4,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          15.4,
+          37.4
+        ]
+      ]
+    },
+    "alpha_3": {
+      "pose": [
+        24.004451956340638,
+        23.73027797453355
+      ],
+      "state": "WAYPOINT_TRACK",
+      "waypoint": 5,
+      "route": [
+        [
+          25.0,
+          4.0
+        ],
+        [
+          25.0,
+          18.0
+        ],
+        [
+          26.0,
+          19.73205080756888
+        ],
+        [
+          25.482361909794957,
+          21.663902460147014
+        ],
+        [
+          23.55051025721682,
+          22.181540550352057
+        ],
+        [
+          24.06814834742186,
+          24.113392202930193
+        ],
+        [
+          22.653934785048765,
+          25.52760576530329
+        ],
+        [
+          24.06814834742186,
+          26.941819327676384
+        ],
+        [
+          24.06814834742186,
+          30.941819327676384
+        ]
+      ]
+    }
+  },
+  "validator_cleanup": "Observer process exits after stopping its owned simulation"
+}

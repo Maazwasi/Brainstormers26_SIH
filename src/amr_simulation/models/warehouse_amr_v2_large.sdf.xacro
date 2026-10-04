@@ -1,0 +1,222 @@
+<?xml version="1.0"?>
+<sdf version="1.8" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="namespace" default="amr_alpha"/>
+  <xacro:arg name="color_r" default="0.8"/>
+  <xacro:arg name="color_g" default="0.1"/>
+  <xacro:arg name="color_b" default="0.1"/>
+  <xacro:arg name="max_linear_velocity" default="0.60"/>
+
+  <!-- Experimental 2x-linear midpoint V2: geometry x2, mass x8, inertia x32.
+       Original V2 remains unchanged. Physical acceptance is required.
+       Wheel-local X is rolling traction; low lateral friction permits the
+       four driven contacts to skid during a turn instead of locking the body.
+       Legacy model remains unchanged. -->
+  <model name="warehouse_amr">
+    <pose>0 0 0 0 0 0</pose>
+
+    <link name="base_footprint"/>
+
+    <link name="base_link">
+      <inertial>
+        <pose>0 0 0.38 0 0 0</pose>
+        <mass>280</mass>
+        <inertia>
+          <ixx>49.4656</ixx><ixy>0</ixy><ixz>0</ixz>
+          <iyy>79.3344</iyy><iyz>0</iyz><izz>121.3344</izz>
+        </inertia>
+      </inertial>
+      <collision name="chassis_collision">
+        <pose>0 0 0.4 0 0 0</pose>
+        <geometry><box><size>1.8 1.4 0.4</size></box></geometry>
+        <surface>
+          <contact><ode><kp>800000</kp><kd>80</kd><max_vel>0.02</max_vel><min_depth>0.002</min_depth></ode></contact>
+        </surface>
+      </collision>
+      <visual name="chassis_visual">
+        <pose>0 0 0.4 0 0 0</pose>
+        <geometry><box><size>1.8 1.4 0.4</size></box></geometry>
+        <material>
+          <ambient>0.08 0.09 0.11 1</ambient>
+          <diffuse>0.12 0.14 0.17 1</diffuse>
+          <specular>0.25 0.25 0.25 1</specular>
+        </material>
+      </visual>
+      <visual name="identity_panel_visual">
+        <pose>0 0 0.614 0 0 0</pose>
+        <geometry><box><size>1.44 1.04 0.024</size></box></geometry>
+        <material>
+          <ambient>$(arg color_r) $(arg color_g) $(arg color_b) 1</ambient>
+          <diffuse>$(arg color_r) $(arg color_g) $(arg color_b) 1</diffuse>
+          <emissive>$(arg color_r) $(arg color_g) $(arg color_b) 1</emissive>
+        </material>
+      </visual>
+    </link>
+
+    <link name="wheel_left_link">
+      <pose>0.6 0.7 0.22 -1.57079632679 0 0</pose>
+      <inertial>
+        <mass>12</mass>
+        <inertia>
+          <ixx>0.15968</ixx><ixy>0</ixy><ixz>0</ixz>
+          <iyy>0.15968</iyy><iyz>0</iyz><izz>0.29056</izz>
+        </inertia>
+      </inertial>
+      <collision name="wheel_collision">
+        <geometry><cylinder><radius>0.22</radius><length>0.12</length></cylinder></geometry>
+        <surface>
+          <friction><ode><mu>2.0</mu><mu2>0.25</mu2><fdir1>1 0 0</fdir1><slip1>0</slip1><slip2>0</slip2></ode></friction>
+          <contact><ode><kp>800000</kp><kd>80</kd><max_vel>0.02</max_vel><min_depth>0.002</min_depth></ode></contact>
+        </surface>
+      </collision>
+      <visual name="wheel_visual">
+        <geometry><cylinder><radius>0.22</radius><length>0.12</length></cylinder></geometry>
+        <material><ambient>0.025 0.025 0.025 1</ambient><diffuse>0.04 0.04 0.04 1</diffuse></material>
+      </visual>
+    </link>
+
+    <link name="wheel_right_link">
+      <pose>0.6 -0.7 0.22 -1.57079632679 0 0</pose>
+      <inertial>
+        <mass>12</mass>
+        <inertia>
+          <ixx>0.15968</ixx><ixy>0</ixy><ixz>0</ixz>
+          <iyy>0.15968</iyy><iyz>0</iyz><izz>0.29056</izz>
+        </inertia>
+      </inertial>
+      <collision name="wheel_collision">
+        <geometry><cylinder><radius>0.22</radius><length>0.12</length></cylinder></geometry>
+        <surface>
+          <friction><ode><mu>2.0</mu><mu2>0.25</mu2><fdir1>1 0 0</fdir1><slip1>0</slip1><slip2>0</slip2></ode></friction>
+          <contact><ode><kp>800000</kp><kd>80</kd><max_vel>0.02</max_vel><min_depth>0.002</min_depth></ode></contact>
+        </surface>
+      </collision>
+      <visual name="wheel_visual">
+        <geometry><cylinder><radius>0.22</radius><length>0.12</length></cylinder></geometry>
+        <material><ambient>0.025 0.025 0.025 1</ambient><diffuse>0.04 0.04 0.04 1</diffuse></material>
+      </visual>
+    </link>
+
+    <link name="wheel_rear_left_link">
+      <pose>-0.6 0.7 0.22 -1.57079632679 0 0</pose>
+      <inertial>
+        <mass>12</mass>
+        <inertia>
+          <ixx>0.15968</ixx><ixy>0</ixy><ixz>0</ixz>
+          <iyy>0.15968</iyy><iyz>0</iyz><izz>0.29056</izz>
+        </inertia>
+      </inertial>
+      <collision name="wheel_collision">
+        <geometry><cylinder><radius>0.22</radius><length>0.12</length></cylinder></geometry>
+        <surface>
+          <friction><ode><mu>2.0</mu><mu2>0.25</mu2><fdir1>1 0 0</fdir1><slip1>0</slip1><slip2>0</slip2></ode></friction>
+          <contact><ode><kp>800000</kp><kd>80</kd><max_vel>0.02</max_vel><min_depth>0.002</min_depth></ode></contact>
+        </surface>
+      </collision>
+      <visual name="wheel_visual">
+        <geometry><cylinder><radius>0.22</radius><length>0.12</length></cylinder></geometry>
+        <material><ambient>0.025 0.025 0.025 1</ambient><diffuse>0.04 0.04 0.04 1</diffuse></material>
+      </visual>
+    </link>
+
+    <link name="wheel_rear_right_link">
+      <pose>-0.6 -0.7 0.22 -1.57079632679 0 0</pose>
+      <inertial>
+        <mass>12</mass>
+        <inertia>
+          <ixx>0.15968</ixx><ixy>0</ixy><ixz>0</ixz>
+          <iyy>0.15968</iyy><iyz>0</iyz><izz>0.29056</izz>
+        </inertia>
+      </inertial>
+      <collision name="wheel_collision">
+        <geometry><cylinder><radius>0.22</radius><length>0.12</length></cylinder></geometry>
+        <surface>
+          <friction><ode><mu>2.0</mu><mu2>0.25</mu2><fdir1>1 0 0</fdir1><slip1>0</slip1><slip2>0</slip2></ode></friction>
+          <contact><ode><kp>800000</kp><kd>80</kd><max_vel>0.02</max_vel><min_depth>0.002</min_depth></ode></contact>
+        </surface>
+      </collision>
+      <visual name="wheel_visual">
+        <geometry><cylinder><radius>0.22</radius><length>0.12</length></cylinder></geometry>
+        <material><ambient>0.025 0.025 0.025 1</ambient><diffuse>0.04 0.04 0.04 1</diffuse></material>
+      </visual>
+    </link>
+
+    <link name="base_scan">
+      <pose>0.24 0 0.66 0 0 0</pose>
+      <inertial><mass>0.4</mass><inertia><ixx>0.00064</ixx><ixy>0</ixy><ixz>0</ixz><iyy>0.00064</iyy><iyz>0</iyz><izz>0.00064</izz></inertia></inertial>
+      <visual name="lidar_visual">
+        <geometry><cylinder><radius>0.14</radius><length>0.08</length></cylinder></geometry>
+        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material>
+      </visual>
+      <sensor name="warehouse_lidar" type="gpu_lidar">
+        <always_on>true</always_on><visualize>true</visualize><update_rate>10</update_rate>
+        <topic>$(arg namespace)/scan</topic>
+        <frame_id>$(arg namespace)/base_scan</frame_id>
+        <ray>
+          <scan><horizontal><samples>360</samples><resolution>1</resolution><min_angle>-3.14159265</min_angle><max_angle>3.14159265</max_angle></horizontal></scan>
+          <range><min>0.05</min><max>20.0</max><resolution>0.015</resolution></range>
+          <noise><type>gaussian</type><mean>0</mean><stddev>0.01</stddev></noise>
+        </ray>
+      </sensor>
+    </link>
+
+    <link name="imu_link">
+      <pose>0 0 0.5 0 0 0</pose>
+      <inertial><mass>0.08</mass><inertia><ixx>0.000032</ixx><ixy>0</ixy><ixz>0</ixz><iyy>0.000032</iyy><iyz>0</iyz><izz>0.000032</izz></inertia></inertial>
+      <sensor name="warehouse_imu" type="imu">
+        <always_on>true</always_on><update_rate>50</update_rate>
+        <topic>$(arg namespace)/imu</topic>
+        <frame_id>$(arg namespace)/imu_link</frame_id>
+      </sensor>
+    </link>
+
+    <joint name="base_joint" type="fixed"><parent>base_footprint</parent><child>base_link</child></joint>
+    <joint name="wheel_left_joint" type="revolute">
+      <parent>base_link</parent><child>wheel_left_link</child>
+      <axis><xyz>0 0 1</xyz><limit><effort>1600</effort><velocity>20</velocity></limit><dynamics><damping>1.6</damping></dynamics></axis>
+    </joint>
+    <joint name="wheel_right_joint" type="revolute">
+      <parent>base_link</parent><child>wheel_right_link</child>
+      <axis><xyz>0 0 1</xyz><limit><effort>1600</effort><velocity>20</velocity></limit><dynamics><damping>1.6</damping></dynamics></axis>
+    </joint>
+    <joint name="wheel_rear_left_joint" type="revolute">
+      <parent>base_link</parent><child>wheel_rear_left_link</child>
+      <axis><xyz>0 0 1</xyz><limit><effort>1600</effort><velocity>20</velocity></limit><dynamics><damping>1.6</damping></dynamics></axis>
+    </joint>
+    <joint name="wheel_rear_right_joint" type="revolute">
+      <parent>base_link</parent><child>wheel_rear_right_link</child>
+      <axis><xyz>0 0 1</xyz><limit><effort>1600</effort><velocity>20</velocity></limit><dynamics><damping>1.6</damping></dynamics></axis>
+    </joint>
+    <joint name="lidar_joint" type="fixed">
+      <parent>base_link</parent><child>base_scan</child>
+    </joint>
+    <joint name="imu_joint" type="fixed">
+      <parent>base_link</parent><child>imu_link</child>
+    </joint>
+
+    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+      <left_joint>wheel_left_joint</left_joint><left_joint>wheel_rear_left_joint</left_joint>
+      <right_joint>wheel_right_joint</right_joint><right_joint>wheel_rear_right_joint</right_joint>
+      <wheel_separation>1.4</wheel_separation><wheel_radius>0.22</wheel_radius>
+      <max_linear_acceleration>0.8</max_linear_acceleration><min_linear_acceleration>-0.8</min_linear_acceleration>
+      <max_angular_acceleration>0.6</max_angular_acceleration><min_angular_acceleration>-0.6</min_angular_acceleration>
+      <max_linear_velocity>$(arg max_linear_velocity)</max_linear_velocity><min_linear_velocity>-$(arg max_linear_velocity)</min_linear_velocity>
+      <max_angular_velocity>0.6</max_angular_velocity><min_angular_velocity>-0.6</min_angular_velocity>
+      <topic>$(arg namespace)/cmd_vel</topic>
+      <odom_topic>$(arg namespace)/command_odom</odom_topic><tf_topic>$(arg namespace)/command_tf</tf_topic>
+      <frame_id>$(arg namespace)/odom</frame_id><child_frame_id>$(arg namespace)/base_footprint</child_frame_id>
+      <odom_publish_frequency>20</odom_publish_frequency>
+    </plugin>
+
+    <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+      <odom_frame>$(arg namespace)/odom</odom_frame><robot_base_frame>$(arg namespace)/base_footprint</robot_base_frame>
+      <dimensions>2</dimensions><odom_publish_frequency>20</odom_publish_frequency>
+      <odom_topic>$(arg namespace)/odom</odom_topic><tf_topic>$(arg namespace)/physical_tf</tf_topic>
+    </plugin>
+
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <joint_name>wheel_left_joint</joint_name><joint_name>wheel_rear_left_joint</joint_name>
+      <joint_name>wheel_right_joint</joint_name><joint_name>wheel_rear_right_joint</joint_name>
+      <topic>$(arg namespace)/joint_states</topic><update_rate>30</update_rate>
+    </plugin>
+  </model>
+</sdf>

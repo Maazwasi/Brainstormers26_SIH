@@ -29,6 +29,7 @@ class FiveAMRSpawnObserver(Node):
         with open(config_file, "r", encoding="utf-8") as stream:
             warehouse = yaml.safe_load(stream)["warehouse"]
         self.spawns = warehouse["robot_spawns"]
+        self.physical_scale=float(warehouse.get('scale_speed_upgrade',{}).get('linear_scale',1.0))
         self.visuals = warehouse["robot_visuals"]
         self.latest: Dict[str, Odometry] = {}
         self.dynamic_tf = TransformBroadcaster(self)
@@ -71,6 +72,8 @@ class FiveAMRSpawnObserver(Node):
                      ("base_link", "base_scan", (-0.064, 0.0, 0.271)),
                      ("base_link", "imu_link", (0.0, 0.0, 0.068)))
             for parent, child, xyz in links:
+                if self.world_odom:
+                    xyz=tuple(value*self.physical_scale for value in xyz)
                 static = TransformStamped()
                 static.header.stamp = stamp
                 static.header.frame_id = f"{robot_id}/{parent}"
@@ -117,7 +120,7 @@ class FiveAMRSpawnObserver(Node):
             label.action = Marker.ADD
             label.pose.position.x = world_x
             label.pose.position.y = world_y
-            label.pose.position.z = 0.78
+            label.pose.position.z = 0.78*self.physical_scale
             label.scale.z = 0.26
             colour = self.visuals[robot_id]["colour"]
             label.color.r, label.color.g, label.color.b = map(float, colour)

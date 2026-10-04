@@ -1,0 +1,183 @@
+{
+  "status": "FAIL",
+  "scenario": "priority",
+  "requested_speed_mps": 0.6,
+  "log": "/tmp/swarmx-v2-priority-p4ncbv6o.log",
+  "reason": "Interrupted",
+  "latest_tilt_rad": {
+    "alpha_1": 5.0603660727046485e-12,
+    "alpha_2": 7.742434427072338e-11,
+    "alpha_3": 5.0603660494475786e-12,
+    "alpha_5": 5.060366107811268e-12,
+    "alpha_4": 5.060365852982547e-12
+  },
+  "latest_angular_speed": {
+    "alpha_1": 5.633766689038257e-21,
+    "alpha_2": 0.2893975865717068,
+    "alpha_3": 3.711403799763118e-19,
+    "alpha_5": 1.1658984675240458e-19,
+    "alpha_4": 7.578306238017093e-19
+  },
+  "minimum_sampled_separation_m": 4.036,
+  "minimum_sampled_static_gap_m": 2.446,
+  "peak_physical_speed_mps": 0.6,
+  "pocket_seen": false,
+  "mean_moving_physical_speed_mps": 0.284,
+  "completed": [],
+  "events": [
+    {
+      "event": "NEGOTIATION_COMPLETE",
+      "robot_id": "ALPHA 1",
+      "timestamp": 1791102860.4809456,
+      "event_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2:decision",
+      "conflict_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2",
+      "zone": "MAIN_UPPER_CROSS",
+      "authority": "ALPHA 1",
+      "decision_version": 1,
+      "winner": "ALPHA 1",
+      "loser": "ALPHA 2",
+      "loser_action": "YIELD_AND_WAIT",
+      "decision_basis": "ZONE_COMMITTED",
+      "winner_priority": 4,
+      "loser_priority": 2,
+      "decision_latency_ms": 3.462,
+      "wait_cost_s": 11.748571672278274,
+      "reroute_cost_s": Infinity,
+      "extra_detour_m": null,
+      "winner_route_preserved": true,
+      "deadlock_prevented": false
+    },
+    {
+      "event": "CONFLICT_RESOLVED",
+      "robot_id": "ALPHA 1",
+      "timestamp": 1791102862.278794,
+      "event_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2:resolved",
+      "conflict_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2",
+      "zone": "MAIN_UPPER_CROSS",
+      "winner": "ALPHA 1",
+      "loser": "ALPHA 2",
+      "actual_delay_s": 1.801,
+      "baseline_delay_s": 35.125,
+      "time_saved_s": 33.324
+    },
+    {
+      "event": "YIELD_POCKET_SELECTED",
+      "robot_id": "ALPHA 2",
+      "timestamp": 1791102871.6471915,
+      "event_id": "POCKET:ALPHA 1:ALPHA 2",
+      "conflict_id": "POCKET:ALPHA 1:ALPHA 2",
+      "winner": "ALPHA 1",
+      "loser": "ALPHA 2",
+      "target": [
+        23.5,
+        27.792724085304695
+      ]
+    }
+  ],
+  "shared_decisions": {
+    "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2": {
+      "alpha_1": [
+        [
+          "ALPHA 1",
+          "ALPHA 2",
+          1
+        ]
+      ],
+      "alpha_2": [
+        [
+          "ALPHA 1",
+          "ALPHA 2",
+          1
+        ]
+      ]
+    }
+  },
+  "final": {
+    "alpha_5": {
+      "pose": [
+        33.4,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          33.4,
+          37.0
+        ]
+      ]
+    },
+    "alpha_3": {
+      "pose": [
+        25.0,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          25.0,
+          37.0
+        ]
+      ]
+    },
+    "alpha_1": {
+      "pose": [
+        30.791119999642824,
+        23.5
+      ],
+      "state": "DEMO_STAGED",
+      "waypoint": 3,
+      "route": [
+        [
+          19.0,
+          23.5
+        ],
+        [
+          25.0,
+          23.5
+        ],
+        [
+          31.0,
+          23.5
+        ]
+      ]
+    },
+    "alpha_2": {
+      "pose": [
+        22.692309445268236,
+        27.33221381853615
+      ],
+      "state": "YIELD_RELOCATING",
+      "waypoint": 1,
+      "route": [
+        [
+          25.0,
+          32.5
+        ],
+        [
+          25.0,
+          23.5
+        ],
+        [
+          25.0,
+          14.5
+        ]
+      ]
+    },
+    "alpha_4": {
+      "pose": [
+        29.2,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          29.2,
+          37.0
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "status": "FAIL",
+  "scenario": "motion",
+  "requested_speed_mps": 0.6,
+  "log": "/tmp/swarmx-v2-motion-f2na4k2p.log",
+  "reason": "Interrupted",
+  "latest_tilt_rad": {
+    "alpha_1": 5.060365779029312e-12,
+    "alpha_2": 5.060366041257009e-12,
+    "alpha_3": 2.8140918735041825e-10,
+    "alpha_4": 5.06036612246983e-12,
+    "alpha_5": 5.06036564206582e-12
+  },
+  "latest_angular_speed": {
+    "alpha_1": 4.885031104896424e-19,
+    "alpha_2": 4.42982789384576e-19,
+    "alpha_3": 0.46052735613341667,
+    "alpha_4": 1.022072666810045e-19,
+    "alpha_5": 4.040617998905323e-19
+  },
+  "braking_phase": "COMPLETE",
+  "braking_start_speed_mps": 0.5999999999932731,
+  "measured_stopping_distance_m": 0.22679688479670723,
+  "maximum_tilt_rad": 1.1663825170263034e-09,
+  "maximum_angular_speed_rad_s": 0.4999997986167048,
+  "yield_hold_cycles": {},
+  "corner_align_cycles": {},
+  "minimum_sampled_separation_m": 4.8,
+  "minimum_sampled_static_gap_m": 2.11,
+  "peak_physical_speed_mps": 0.6,
+  "pocket_seen": false,
+  "mean_moving_physical_speed_mps": 0.458,
+  "completed": [],
+  "events": [],
+  "shared_decisions": {},
+  "final": {
+    "alpha_2": {
+      "pose": [
+        20.2,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          20.2,
+          37.4
+        ]
+      ]
+    },
+    "alpha_4": {
+      "pose": [
+        29.8,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          29.8,
+          37.4
+        ]
+      ]
+    },
+    "alpha_5": {
+      "pose": [
+        34.6,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          34.6,
+          37.4
+        ]
+      ]
+    },
+    "alpha_3": {
+      "pose": [
+        25.95722403128227,
+        20.791227236433873
+      ],
+      "state": "WAYPOINT_TRACK",
+      "waypoint": 3,
+      "route": [
+        [
+          25.0,
+          4.0
+        ],
+        [
+          25.0,
+          18.0
+        ],
+        [
+          26.0,
+          19.73205080756888
+        ],
+        [
+          25.482361909794957,
+          21.663902460147014
+        ],
+        [
+          23.55051025721682,
+          22.181540550352057
+        ],
+        [
+          24.06814834742186,
+          24.113392202930193
+        ],
+        [
+          22.653934785048765,
+          25.52760576530329
+        ],
+        [
+          24.06814834742186,
+          26.941819327676384
+        ],
+        [
+          24.06814834742186,
+          30.941819327676384
+        ]
+      ]
+    },
+    "alpha_1": {
+      "pose": [
+        15.4,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          15.4,
+          37.4
+        ]
+      ]
+    }
+  }
+}

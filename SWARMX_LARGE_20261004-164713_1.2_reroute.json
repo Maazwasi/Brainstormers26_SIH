@@ -1,0 +1,88 @@
+{
+  "status": "FAIL",
+  "scenario": "reroute",
+  "requested_speed_mps": 1.2,
+  "linear_scale": 2.0,
+  "target_speed_mps": 1.8,
+  "log": "/tmp/swarmx-v2-reroute-r09d_0_j.log",
+  "reason": "Validation deadline exceeded",
+  "latest_tilt_rad": {},
+  "latest_angular_speed": {},
+  "braking_phase": "PENDING",
+  "braking_start_speed_mps": 0.0,
+  "measured_stopping_distance_m": null,
+  "maximum_tilt_rad": 0.0,
+  "maximum_angular_speed_rad_s": 0.0,
+  "yield_hold_cycles": {},
+  "maximum_lateral_speed_mps": 0.0,
+  "corner_align_cycles": {},
+  "minimum_sampled_separation_m": null,
+  "minimum_sampled_pair_separations_m": {},
+  "minimum_sampled_static_gap_m": null,
+  "peak_physical_speed_mps": 0.0,
+  "pocket_seen": false,
+  "peak_physical_speeds_mps": {},
+  "mean_moving_physical_speed_mps": 0.0,
+  "completed": [],
+  "events": [],
+  "conflict_metrics": {},
+  "shared_decisions": {},
+  "final": {
+    "alpha_1": {
+      "pose": null,
+      "state": "DISABLED",
+      "waypoint": 0,
+      "route": [
+        [
+          15.4,
+          37.4
+        ]
+      ]
+    },
+    "alpha_2": {
+      "pose": null,
+      "state": "DISABLED",
+      "waypoint": 0,
+      "route": [
+        [
+          20.2,
+          37.4
+        ]
+      ]
+    },
+    "alpha_3": {
+      "pose": null,
+      "state": "DISABLED",
+      "waypoint": 0,
+      "route": [
+        [
+          25.0,
+          37.4
+        ]
+      ]
+    },
+    "alpha_5": {
+      "pose": null,
+      "state": "DISABLED",
+      "waypoint": 0,
+      "route": [
+        [
+          34.6,
+          37.4
+        ]
+      ]
+    },
+    "alpha_4": {
+      "pose": null,
+      "state": "DISABLED",
+      "waypoint": 0,
+      "route": [
+        [
+          29.8,
+          37.4
+        ]
+      ]
+    }
+  },
+  "validator_cleanup": "Observer process exits after stopping its owned simulation"
+}

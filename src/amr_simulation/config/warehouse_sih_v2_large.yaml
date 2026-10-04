@@ -1,0 +1,918 @@
+# Midpoint resize requested: 2x original physical lengths. Warehouse unchanged.
+# EXPERIMENTAL: original 0.82 m peer comfort and 0.64 m front margin retained.
+warehouse:
+  world_file: warehouse_sih_v2_large.sdf
+  bounds:
+    x:
+    - 0.0
+    - 50.0
+    y:
+    - 0.0
+    - 40.0
+  center:
+  - 25.0
+  - 20.0
+  wall_thickness_m: 0.25
+  main_path:
+    center_x: 25.0
+    bounds:
+      x:
+      - 20.125
+      - 29.875
+      y:
+      - 4.5
+      - 35.5
+  amr_footprint_diameter_m: 2.36
+  amr_collision_bounds_m:
+    x:
+    - -0.9
+    - 0.9
+    y:
+    - -0.76
+    - 0.76
+  amr_footprint_polygon_m:
+  - - -0.9
+    - -0.7
+  - - -0.82
+    - -0.76
+  - - 0.82
+    - -0.76
+  - - 0.9
+    - -0.7
+  - - 0.9
+    - 0.7
+  - - 0.82
+    - 0.76
+  - - -0.82
+    - 0.76
+  - - -0.9
+    - 0.7
+  shelves:
+    SHELF_01:
+      center:
+      - 7.225
+      - 27.0
+      size:
+      - 5.8
+      - 1.1
+      - 2.2
+    SHELF_02:
+      center:
+      - 17.225
+      - 27.0
+      size:
+      - 5.8
+      - 1.1
+      - 2.2
+    SHELF_03:
+      center:
+      - 32.775
+      - 27.0
+      size:
+      - 5.8
+      - 1.1
+      - 2.2
+    SHELF_04:
+      center:
+      - 42.775
+      - 27.0
+      size:
+      - 5.8
+      - 1.1
+      - 2.2
+    SHELF_05:
+      center:
+      - 7.225
+      - 20.0
+      size:
+      - 5.8
+      - 1.1
+      - 2.2
+    SHELF_06:
+      center:
+      - 17.225
+      - 20.0
+      size:
+      - 5.8
+      - 1.1
+      - 2.2
+    SHELF_07:
+      center:
+      - 32.775
+      - 20.0
+      size:
+      - 5.8
+      - 1.1
+      - 2.2
+    SHELF_08:
+      center:
+      - 42.775
+      - 20.0
+      size:
+      - 5.8
+      - 1.1
+      - 2.2
+    SHELF_09:
+      center:
+      - 7.225
+      - 13.0
+      size:
+      - 5.8
+      - 1.1
+      - 2.2
+    SHELF_10:
+      center:
+      - 17.225
+      - 13.0
+      size:
+      - 5.8
+      - 1.1
+      - 2.2
+    SHELF_11:
+      center:
+      - 32.775
+      - 13.0
+      size:
+      - 5.8
+      - 1.1
+      - 2.2
+    SHELF_12:
+      center:
+      - 42.775
+      - 13.0
+      size:
+      - 5.8
+      - 1.1
+      - 2.2
+  pickups:
+    PICKUP_01:
+    - 7.225
+    - 24.4
+    PICKUP_02:
+    - 17.225
+    - 24.4
+    PICKUP_03:
+    - 32.775
+    - 24.4
+    PICKUP_04:
+    - 42.775
+    - 24.4
+    PICKUP_05:
+    - 7.225
+    - 17.4
+    PICKUP_06:
+    - 17.225
+    - 17.4
+    PICKUP_07:
+    - 32.775
+    - 17.4
+    PICKUP_08:
+    - 42.775
+    - 17.4
+    PICKUP_09:
+    - 7.225
+    - 10.4
+    PICKUP_10:
+    - 17.225
+    - 10.4
+    PICKUP_11:
+    - 32.775
+    - 10.4
+    PICKUP_12:
+    - 42.775
+    - 10.4
+  drops:
+    DROP_01:
+    - 5.0
+    - 4.0
+    DROP_02:
+    - 11.5
+    - 4.0
+    DROP_03:
+    - 18.0
+    - 4.0
+    DROP_04:
+    - 25.0
+    - 4.0
+    DROP_05:
+    - 32.0
+    - 4.0
+    DROP_06:
+    - 38.5
+    - 4.0
+    DROP_07:
+    - 45.0
+    - 4.0
+  charging_station:
+    center:
+    - 25.0
+    - 37.4
+    size:
+    - 22.6
+    - 3.2
+  charging_bays:
+    CHARGE_01:
+    - 15.4
+    - 37.4
+    CHARGE_02:
+    - 20.2
+    - 37.4
+    CHARGE_03:
+    - 25.0
+    - 37.4
+    CHARGE_04:
+    - 29.8
+    - 37.4
+    CHARGE_05:
+    - 34.6
+    - 37.4
+  static_obstacles:
+    PALLET_01:
+      center:
+      - 1.0
+      - 1.5
+      size:
+      - 0.8
+      - 0.7
+      - 0.6
+    PALLET_02:
+      center:
+      - 49.0
+      - 1.5
+      size:
+      - 0.8
+      - 0.7
+      - 0.6
+    PALLET_03:
+      center:
+      - 1.0
+      - 38.5
+      size:
+      - 0.8
+      - 0.7
+      - 0.6
+    PALLET_04:
+      center:
+      - 49.0
+      - 38.5
+      size:
+      - 0.8
+      - 0.7
+      - 0.6
+  aisle_centrelines:
+    LEFT_OUTER:
+      x: 2.225
+      y:
+      - 5.8
+      - 34.2
+    LEFT_INNER:
+      x: 12.225
+      y:
+      - 5.8
+      - 34.2
+    MAIN:
+      x: 25.0
+      y:
+      - 5.8
+      - 34.2
+    RIGHT_INNER:
+      x: 37.775
+      y:
+      - 5.8
+      - 34.2
+    RIGHT_OUTER:
+      x: 47.775
+      y:
+      - 5.8
+      - 34.2
+  cross_aisle_centrelines:
+  - 32.5
+  - 23.5
+  - 16.5
+  - 8.0
+  zones:
+    MAIN_NORTH_CROSS:
+      center:
+      - 25.0
+      - 32.5
+      radius: 2.0
+      coordination_zone: true
+    MAIN_UPPER_CROSS:
+      center:
+      - 25.0
+      - 23.5
+      radius: 2.0
+      coordination_zone: true
+    MAIN_MID_CROSS:
+      center:
+      - 25.0
+      - 16.5
+      radius: 2.0
+      coordination_zone: true
+    MAIN_LOWER_CROSS:
+      center:
+      - 25.0
+      - 8.0
+      radius: 2.0
+      coordination_zone: true
+    LEFT_OUTER_CORRIDOR:
+      center:
+      - 2.225
+      - 18.25
+      bounds:
+        x:
+        - 0.125
+        - 4.325
+        y:
+        - 4.0
+        - 32.5
+      coordination_zone: true
+    LEFT_INNER_CORRIDOR:
+      center:
+      - 12.225
+      - 18.25
+      bounds:
+        x:
+        - 10.125
+        - 14.325
+        y:
+        - 4.0
+        - 32.5
+      coordination_zone: true
+    RIGHT_INNER_CORRIDOR:
+      center:
+      - 37.775
+      - 18.25
+      bounds:
+        x:
+        - 35.675
+        - 39.875
+        y:
+        - 4.0
+        - 32.5
+      coordination_zone: true
+    RIGHT_OUTER_CORRIDOR:
+      center:
+      - 47.775
+      - 18.25
+      bounds:
+        x:
+        - 45.675
+        - 49.875
+        y:
+        - 4.0
+        - 32.5
+      coordination_zone: true
+  robot_spawns:
+    alpha_1:
+    - 15.4
+    - 37.4
+    - -1.57079632679
+    alpha_2:
+    - 20.2
+    - 37.4
+    - -1.57079632679
+    alpha_3:
+    - 25.0
+    - 37.4
+    - -1.57079632679
+    alpha_4:
+    - 29.8
+    - 37.4
+    - -1.57079632679
+    alpha_5:
+    - 34.6
+    - 37.4
+    - -1.57079632679
+  robot_visuals:
+    alpha_1:
+      label: ALPHA 1
+      colour:
+      - 1.0
+      - 0.05
+      - 0.05
+    alpha_2:
+      label: ALPHA 2
+      colour:
+      - 0.05
+      - 0.2
+      - 1.0
+    alpha_3:
+      label: ALPHA 3
+      colour:
+      - 0.05
+      - 0.95
+      - 0.15
+    alpha_4:
+      label: ALPHA 4
+      colour:
+      - 1.0
+      - 0.35
+      - 0.02
+    alpha_5:
+      label: ALPHA 5
+      colour:
+      - 0.65
+      - 0.05
+      - 0.85
+  battery_initial_percent:
+    alpha_1: 92
+    alpha_2: 87
+    alpha_3: 95
+    alpha_4: 81
+    alpha_5: 89
+  stage3_missions:
+    alpha_1:
+    - - 15.4
+      - 37.4
+    alpha_2:
+    - - 20.2
+      - 37.4
+    alpha_3:
+    - - 25.0
+      - 37.4
+    alpha_4:
+    - - 29.8
+      - 37.4
+    alpha_5:
+    - - 34.6
+      - 37.4
+  stage4_peer_metadata:
+    ALPHA 1:
+      namespace: /alpha_1
+      priority: 3
+      next_zone: ''
+    ALPHA 2:
+      namespace: /alpha_2
+      priority: 3
+      next_zone: ''
+    ALPHA 3:
+      namespace: /alpha_3
+      priority: 3
+      next_zone: ''
+    ALPHA 4:
+      namespace: /alpha_4
+      priority: 3
+      next_zone: ''
+    ALPHA 5:
+      namespace: /alpha_5
+      priority: 3
+      next_zone: ''
+  stage5:
+    prediction:
+      horizon: 12.0
+      buffer: 0.75
+      minimum_speed: 0.35
+  stage6:
+    priority_first: true
+    path_crossing_guard: true
+    physical_stop_distance_m: 3.18
+    allow_reroute: true
+    reroute_clearance_m: 3.18
+    hold_margin: 1.33
+    exit_margin: 1.33
+    waiting_cap: 30.0
+    waiting_quantum: 1.0
+    eta_quantum: 0.25
+    maximum_reroute_detour_m: 10.0
+    safe_deceleration: 0.65
+    processing_margin: 0.15
+    footprint_margin: 1.18
+    safety_margin: 0.55
+    minimum_negotiation_distance: 3.18
+    maximum_negotiation_distance: 15.0
+  route_graph:
+    forward_rejoin: true
+    bounds:
+      x:
+      - 0.125
+      - 49.875
+      y:
+      - 0.125
+      - 39.875
+    clearance: 1.33
+    side_aisle_cost_multiplier: 1.08
+    charging_station:
+      name: CHARGING_STATION
+      center:
+      - 25.0
+      - 37.4
+      slots:
+      - CHARGE_01
+      - CHARGE_02
+      - CHARGE_03
+      - CHARGE_04
+      - CHARGE_05
+    parking_hotspots: []
+    obstacles:
+    - - 4.325
+      - 10.125
+      - 26.45
+      - 27.55
+    - - 14.325
+      - 20.125
+      - 26.45
+      - 27.55
+    - - 29.875
+      - 35.675
+      - 26.45
+      - 27.55
+    - - 39.875
+      - 45.675
+      - 26.45
+      - 27.55
+    - - 4.325
+      - 10.125
+      - 19.45
+      - 20.55
+    - - 14.325
+      - 20.125
+      - 19.45
+      - 20.55
+    - - 29.875
+      - 35.675
+      - 19.45
+      - 20.55
+    - - 39.875
+      - 45.675
+      - 19.45
+      - 20.55
+    - - 4.325
+      - 10.125
+      - 12.45
+      - 13.55
+    - - 14.325
+      - 20.125
+      - 12.45
+      - 13.55
+    - - 29.875
+      - 35.675
+      - 12.45
+      - 13.55
+    - - 39.875
+      - 45.675
+      - 12.45
+      - 13.55
+    - - 0.6
+      - 1.4
+      - 1.15
+      - 1.85
+    - - 48.6
+      - 49.4
+      - 1.15
+      - 1.85
+    - - 0.6
+      - 1.4
+      - 38.15
+      - 38.85
+    - - 48.6
+      - 49.4
+      - 38.15
+      - 38.85
+    - - 13.7
+      - 36.3
+      - 39.51
+      - 39.69
+    nodes:
+      LEFT_OUTER_NORTH:
+      - 2.225
+      - 32.5
+      LEFT_OUTER_UPPER:
+      - 2.225
+      - 23.5
+      LEFT_OUTER_MID:
+      - 2.225
+      - 16.5
+      LEFT_OUTER_LOWER:
+      - 2.225
+      - 8.0
+      LEFT_OUTER_SOUTH:
+      - 2.225
+      - 4.0
+      LEFT_INNER_NORTH:
+      - 12.225
+      - 32.5
+      LEFT_INNER_UPPER:
+      - 12.225
+      - 23.5
+      LEFT_INNER_MID:
+      - 12.225
+      - 16.5
+      LEFT_INNER_LOWER:
+      - 12.225
+      - 8.0
+      LEFT_INNER_SOUTH:
+      - 12.225
+      - 4.0
+      MAIN_NORTH:
+      - 25.0
+      - 32.5
+      MAIN_UPPER:
+      - 25.0
+      - 23.5
+      MAIN_MID:
+      - 25.0
+      - 16.5
+      MAIN_LOWER:
+      - 25.0
+      - 8.0
+      MAIN_SOUTH:
+      - 25.0
+      - 4.0
+      RIGHT_INNER_NORTH:
+      - 37.775
+      - 32.5
+      RIGHT_INNER_UPPER:
+      - 37.775
+      - 23.5
+      RIGHT_INNER_MID:
+      - 37.775
+      - 16.5
+      RIGHT_INNER_LOWER:
+      - 37.775
+      - 8.0
+      RIGHT_INNER_SOUTH:
+      - 37.775
+      - 4.0
+      RIGHT_OUTER_NORTH:
+      - 47.775
+      - 32.5
+      RIGHT_OUTER_UPPER:
+      - 47.775
+      - 23.5
+      RIGHT_OUTER_MID:
+      - 47.775
+      - 16.5
+      RIGHT_OUTER_LOWER:
+      - 47.775
+      - 8.0
+      RIGHT_OUTER_SOUTH:
+      - 47.775
+      - 4.0
+      PICKUP_01:
+      - 7.225
+      - 24.4
+      PICKUP_02:
+      - 17.225
+      - 24.4
+      PICKUP_03:
+      - 32.775
+      - 24.4
+      PICKUP_04:
+      - 42.775
+      - 24.4
+      PICKUP_05:
+      - 7.225
+      - 17.4
+      PICKUP_06:
+      - 17.225
+      - 17.4
+      PICKUP_07:
+      - 32.775
+      - 17.4
+      PICKUP_08:
+      - 42.775
+      - 17.4
+      PICKUP_09:
+      - 7.225
+      - 10.4
+      PICKUP_10:
+      - 17.225
+      - 10.4
+      PICKUP_11:
+      - 32.775
+      - 10.4
+      PICKUP_12:
+      - 42.775
+      - 10.4
+      DROP_01:
+      - 5.0
+      - 4.0
+      DROP_02:
+      - 11.5
+      - 4.0
+      DROP_03:
+      - 18.0
+      - 4.0
+      DROP_04:
+      - 25.0
+      - 4.0
+      DROP_05:
+      - 32.0
+      - 4.0
+      DROP_06:
+      - 38.5
+      - 4.0
+      DROP_07:
+      - 45.0
+      - 4.0
+      CHARGE_01:
+      - 15.4
+      - 37.4
+      CHARGE_02:
+      - 20.2
+      - 37.4
+      CHARGE_03:
+      - 25.0
+      - 37.4
+      CHARGE_04:
+      - 29.8
+      - 37.4
+      CHARGE_05:
+      - 34.6
+      - 37.4
+      CHARGE_01_APPROACH:
+      - 15.4
+      - 32.5
+      CHARGE_02_APPROACH:
+      - 20.2
+      - 32.5
+      CHARGE_03_APPROACH:
+      - 25.0
+      - 32.5
+      CHARGE_04_APPROACH:
+      - 29.8
+      - 32.5
+      CHARGE_05_APPROACH:
+      - 34.6
+      - 32.5
+    edges:
+    - - LEFT_OUTER_NORTH
+      - LEFT_OUTER_UPPER
+    - - LEFT_OUTER_UPPER
+      - LEFT_OUTER_MID
+    - - LEFT_OUTER_MID
+      - LEFT_OUTER_LOWER
+    - - LEFT_OUTER_LOWER
+      - LEFT_OUTER_SOUTH
+    - - LEFT_INNER_NORTH
+      - LEFT_INNER_UPPER
+    - - LEFT_INNER_UPPER
+      - LEFT_INNER_MID
+    - - LEFT_INNER_MID
+      - LEFT_INNER_LOWER
+    - - LEFT_INNER_LOWER
+      - LEFT_INNER_SOUTH
+    - - MAIN_NORTH
+      - MAIN_UPPER
+    - - MAIN_UPPER
+      - MAIN_MID
+    - - MAIN_MID
+      - MAIN_LOWER
+    - - MAIN_LOWER
+      - MAIN_SOUTH
+    - - RIGHT_INNER_NORTH
+      - RIGHT_INNER_UPPER
+    - - RIGHT_INNER_UPPER
+      - RIGHT_INNER_MID
+    - - RIGHT_INNER_MID
+      - RIGHT_INNER_LOWER
+    - - RIGHT_INNER_LOWER
+      - RIGHT_INNER_SOUTH
+    - - RIGHT_OUTER_NORTH
+      - RIGHT_OUTER_UPPER
+    - - RIGHT_OUTER_UPPER
+      - RIGHT_OUTER_MID
+    - - RIGHT_OUTER_MID
+      - RIGHT_OUTER_LOWER
+    - - RIGHT_OUTER_LOWER
+      - RIGHT_OUTER_SOUTH
+    - - LEFT_OUTER_NORTH
+      - LEFT_INNER_NORTH
+    - - LEFT_INNER_NORTH
+      - MAIN_NORTH
+    - - MAIN_NORTH
+      - RIGHT_INNER_NORTH
+    - - RIGHT_INNER_NORTH
+      - RIGHT_OUTER_NORTH
+    - - LEFT_OUTER_UPPER
+      - LEFT_INNER_UPPER
+    - - LEFT_INNER_UPPER
+      - MAIN_UPPER
+    - - MAIN_UPPER
+      - RIGHT_INNER_UPPER
+    - - RIGHT_INNER_UPPER
+      - RIGHT_OUTER_UPPER
+    - - LEFT_OUTER_MID
+      - LEFT_INNER_MID
+    - - LEFT_INNER_MID
+      - MAIN_MID
+    - - MAIN_MID
+      - RIGHT_INNER_MID
+    - - RIGHT_INNER_MID
+      - RIGHT_OUTER_MID
+    - - LEFT_OUTER_LOWER
+      - LEFT_INNER_LOWER
+    - - LEFT_INNER_LOWER
+      - MAIN_LOWER
+    - - MAIN_LOWER
+      - RIGHT_INNER_LOWER
+    - - RIGHT_INNER_LOWER
+      - RIGHT_OUTER_LOWER
+    - - PICKUP_01
+      - LEFT_OUTER_UPPER
+    - - PICKUP_01
+      - LEFT_INNER_UPPER
+    - - PICKUP_02
+      - LEFT_INNER_UPPER
+    - - PICKUP_02
+      - MAIN_UPPER
+    - - PICKUP_03
+      - MAIN_UPPER
+    - - PICKUP_03
+      - RIGHT_INNER_UPPER
+    - - PICKUP_04
+      - RIGHT_INNER_UPPER
+    - - PICKUP_04
+      - RIGHT_OUTER_UPPER
+    - - PICKUP_05
+      - LEFT_OUTER_MID
+    - - PICKUP_05
+      - LEFT_INNER_MID
+    - - PICKUP_06
+      - LEFT_INNER_MID
+    - - PICKUP_06
+      - MAIN_MID
+    - - PICKUP_07
+      - MAIN_MID
+    - - PICKUP_07
+      - RIGHT_INNER_MID
+    - - PICKUP_08
+      - RIGHT_INNER_MID
+    - - PICKUP_08
+      - RIGHT_OUTER_MID
+    - - PICKUP_09
+      - LEFT_OUTER_LOWER
+    - - PICKUP_09
+      - LEFT_INNER_LOWER
+    - - PICKUP_10
+      - LEFT_INNER_LOWER
+    - - PICKUP_10
+      - MAIN_LOWER
+    - - PICKUP_11
+      - MAIN_LOWER
+    - - PICKUP_11
+      - RIGHT_INNER_LOWER
+    - - PICKUP_12
+      - RIGHT_INNER_LOWER
+    - - PICKUP_12
+      - RIGHT_OUTER_LOWER
+    - - DROP_01
+      - LEFT_OUTER_SOUTH
+    - - DROP_02
+      - LEFT_INNER_SOUTH
+    - - DROP_03
+      - LEFT_INNER_LOWER
+    - - DROP_03
+      - MAIN_LOWER
+    - - DROP_04
+      - MAIN_SOUTH
+    - - DROP_05
+      - MAIN_LOWER
+    - - DROP_05
+      - RIGHT_INNER_LOWER
+    - - DROP_06
+      - RIGHT_INNER_SOUTH
+    - - DROP_07
+      - RIGHT_OUTER_SOUTH
+    - - MAIN_NORTH
+      - CHARGE_01_APPROACH
+    - - MAIN_NORTH
+      - CHARGE_02_APPROACH
+    - - MAIN_NORTH
+      - CHARGE_03_APPROACH
+    - - MAIN_NORTH
+      - CHARGE_04_APPROACH
+    - - MAIN_NORTH
+      - CHARGE_05_APPROACH
+    - - CHARGE_01_APPROACH
+      - CHARGE_01
+    - - CHARGE_02_APPROACH
+      - CHARGE_02
+    - - CHARGE_03_APPROACH
+      - CHARGE_03
+    - - CHARGE_04_APPROACH
+      - CHARGE_04
+    - - CHARGE_05_APPROACH
+      - CHARGE_05
+  scale_speed_upgrade:
+    experimental: true
+    linear_scale: 2.0
+    original_speed_mps: 0.6
+    target_speed_mps: 1.8
+    physical_radius_m: 1.18
+    navigation_margin_m: 0.15
+    lidar_pose_m:
+    - 0.24
+    - 0.0
+    - 0.66
+    imu_pose_m:
+    - 0.0
+    - 0.0
+    - 0.5
+    speed_stages_mps:
+    - 0.6
+    - 0.9
+    - 1.2
+    - 1.5
+    - 1.8

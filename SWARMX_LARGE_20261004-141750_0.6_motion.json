@@ -1,0 +1,139 @@
+{
+  "status": "FAIL",
+  "scenario": "motion",
+  "requested_speed_mps": 0.6,
+  "log": "/tmp/swarmx-v2-motion-_bhqa31_.log",
+  "reason": "Unable to convert call argument '0' to Python object (#define PYBIND11_DETAILED_ERROR_MESSAGES or compile in debug mode for details)",
+  "latest_tilt_rad": {
+    "alpha_1": 5.060366112409535e-12,
+    "alpha_2": 5.06036583006905e-12,
+    "alpha_3": 9.683133678135297e-11,
+    "alpha_5": 5.0603657064308746e-12,
+    "alpha_4": 5.060365768096107e-12
+  },
+  "latest_angular_speed": {
+    "alpha_1": 6.068525810447596e-19,
+    "alpha_2": 6.409615926170416e-19,
+    "alpha_3": 0.3756978423276748,
+    "alpha_5": 3.712129053458814e-20,
+    "alpha_4": 6.691334339505678e-19
+  },
+  "braking_phase": "COMPLETE",
+  "braking_start_speed_mps": 0.5942398976880098,
+  "measured_stopping_distance_m": 0.22679688479670723,
+  "maximum_tilt_rad": 1.2020925921109952e-09,
+  "maximum_angular_speed_rad_s": 0.48907662629770565,
+  "yield_hold_cycles": {},
+  "minimum_sampled_separation_m": 4.2,
+  "minimum_sampled_static_gap_m": 2.494,
+  "peak_physical_speed_mps": 0.608,
+  "pocket_seen": false,
+  "mean_moving_physical_speed_mps": 0.35,
+  "completed": [],
+  "events": [],
+  "shared_decisions": {},
+  "final": {
+    "alpha_3": {
+      "pose": [
+        24.319966209041233,
+        26.520381644140475
+      ],
+      "state": "WAYPOINT_TRACK",
+      "waypoint": 7,
+      "route": [
+        [
+          25.0,
+          4.0
+        ],
+        [
+          25.0,
+          18.0
+        ],
+        [
+          26.0,
+          19.73205080756888
+        ],
+        [
+          25.482361909794957,
+          21.663902460147014
+        ],
+        [
+          23.55051025721682,
+          22.181540550352057
+        ],
+        [
+          24.06814834742186,
+          24.113392202930193
+        ],
+        [
+          22.653934785048765,
+          25.52760576530329
+        ],
+        [
+          24.06814834742186,
+          26.941819327676384
+        ],
+        [
+          24.06814834742186,
+          30.941819327676384
+        ]
+      ]
+    },
+    "alpha_5": {
+      "pose": [
+        33.4,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          33.4,
+          37.0
+        ]
+      ]
+    },
+    "alpha_1": {
+      "pose": [
+        16.6,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          16.6,
+          37.0
+        ]
+      ]
+    },
+    "alpha_4": {
+      "pose": [
+        29.2,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          29.2,
+          37.0
+        ]
+      ]
+    },
+    "alpha_2": {
+      "pose": [
+        20.8,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          20.8,
+          37.0
+        ]
+      ]
+    }
+  }
+}

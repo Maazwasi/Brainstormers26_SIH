@@ -15,6 +15,7 @@ from std_srvs.srv import SetBool
 from edge_ai_nav.fleet.negotiation import motion_gate
 from edge_ai_nav.fleet.performance_profile import PerformanceProfile
 from edge_ai_nav.fleet.route_graph import WarehouseGraph
+from edge_ai_nav.fleet.scale_speed import braking_distance, obstacle_distance, forward_scan
 
 
 def wrap(angle):
@@ -24,6 +25,11 @@ def wrap(angle):
 def heading_rate(error, gain, limit):
     """Proportional angular correction for any signed target angle."""
     return 0.0 if abs(error)<0.05 else max(-limit,min(limit,gain*error))
+
+
+def traction_limited_speed(speed, angular_rate):
+    """Keep the scaled four-wheel chassis in its measured steering envelope."""
+    return min(speed,0.55) if abs(angular_rate)>1e-6 else speed
 
 
 def passed_waypoint(pose, previous, target, lateral_tolerance=0.45):
@@ -90,6 +96,15 @@ class LocalController(Node):
         self.rid = self.p['robot_id']
         with open(self.p['config_file']) as f:
             config = yaml.safe_load(f)['warehouse']
+        self.large_platform = bool(config.get('scale_speed_upgrade', {}).get('experimental', False))
+        bounds=config.get('amr_collision_bounds_m',{'x':[-.45,.45],'y':[-.38,.38]})
+        self.physical_half_width=max(abs(v) for v in bounds['y'])
+        self.lidar_x=float(config.get('scale_speed_upgrade',{}).get('lidar_pose_m',[.12,0,.33])[0])
+        self.front_overhang=max(bounds['x'])-self.lidar_x
+        self.terminal_approach_distance=2.0*(max(bounds['x'])-min(bounds['x']))
+        self.peer_clearance=float(config.get('stage6',{}).get('physical_stop_distance_m',2.0))
+        self.actual_speed = 0.0
+        self.actual_angular_speed = 0.0
         self.spawn = config['robot_spawns'][self.rid]
         self.graph = WarehouseGraph(config)
         self.logical_id = config['robot_visuals'][self.rid]['label']
@@ -135,6 +150,8 @@ class LocalController(Node):
         self.last_target = None
         self.last_heading_error = 0.0
         self.aligning = False
+        self.align_exit_pose = None
+        self.align_release_at = 0.0
         self.align_episodes = 0
         self.live_obstacle = {'active':False}
         self.obstacle_seen_at = None
@@ -171,6 +188,8 @@ class LocalController(Node):
         self.create_timer(0.1, self.tick)
 
     def odom(self, m):
+        self.actual_speed = math.hypot(m.twist.twist.linear.x,m.twist.twist.linear.y)
+        self.actual_angular_speed = float(m.twist.twist.angular.z)
         px, py = m.pose.pose.position.x, m.pose.pose.position.y
         q = m.pose.pose.orientation
         if self.battery_last_pose is not None and self.state != 'CHARGING':
@@ -192,6 +211,8 @@ class LocalController(Node):
 
     def lidar(self, m):
         values = sectors(m)
+        if getattr(self,'large_platform',False):
+            values['front'] = forward_scan(m,half_width=self.physical_half_width,lidar_x=self.lidar_x)
         self.scan = values
         if all(v is not None for v in values.values()):
             self.scan_time = time.monotonic()
@@ -351,6 +372,8 @@ class LocalController(Node):
             return False
         self.set_world_route(normalized)
         self.index=0
+        self.align_exit_pose=None
+        self.align_release_at=0.0
         self.active_route_version=route_version
         return True
 
@@ -379,6 +402,8 @@ class LocalController(Node):
         if self.p.get('smooth_steering', False):
             speed=max(0.0,float(getattr(self,'last_linear_command',0.0)))
             ahead=min(1.20,ahead+0.35*speed/max(0.1,float(self.p['max_linear_speed'])))
+        if getattr(self, 'large_platform', False):
+            ahead=min(3.6, 1.2+0.8*abs(self.actual_speed))
         # Preserve a warehouse corner and approach it with a shorter target.
         # Once the route index advances, normal 0.55 m look-ahead resumes.
         if 0 < self.index < len(self.route)-1:
@@ -397,7 +422,12 @@ class LocalController(Node):
         # cut a lookahead arc past either docking-area bend: that can carry a
         # robot north of the cross aisle and into an occupied bay's brake zone.
         for corner in (self.index, self.index+1):
-            if LocalController.charging_bend(self,corner):
+            preserve = LocalController.charging_bend(self,corner)
+            if getattr(self, 'large_platform', False) and 0 < corner < len(self.route)-1:
+                a,b,c=self.route[corner-1:corner+2]
+                preserve = preserve or abs(wrap(math.atan2(c[1]-b[1],c[0]-b[0])-
+                                                math.atan2(b[1]-a[1],b[0]-a[0]))) > .15
+            if preserve:
                 target_progress=min(target_progress,self.route_cumulative[corner])
                 break
         self.lookahead_progress=min(target_progress,self.route_cumulative[-1])
@@ -436,7 +466,12 @@ class LocalController(Node):
         elif self.mission_kind=='CHARGING':
             # Only the final dock is slowed; normal warehouse cruise is untouched.
             target=self.graph.nodes.get(self.parking_target)
-            base=0.18 if target and math.dist(self.world_pose(),target)<0.80 else 0.28
+            distance=math.dist(self.world_pose(),target) if target else 0.0
+            if (getattr(self,'large_platform',False) and target and
+                    distance>self.terminal_approach_distance):
+                base=max(.50,float(self.p['max_linear_speed']))
+            else:
+                base=0.18 if target and distance<0.80 else 0.28
         elif self.mission_kind=='PARKING': base=0.42
         else: base=(max(0.50,float(self.p['max_linear_speed']))
                     if self.p.get('smooth_steering',False) else 0.50)
@@ -618,6 +653,9 @@ class LocalController(Node):
         if v > 0.0:
             max_step=float(self.p['linear_acceleration'])*0.1
             v=min(v,self.last_linear_command+max_step)
+        if getattr(self, 'large_platform', False):
+            v=min(v,float(self.p['max_linear_speed']))
+            w=max(-float(self.p['max_angular_speed']),min(float(self.p['max_angular_speed']),w))
         self.last_linear_command=float(v)
         m = TwistStamped()
         m.header.stamp = self.get_clock().now().to_msg()
@@ -627,6 +665,13 @@ class LocalController(Node):
         battery_state=self.battery_state()
         self.status.publish(String(data=json.dumps(dict(state=self.state, waypoint=self.index,
                             pose=self.pose, scan=self.scan, linear=v, angular=w,
+                            physical_speed_mps=getattr(self,'actual_speed',0.0),
+                            target_speed_mps=float(self.p['max_linear_speed']),
+                            estimated_braking_distance_m=braking_distance(getattr(self,'actual_speed',0.0)),
+                            braking_state='STOP_REQUESTED' if v==0 else 'MOVING',
+                            prediction_distance_m=self.coordination_command.get('reservation_distance_m'),
+                            negotiation_winner=self.coordination_command.get('winner',''),
+                            negotiation_loser=self.coordination_command.get('loser',''),
                             active_task=self.active_task,
                             route=self.world_route, remaining_route=self.world_route[self.index:],
                             task_priority=self.task_priority, pickup=self.pickup, destination=self.destination,
@@ -771,7 +816,8 @@ class LocalController(Node):
             if peer.get('local_nav_state') in ('DISABLED','MISSION_COMPLETE','PARKED','AVAILABLE','DEMO_STAGED','UNKNOWN'):
                 continue
             route=peer.get('remaining_route') or []
-            if len(route)>1 and any(self.graph.point_segment_distance(self.pose[:2],a,b)<0.82
+            if len(route)>1 and any(self.graph.point_segment_distance(self.pose[:2],a,b)<
+                                    (self.peer_clearance if getattr(self,'large_platform',False) else 0.82)
                                     for a,b in zip(route,route[1:])):
                 return peer.get('robot_id')
         return None
@@ -869,6 +915,10 @@ class LocalController(Node):
             # Pocket recovery is V2/world-odom only. Keep the original route,
             # index and destination untouched so normal following can resume.
             error=wrap(math.atan2(target[1]-wy,target[0]-wx)-yaw)
+            if (getattr(self,'large_platform',False) and abs(error)>.25 and
+                    abs(self.actual_speed)>.08):
+                self.change('YIELD_RELOCATING')
+                self.command(0,0); return
             speed=0.22 if abs(error)<.25 and front>self.p['obstacle_stop_distance'] else 0.
             self.change('YIELD_RELOCATING')
             self.command(speed,heading_rate(error,1.25,float(self.p['max_angular_speed'])))
@@ -899,6 +949,12 @@ class LocalController(Node):
             self.change('REACQUIRE_WAYPOINT')
             self.emit('ORIGINAL_ASTAR_ROUTE_REACQUIRED',route_version=self.route_version)
         if self.state == 'OBSTACLE_STOP':
+            # The scaled four-wheel chassis must finish its physical stop
+            # before an avoidance turn starts.  Applying yaw while residual
+            # forward momentum remains caused lateral scrub at the 3x gate.
+            if (getattr(self,'large_platform',False) and
+                    abs(self.actual_speed)>.08):
+                self.command(0,0); return
             # Pick the safer side from the first scan and retain it while
             # clearing this waypoint's obstacle.  Re-picking on each scan can
             # make a robot alternate around the two faces of one crate.
@@ -910,11 +966,30 @@ class LocalController(Node):
             self.change('AVOID_TURN'); self.command(0, self.side*0.60); return
         gx, gy = self.route[self.index]
         distance = math.hypot(gx-x, gy-y)
+        # A live reroute's first point is an origin snapshot. At high speed the
+        # robot can leave its small tolerance before the route callback is
+        # installed. Once it has safely traversed that first segment, discard
+        # the stale origin instead of turning back toward it at segment end.
+        if (self.index==0 and len(self.route)>1 and
+                passed_waypoint((x,y),self.route[0],self.route[1],
+                                float(self.p['waypoint_tolerance'])) and
+                self.graph.visible(self.world_pose(),self.world_route[1])):
+            self.get_logger().info('WAYPOINT_REACHED 1 (route origin)')
+            self.index=1
+            gx,gy=self.route[self.index]
+            distance=math.hypot(gx-x,gy-y)
         while self.index < len(self.route)-1 and (
-                distance < (0.25 if self.charging_bend(self.index)
-                            else self.p['waypoint_tolerance']) or
+                distance < (0.35 if getattr(self,'large_platform',False) else
+                            (0.25 if self.charging_bend(self.index)
+                             else self.p['waypoint_tolerance'])) or
                 (self.p['smooth_steering'] and self.index > 0 and
                  not self.charging_bend(self.index) and
+                 (not getattr(self,'large_platform',False) or distance<.25 or
+                  (self.index < len(self.route)-1 and
+                   abs(wrap(math.atan2(self.route[self.index+1][1]-gy,
+                                       self.route[self.index+1][0]-gx)-
+                            math.atan2(gy-self.route[self.index-1][1],
+                                       gx-self.route[self.index-1][0])))<=.15)) and
                  passed_waypoint((x,y),self.route[self.index-1],self.route[self.index],
                                  float(self.p['waypoint_tolerance'])) and
                  self.graph.visible(self.world_pose(),self.world_route[self.index+1]))):
@@ -948,7 +1023,10 @@ class LocalController(Node):
                  self.last_linear_command,self.coordination_command.get('state','NONE'),
                  self.live_obstacle.get('active',False),self.p['enable_obstacle_replan']))
         requested_hold = self.should_hold_for_coordination()
-        gate = motion_gate(front, self.p['obstacle_stop_distance'], requested_hold)
+        stop_distance=self.p['obstacle_stop_distance']
+        if getattr(self,'large_platform',False):
+            stop_distance=obstacle_distance(max(abs(self.actual_speed),self.last_linear_command),front_overhang=self.front_overhang)
+        gate = motion_gate(front, stop_distance, requested_hold)
         # At 0.50 m/s, start reacting long before the hard-stop threshold.
         # The crate's *position* is never trusted: LaserScan is the evidence.
         if front < self.p['obstacle_prepare_distance']:
@@ -963,7 +1041,8 @@ class LocalController(Node):
             self.obstacle_seen_at=None; self.obstacle_event_sent=False
         # Physical sensor safety is intentionally evaluated before the fleet
         # decision, including when the local command says PROCEED.
-        if gate == 'LIDAR_STOP' and abs(error) < 0.55:
+        if gate == 'LIDAR_STOP' and (abs(error) < 0.55 or
+                (getattr(self,'large_platform',False) and abs(self.actual_speed)>.05)):
             self.get_logger().info(f'LIDAR_OBSTACLE front={front:.3f} left={left:.3f} right={right:.3f}')
             self.change('OBSTACLE_STOP'); self.command(0, 0); return
         if gate == 'COORDINATION_HOLD':
@@ -980,29 +1059,102 @@ class LocalController(Node):
         docking_turn=self.charging_bend(self.index-1)
         enter_align = (0.9 if docking_turn else 1.7) if self.p['smooth_steering'] else 0.55
         exit_align = (0.25 if docking_turn else 0.45) if self.p['smooth_steering'] else 0.20
+        if getattr(self,'large_platform',False):
+            # The scaled four-wheel platform skids if a substantial yaw
+            # correction starts while still translating. Brake first, then
+            # rotate through the actual requested angle, not a fixed 90°.
+            # Leave ordinary post-corner yaw settling to continuous steering.
+            # A 0.30 rad entry threshold repeatedly stopped the stable 2x
+            # chassis while it was within centimetres of the aisle centreline
+            # at 3x speed; true warehouse bends remain well above 0.40 rad.
+            enter_align,exit_align=.40,.10
         if not self.aligning and abs(error) > enter_align:
-            self.aligning=True; self.align_episodes += 1
+            self.aligning=True; self.align_exit_pose=None; self.align_release_at=0.0
+            self.align_episodes += 1
             self.change('ALIGN')
-        elif self.aligning and abs(error) < exit_align:
+        elif (self.aligning and abs(error) < exit_align and
+              (not getattr(self,'large_platform',False) or abs(self.actual_angular_speed)<.08)):
             self.aligning=False
+            self.align_exit_pose=(x,y)
+            self.align_release_at=now+.75
             self.change('WAYPOINT_TRACK')
         if self.aligning:
             self.change('ALIGN')
             v=(0.0 if docking_turn or abs(error)>1.8 else 0.10) if self.p['smooth_steering'] else (
                 0.0 if abs(error)>0.85 else 0.12)
+            if getattr(self,'large_platform',False): v=0.0
         else:
             self.change('WAYPOINT_TRACK')
             v=self.desired_speed(error)
+        if getattr(self,'large_platform',False):
+            # Arrive slowly at every real bend, not just a charger. Preserve
+            # the centreline until an in-place turn is physically clear.
+            if self.index < len(self.route)-1:
+                a,b=self.route[self.index:self.index+2]
+                incoming=math.atan2(gy-y,gx-x)
+                turn=abs(wrap(math.atan2(b[1]-a[1],b[0]-a[0])-incoming))
+                if turn>.15:
+                    v=min(v,math.sqrt(2*.65*max(.02,distance-.12)))
+                    if distance<1.5: v=min(v,.22)
+                    if distance<2.0:
+                        v=min(v,.25*distance*max(0.,math.cos(error)))
+            # Heading/curvature, not a blind 4x angular gain.
+            v=min(v,float(self.p['max_angular_speed'])*max(.55,
+                math.dist((x,y),(tx,ty)))/(2*max(.08,abs(math.sin(error)))))
+            # Preserve the 3x cruise cap on straight aisles, but keep the
+            # heavy four-wheel chassis below its lateral-scrub limit while
+            # continuous steering settles after a real bend.
+            if abs(error)>.12:
+                v=min(v,.45)
+            elif abs(error)>.05:
+                v=min(v,.80)
+            if (docking_turn and self.index>0 and
+                    math.dist((x,y),self.route[self.index-1])<1.5):
+                v=min(v,.25)
+            if self.align_exit_pose is not None:
+                if math.dist((x,y),self.align_exit_pose)<2.0:
+                    v=min(v,.25)
+                else:
+                    self.align_exit_pose=None
+            if now<self.align_release_at:
+                v=0.0
         if self.charging_bend(self.index) and distance < 2.0:
             v=min(v,0.15)
         if self.graph.forward_rejoin and self.index == len(self.route)-1:
             # V2's larger robot must settle on the terminal pad instead of
             # crossing it at cruise speed and repeatedly turning near a wall.
-            v=min(v,0.20 if distance>=1.0 else 0.12)
+            if getattr(self,'large_platform',False):
+                # Cruise on the clear part of a long final leg. Reserve the
+                # stopping distance, reaction travel and terminal tolerance
+                # before entering the same slow pad-approach profile.
+                if distance>=self.terminal_approach_distance:
+                    usable=max(0.,distance-float(self.p['goal_tolerance'])-.10-
+                               .35*abs(self.actual_speed))
+                    v=min(v,math.sqrt(2*.65*usable))
+                else:
+                    v=min(v,.20 if distance>=1.0 else .12)
+            else:
+                v=min(v,0.20 if distance>=1.0 else 0.12)
             if distance<1.2 and abs(error)>0.8:
                 v=0.0
         steering_gain=1.25*self.performance.steering_factor
         w=heading_rate(error,steering_gain,float(self.p['max_angular_speed']))
+        if getattr(self,'large_platform',False):
+            # Straight aisles retain the accepted 1.80 m/s peak.  Any active
+            # steering correction stays within the four-wheel chassis's
+            # measured lateral-traction envelope.
+            v=traction_limited_speed(v,w)
+        if (getattr(self,'large_platform',False) and self.aligning and
+                abs(self.actual_speed)>.08):
+            w=0.0
+        if getattr(self,'large_platform',False) and v>0:
+            # Refuse a command whose reaction-time centre sweep leaves the
+            # real footprint-safe graph. Angular motion alone is covered by
+            # the conservative turning circle used by that graph.
+            wx,wy=self.world_pose()
+            projected=(wx+v*.35*math.cos(yaw),wy+v*.35*math.sin(yaw))
+            if not self.graph.visible((wx,wy),projected):
+                self.change('FOOTPRINT_BRAKE'); v=0.0
         self.command(v, w)
 
 

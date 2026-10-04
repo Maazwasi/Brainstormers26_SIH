@@ -256,6 +256,41 @@ is acceptable if physical movement remains stable enough for the demo.
 
 ## Main launch scripts
 
+### Experimental 2× midpoint AMR / 3× speed upgrade
+
+The operator revised the size from 3× to 2× original: chassis
+1.80 × 1.40 × 0.40 m, wheel-inclusive footprint 1.80 × 1.52 m.
+The warehouse is unchanged from the enlarged variant. View all five parked
+robots at the conservative 0.60 m/s cap in Ubuntu Terminal:
+
+```bash
+cd /home/maaz-wasi/amr_ws
+bash run_swarmx_v2_large.sh enabled:=false use_rviz:=true
+```
+
+Existing 3× physical reports do not validate this revised 2× platform.
+
+This is a separate, **not-yet-accepted** variant; it does not replace the demo.
+See [the baseline audit](SWARMX_SCALE_SPEED_AUDIT.md) and
+[the live validation report](SWARMX_SCALE_SPEED_REPORT.md). In Ubuntu Terminal,
+after stopping any existing simulation:
+
+```bash
+cd /home/maaz-wasi/amr_ws
+source /opt/ros/lyrical/setup.bash
+colcon build --packages-select amr_simulation edge_ai_nav --symlink-install
+source install/setup.bash
+python3 validate_v2_large_stages.py --visible
+```
+
+The runner advances through 0.60 → 0.90 → 1.20 → 1.50 → 1.80 m/s
+only after each stage's gates pass. It stops on failure. Detailed
+attempts are saved as `SWARMX_LARGE_*.json`; current completed gates are in
+`SWARMX_LARGE_STAGE_PROGRESS.json`. Viewing the enlarged fleet at the conservative
+initial cap: `bash run_swarmx_v2_large.sh enabled:=false use_rviz:=true`.
+Dashboard: <http://localhost:8091/fleet>. Do not describe 1.80 m/s as verified
+until the final physical and concurrent-fleet gates have passed.
+
 - `start_swarmx_demo.sh` — opens both demo terminals.
 - `run_fleet_demo_ros.sh` — starts the five-AMR ROS/Gazebo stack.
 - `run_fleet_dashboard.sh` — starts the dashboard server.

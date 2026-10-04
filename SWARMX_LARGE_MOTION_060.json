@@ -1,0 +1,18 @@
+{
+  "status": "FAIL",
+  "scenario": "motion",
+  "requested_speed_mps": 0.6,
+  "log": "/tmp/swarmx-v2-motion-1bpkecnk.log",
+  "reason": "Simulation process exited",
+  "latest_tilt_rad": {},
+  "latest_angular_speed": {},
+  "minimum_sampled_separation_m": Infinity,
+  "minimum_sampled_static_gap_m": Infinity,
+  "peak_physical_speed_mps": 0.0,
+  "pocket_seen": false,
+  "mean_moving_physical_speed_mps": 0.0,
+  "completed": [],
+  "events": [],
+  "shared_decisions": {},
+  "final": {}
+}

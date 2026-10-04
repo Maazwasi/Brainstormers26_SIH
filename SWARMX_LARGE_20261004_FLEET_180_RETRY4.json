@@ -1,0 +1,643 @@
+{
+  "status": "FAIL",
+  "scenario": "fleet",
+  "requested_speed_mps": 1.8,
+  "linear_scale": 2.0,
+  "target_speed_mps": 1.8,
+  "log": "/tmp/swarmx-v2-fleet-fl2qn6i0.log",
+  "reason": "Preemptive separation gate failed: (3.1767622265846254, 'alpha_4', 'alpha_5')",
+  "latest_tilt_rad": {
+    "alpha_1": 1.7890791794556062e-09,
+    "alpha_2": 4.497787670285503e-12,
+    "alpha_4": 1.7869816965059222e-09,
+    "alpha_3": 7.522940780404926e-12,
+    "alpha_5": 6.537005860337781e-12
+  },
+  "latest_angular_speed": {
+    "alpha_1": 1.144885725828492e-16,
+    "alpha_2": 0.4605274148362391,
+    "alpha_4": 9.746550016626666e-18,
+    "alpha_3": 2.9319265924950897e-18,
+    "alpha_5": 0.4605274148246511
+  },
+  "braking_phase": "PENDING",
+  "braking_start_speed_mps": 0.0,
+  "measured_stopping_distance_m": null,
+  "maximum_tilt_rad": 1.7901926327321409e-09,
+  "maximum_angular_speed_rad_s": 0.4605274148385518,
+  "yield_hold_cycles": {},
+  "maximum_lateral_speed_mps": 0.010325547711993373,
+  "corner_align_cycles": {
+    "alpha_4:2:1": 1,
+    "alpha_2:2:0": 1
+  },
+  "minimum_sampled_separation_m": 3.177,
+  "minimum_sampled_pair_separations_m": {
+    "alpha_1:alpha_2": 4.799999999999999,
+    "alpha_1:alpha_3": 9.6,
+    "alpha_1:alpha_4": 14.397032853246907,
+    "alpha_1:alpha_5": 19.200000000000003,
+    "alpha_2:alpha_3": 4.800000000000001,
+    "alpha_2:alpha_4": 9.600000000000001,
+    "alpha_2:alpha_5": 14.400000000000002,
+    "alpha_3:alpha_4": 4.800000000000001,
+    "alpha_3:alpha_5": 9.600000000000001,
+    "alpha_4:alpha_5": 3.1767622265846254
+  },
+  "minimum_sampled_static_gap_m": 2.11,
+  "peak_physical_speed_mps": 1.8,
+  "pocket_seen": false,
+  "peak_physical_speeds_mps": {
+    "alpha_1": 1.7187499999806748,
+    "alpha_2": 1.7187499999806748,
+    "alpha_3": 1.7999999999709377,
+    "alpha_4": 1.302880013182016,
+    "alpha_5": 0.0439998861015312
+  },
+  "mean_moving_physical_speed_mps": 1.023,
+  "completed": [],
+  "events": [
+    {
+      "event": "NEGOTIATION_COMPLETE",
+      "robot_id": "ALPHA 2",
+      "timestamp": 1791116321.5161667,
+      "event_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 4:decision",
+      "conflict_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 4",
+      "zone": "MAIN_NORTH_CROSS",
+      "authority": "ALPHA 2",
+      "decision_version": 1,
+      "winner": "ALPHA 2",
+      "loser": "ALPHA 4",
+      "loser_action": "REROUTE",
+      "decision_basis": "WAITING_TIME",
+      "winner_priority": 3,
+      "loser_priority": 3,
+      "decision_latency_ms": 51.158,
+      "wait_cost_s": 5.914401872071669,
+      "reroute_cost_s": 0.0,
+      "extra_detour_m": 0.0,
+      "winner_route_preserved": true,
+      "deadlock_prevented": false
+    },
+    {
+      "event": "NEGOTIATION_COMPLETE",
+      "robot_id": "ALPHA 2",
+      "timestamp": 1791116321.5595224,
+      "event_id": "MAIN_UPPER_CROSS:ALPHA 2:ALPHA 4:decision",
+      "conflict_id": "MAIN_UPPER_CROSS:ALPHA 2:ALPHA 4",
+      "zone": "MAIN_UPPER_CROSS",
+      "authority": "ALPHA 2",
+      "decision_version": 1,
+      "winner": "ALPHA 2",
+      "loser": "ALPHA 4",
+      "loser_action": "REROUTE",
+      "decision_basis": "WAITING_TIME",
+      "winner_priority": 3,
+      "loser_priority": 3,
+      "decision_latency_ms": 95.058,
+      "wait_cost_s": 10.914401872071668,
+      "reroute_cost_s": 0.0,
+      "extra_detour_m": 0.0,
+      "winner_route_preserved": true,
+      "deadlock_prevented": false
+    },
+    {
+      "event": "REROUTE_STARTED",
+      "robot_id": "alpha_4",
+      "timestamp": 1791116321.62231,
+      "conflict_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 4",
+      "zone": "MAIN_NORTH_CROSS",
+      "reason": "WAITING_TIME",
+      "route_length_m": 38.58,
+      "extra_detour_m": 0.0,
+      "route_version": 2
+    },
+    {
+      "event": "NEGOTIATION_COMPLETE",
+      "robot_id": "ALPHA 3",
+      "timestamp": 1791116321.9057896,
+      "event_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 4:decision",
+      "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 4",
+      "zone": "RIGHT_INNER_CORRIDOR",
+      "authority": "ALPHA 3",
+      "decision_version": 1,
+      "winner": "ALPHA 4",
+      "loser": "ALPHA 3",
+      "loser_action": "YIELD_AND_WAIT",
+      "decision_basis": "MISSION_PROGRESS",
+      "winner_priority": 3,
+      "loser_priority": 3,
+      "decision_latency_ms": 37.643,
+      "wait_cost_s": 23.419799759400465,
+      "reroute_cost_s": Infinity,
+      "extra_detour_m": null,
+      "winner_route_preserved": true,
+      "deadlock_prevented": false
+    },
+    {
+      "event": "NEGOTIATION_COMPLETE",
+      "robot_id": "ALPHA 2",
+      "timestamp": 1791116321.9396765,
+      "event_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 3:decision",
+      "conflict_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 3",
+      "zone": "MAIN_NORTH_CROSS",
+      "authority": "ALPHA 2",
+      "decision_version": 1,
+      "winner": "ALPHA 3",
+      "loser": "ALPHA 2",
+      "loser_action": "REROUTE",
+      "decision_basis": "ZONE_COMMITTED",
+      "winner_priority": 3,
+      "loser_priority": 3,
+      "decision_latency_ms": 73.952,
+      "wait_cost_s": 1.4270458614501227,
+      "reroute_cost_s": 0.0,
+      "extra_detour_m": 0.0,
+      "winner_route_preserved": true,
+      "deadlock_prevented": false
+    },
+    {
+      "event": "NEGOTIATION_COMPLETE",
+      "robot_id": "ALPHA 2",
+      "timestamp": 1791116321.9886124,
+      "event_id": "MAIN_UPPER_CROSS:ALPHA 2:ALPHA 3:decision",
+      "conflict_id": "MAIN_UPPER_CROSS:ALPHA 2:ALPHA 3",
+      "zone": "MAIN_UPPER_CROSS",
+      "authority": "ALPHA 2",
+      "decision_version": 1,
+      "winner": "ALPHA 3",
+      "loser": "ALPHA 2",
+      "loser_action": "REROUTE",
+      "decision_basis": "MISSION_PROGRESS",
+      "winner_priority": 3,
+      "loser_priority": 3,
+      "decision_latency_ms": 122.228,
+      "wait_cost_s": 6.427150129304834,
+      "reroute_cost_s": 0.0,
+      "extra_detour_m": 0.0,
+      "winner_route_preserved": true,
+      "deadlock_prevented": false
+    },
+    {
+      "event": "REROUTE_STARTED",
+      "robot_id": "alpha_2",
+      "timestamp": 1791116321.9905431,
+      "conflict_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 3",
+      "zone": "MAIN_NORTH_CROSS",
+      "reason": "ZONE_COMMITTED",
+      "route_length_m": 49.38,
+      "extra_detour_m": 0.0,
+      "route_version": 2
+    },
+    {
+      "event": "NEGOTIATION_COMPLETE",
+      "robot_id": "ALPHA 1",
+      "timestamp": 1791116327.410738,
+      "event_id": "MAIN_NORTH_CROSS:ALPHA 1:ALPHA 5:decision",
+      "conflict_id": "MAIN_NORTH_CROSS:ALPHA 1:ALPHA 5",
+      "zone": "MAIN_NORTH_CROSS",
+      "authority": "ALPHA 1",
+      "decision_version": 1,
+      "winner": "ALPHA 5",
+      "loser": "ALPHA 1",
+      "loser_action": "YIELD_AND_WAIT",
+      "decision_basis": "MISSION_PROGRESS",
+      "winner_priority": 3,
+      "loser_priority": 3,
+      "decision_latency_ms": 27.679,
+      "wait_cost_s": 11.199904221699635,
+      "reroute_cost_s": Infinity,
+      "extra_detour_m": null,
+      "winner_route_preserved": true,
+      "deadlock_prevented": false
+    },
+    {
+      "event": "YIELD_POCKET_SELECTED",
+      "robot_id": "ALPHA 5",
+      "timestamp": 1791116327.860845,
+      "event_id": "POCKET:ALPHA 4:ALPHA 5",
+      "conflict_id": "POCKET:ALPHA 4:ALPHA 5",
+      "winner": "ALPHA 4",
+      "loser": "ALPHA 5",
+      "target": [
+        36.1,
+        37.39608000022784
+      ]
+    }
+  ],
+  "conflict_metrics": {
+    "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 4": {
+      "initial_detection_distance_m": 9.837316503627575,
+      "relative_velocity_mps": 1.6331501138793685,
+      "closing_velocity_mps": 0.0,
+      "estimated_combined_braking_distance_m": 2.278022233026251,
+      "stopping_margin_m": 4.379294270601324,
+      "winner_hold_samples": 0,
+      "winner": "ALPHA 2",
+      "loser": "ALPHA 4",
+      "loser_action": "REROUTE",
+      "decision_latency_ms": 51.158119,
+      "winner_speed_sample_count": 8,
+      "winner_peak_speed_mps": 1.7187499999806748,
+      "winner_mean_sampled_speed_mps": 1.6600235670284584
+    },
+    "MAIN_UPPER_CROSS:ALPHA 2:ALPHA 4": {
+      "initial_detection_distance_m": 9.837316503627575,
+      "relative_velocity_mps": 1.6331501138793685,
+      "closing_velocity_mps": 0.0,
+      "estimated_combined_braking_distance_m": 2.278022233026251,
+      "stopping_margin_m": 4.379294270601324,
+      "winner_hold_samples": 0,
+      "winner": "ALPHA 2",
+      "loser": "ALPHA 4",
+      "loser_action": "REROUTE",
+      "decision_latency_ms": 95.058212,
+      "winner_speed_sample_count": 8,
+      "winner_peak_speed_mps": 1.7187499999806748,
+      "winner_mean_sampled_speed_mps": 1.6600235670284584
+    },
+    "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 4": {
+      "initial_detection_distance_m": 7.899831728091486,
+      "relative_velocity_mps": 0.7367997611143188,
+      "closing_velocity_mps": 0.0,
+      "estimated_combined_braking_distance_m": 0.4175957644009864,
+      "stopping_margin_m": 4.3022359636904985,
+      "winner_hold_samples": 16,
+      "winner": "ALPHA 4",
+      "loser": "ALPHA 3",
+      "loser_action": "YIELD_AND_WAIT",
+      "decision_latency_ms": 37.642724,
+      "winner_speed_sample_count": 77,
+      "winner_peak_speed_mps": 1.2648001045833044,
+      "winner_mean_sampled_speed_mps": 0.33608178534914
+    },
+    "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 3": {
+      "initial_detection_distance_m": 5.918034860490303,
+      "relative_velocity_mps": 0.9747500000051099,
+      "closing_velocity_mps": 0.5701655934222597,
+      "estimated_combined_braking_distance_m": 2.3794939720671135,
+      "stopping_margin_m": 0.158982930725398,
+      "winner_hold_samples": 77,
+      "winner": "ALPHA 3",
+      "loser": "ALPHA 2",
+      "loser_action": "REROUTE",
+      "decision_latency_ms": 73.952353,
+      "winner_speed_sample_count": 77,
+      "winner_peak_speed_mps": 0.6568001138747455,
+      "winner_mean_sampled_speed_mps": 0.06309612312221839
+    },
+    "MAIN_UPPER_CROSS:ALPHA 2:ALPHA 3": {
+      "initial_detection_distance_m": 5.918034860490303,
+      "relative_velocity_mps": 0.9747500000051099,
+      "closing_velocity_mps": 0.5701655934222597,
+      "estimated_combined_braking_distance_m": 2.3794939720671135,
+      "stopping_margin_m": 0.158982930725398,
+      "winner_hold_samples": 77,
+      "winner": "ALPHA 3",
+      "loser": "ALPHA 2",
+      "loser_action": "REROUTE",
+      "decision_latency_ms": 122.228155,
+      "winner_speed_sample_count": 77,
+      "winner_peak_speed_mps": 0.6568001138747455,
+      "winner_mean_sampled_speed_mps": 0.06309612312221839
+    },
+    "MAIN_NORTH_CROSS:ALPHA 1:ALPHA 5": {
+      "initial_detection_distance_m": 19.30568217808144,
+      "relative_velocity_mps": 1.7142700797080594,
+      "closing_velocity_mps": 0.0,
+      "estimated_combined_braking_distance_m": 2.272401255476322,
+      "stopping_margin_m": 13.85328092260512,
+      "winner_hold_samples": 6,
+      "winner": "ALPHA 5",
+      "loser": "ALPHA 1",
+      "loser_action": "YIELD_AND_WAIT",
+      "decision_latency_ms": 27.678517,
+      "winner_speed_sample_count": 22,
+      "winner_peak_speed_mps": 0.02800011389751947,
+      "winner_mean_sampled_speed_mps": 0.0017839933424912394
+    }
+  },
+  "shared_decisions": {
+    "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 4": {
+      "alpha_2": [
+        [
+          "ALPHA 2",
+          "ALPHA 4",
+          1
+        ]
+      ],
+      "alpha_4": [
+        [
+          "ALPHA 2",
+          "ALPHA 4",
+          1
+        ]
+      ]
+    },
+    "MAIN_UPPER_CROSS:ALPHA 2:ALPHA 4": {
+      "alpha_2": [
+        [
+          "ALPHA 2",
+          "ALPHA 4",
+          1
+        ]
+      ],
+      "alpha_4": [
+        [
+          "ALPHA 2",
+          "ALPHA 4",
+          1
+        ]
+      ]
+    },
+    "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 4": {
+      "alpha_3": [
+        [
+          "ALPHA 4",
+          "ALPHA 3",
+          1
+        ]
+      ],
+      "alpha_4": [
+        [
+          "ALPHA 4",
+          "ALPHA 3",
+          1
+        ]
+      ]
+    },
+    "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 3": {
+      "alpha_2": [
+        [
+          "ALPHA 3",
+          "ALPHA 2",
+          1
+        ]
+      ],
+      "alpha_3": [
+        [
+          "ALPHA 3",
+          "ALPHA 2",
+          1
+        ]
+      ]
+    },
+    "MAIN_UPPER_CROSS:ALPHA 2:ALPHA 3": {
+      "alpha_2": [
+        [
+          "ALPHA 3",
+          "ALPHA 2",
+          1
+        ]
+      ],
+      "alpha_3": [
+        [
+          "ALPHA 3",
+          "ALPHA 2",
+          1
+        ]
+      ]
+    },
+    "MAIN_NORTH_CROSS:ALPHA 1:ALPHA 5": {
+      "alpha_1": [
+        [
+          "ALPHA 5",
+          "ALPHA 1",
+          1
+        ]
+      ],
+      "alpha_5": [
+        [
+          "ALPHA 5",
+          "ALPHA 1",
+          1
+        ]
+      ]
+    }
+  },
+  "final": {
+    "alpha_3": {
+      "pose": [
+        25.000000000032635,
+        30.754254400353545
+      ],
+      "state": "COORDINATION_HOLD",
+      "waypoint": 2,
+      "route": [
+        [
+          25.0,
+          37.4
+        ],
+        [
+          25.0,
+          32.5
+        ],
+        [
+          25.0,
+          23.5
+        ],
+        [
+          32.775,
+          24.4
+        ],
+        [
+          37.775,
+          23.5
+        ],
+        [
+          37.775,
+          16.5
+        ],
+        [
+          37.775,
+          8.0
+        ],
+        [
+          47.775,
+          8.0
+        ],
+        [
+          47.775,
+          4.0
+        ],
+        [
+          45.0,
+          4.0
+        ]
+      ]
+    },
+    "alpha_1": {
+      "pose": [
+        15.400000000021478,
+        32.964887662666726
+      ],
+      "state": "WAYPOINT_TRACK",
+      "waypoint": 1,
+      "route": [
+        [
+          15.4,
+          37.4
+        ],
+        [
+          15.4,
+          32.5
+        ],
+        [
+          25.0,
+          32.5
+        ],
+        [
+          25.0,
+          23.5
+        ],
+        [
+          17.225,
+          24.4
+        ],
+        [
+          12.225,
+          23.5
+        ],
+        [
+          12.225,
+          16.5
+        ],
+        [
+          12.225,
+          8.0
+        ],
+        [
+          12.225,
+          4.0
+        ],
+        [
+          11.5,
+          4.0
+        ]
+      ]
+    },
+    "alpha_2": {
+      "pose": [
+        20.203752084259815,
+        32.82060641893317
+      ],
+      "state": "ALIGN",
+      "waypoint": 0,
+      "route": [
+        [
+          20.200000000013706,
+          34.645364242682234
+        ],
+        [
+          2.225,
+          32.5
+        ],
+        [
+          2.225,
+          23.5
+        ],
+        [
+          2.225,
+          16.5
+        ],
+        [
+          2.225,
+          8.0
+        ],
+        [
+          2.225,
+          4.0
+        ],
+        [
+          5.0,
+          4.0
+        ]
+      ]
+    },
+    "alpha_5": {
+      "pose": [
+        34.59902283260932,
+        37.39584528195092
+      ],
+      "state": "YIELD_RELOCATING",
+      "waypoint": 1,
+      "route": [
+        [
+          34.6,
+          37.4
+        ],
+        [
+          34.6,
+          32.5
+        ],
+        [
+          25.0,
+          32.5
+        ],
+        [
+          25.0,
+          23.5
+        ],
+        [
+          25.0,
+          16.5
+        ],
+        [
+          25.0,
+          8.0
+        ],
+        [
+          17.225,
+          10.4
+        ],
+        [
+          12.225,
+          8.0
+        ],
+        [
+          18.0,
+          4.0
+        ]
+      ]
+    },
+    "alpha_4": {
+      "pose": [
+        31.62189937616467,
+        36.28744365377548
+      ],
+      "state": "COORDINATION_HOLD",
+      "waypoint": 1,
+      "route": [
+        [
+          29.8,
+          37.39452481321217
+        ],
+        [
+          37.775,
+          32.5
+        ],
+        [
+          37.775,
+          23.5
+        ],
+        [
+          37.775,
+          16.5
+        ],
+        [
+          37.775,
+          8.0
+        ],
+        [
+          37.775,
+          4.0
+        ],
+        [
+          38.5,
+          4.0
+        ]
+      ]
+    }
+  },
+  "validator_cleanup": "Observer process exits after stopping its owned simulation"
+}

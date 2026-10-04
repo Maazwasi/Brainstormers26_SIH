@@ -1,0 +1,11 @@
+{
+  "status": "INCOMPLETE",
+  "scenario": "motion",
+  "requested_speed_mps": 0.9,
+  "linear_scale": 2.0,
+  "target_speed_mps": 1.8,
+  "reason": "Route completion was observed in the physical controller log, but the validator remained unresponsive after the ROS launch exited, before exporting measurements. No physical PASS is claimed for this attempt.",
+  "log": "/tmp/swarmx-v2-motion-ht3sfblq.log",
+  "route_completion_log_observed": true,
+  "physical_measurements_exported": false
+}

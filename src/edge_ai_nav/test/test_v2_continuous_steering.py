@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from edge_ai_nav.ros_nodes.local_waypoint_controller import (
-    LocalController, heading_rate, passed_waypoint, wrap)
+    LocalController, heading_rate, passed_waypoint, traction_limited_speed, wrap)
 
 
 @pytest.mark.parametrize('degrees', [15, 30, 45, 60, 90, 135, -30, -90])
@@ -31,6 +31,12 @@ def test_v2_speed_slows_continuously_for_curvature(degrees):
         assert speed < LocalController.desired_speed(follower, math.radians(30))
 
 
+def test_large_platform_retains_cruise_only_without_active_steering():
+    assert traction_limited_speed(1.8,0.0)==pytest.approx(1.8)
+    assert traction_limited_speed(1.8,0.06)==pytest.approx(0.55)
+    assert traction_limited_speed(0.45,0.50)==pytest.approx(0.45)
+
+
 def test_v2_successive_and_s_bend_lookahead_never_reverses():
     route = [(0, 0), (3, 0), (5, 1), (7, 3), (9, 3),
              (11, 1), (13, 1), (15, 3)]
@@ -51,6 +57,17 @@ def test_v2_successive_and_s_bend_lookahead_never_reverses():
         observed.append(follower.lookahead_progress)
     assert observed == sorted(observed)
     assert all(observed[i] >= cumulative[i] for i in range(len(observed)))
+
+
+@pytest.mark.parametrize('distance,large,expected',[
+    (20.,True,1.8),(2.,True,.28),(.5,True,.18),(20.,False,.28)])
+def test_scaled_charge_return_cruises_only_outside_controlled_dock_zone(distance,large,expected):
+    follower=SimpleNamespace(coordination_command={},mission_kind='CHARGING',
+        large_platform=large,terminal_approach_distance=3.6,parking_target='CHARGE_01',
+        graph=SimpleNamespace(nodes={'CHARGE_01':(0.,0.)}),world_pose=lambda:(distance,0.),
+        performance=SimpleNamespace(speed_factor=1.0),
+        p={'smooth_steering':True,'max_linear_speed':1.8})
+    assert LocalController.desired_speed(follower,0.)==pytest.approx(expected)
 
 
 def test_v2_overlapping_return_leg_does_not_capture_future_segment():

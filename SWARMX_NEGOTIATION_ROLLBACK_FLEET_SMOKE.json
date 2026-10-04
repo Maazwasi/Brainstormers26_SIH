@@ -1,0 +1,330 @@
+{
+  "status": "FAIL",
+  "scenario": "fleet",
+  "requested_speed_mps": 0.6,
+  "linear_scale": 2.0,
+  "target_speed_mps": 1.8,
+  "log": "/tmp/swarmx-v2-fleet-dvrcbx21.log",
+  "reason": "Interrupted",
+  "latest_tilt_rad": {
+    "alpha_1": 6.575284811059198e-12,
+    "alpha_2": 2.508341402445966e-10,
+    "alpha_3": 7.522933971004121e-12,
+    "alpha_4": 2.631821436107564e-12,
+    "alpha_5": 1.9825475213656743e-10
+  },
+  "latest_angular_speed": {
+    "alpha_1": 0.09586429804775316,
+    "alpha_2": 0.13515969096384317,
+    "alpha_3": 1.196321764644642e-17,
+    "alpha_4": 0.03904971653737942,
+    "alpha_5": 0.08768033824022928
+  },
+  "braking_phase": "PENDING",
+  "braking_start_speed_mps": 0.0,
+  "measured_stopping_distance_m": null,
+  "maximum_tilt_rad": 1.7323412509600149e-09,
+  "maximum_angular_speed_rad_s": 0.46052726948780576,
+  "yield_hold_cycles": {},
+  "maximum_lateral_speed_mps": 0.15338012594132194,
+  "corner_align_cycles": {
+    "alpha_2:1:2": 1,
+    "alpha_3:1:5": 1,
+    "alpha_2:1:3": 1,
+    "alpha_4:1:2": 1,
+    "alpha_3:1:6": 1,
+    "alpha_4:1:3": 1,
+    "alpha_2:1:4": 1,
+    "alpha_1:1:2": 1,
+    "alpha_3:1:7": 1,
+    "alpha_5:1:2": 1,
+    "alpha_4:1:4": 1,
+    "alpha_1:1:3": 1
+  },
+  "minimum_sampled_separation_m": 4.671,
+  "minimum_sampled_pair_separations_m": {
+    "alpha_1:alpha_2": 4.799999999999999,
+    "alpha_1:alpha_3": 9.6,
+    "alpha_1:alpha_4": 7.579027337932721,
+    "alpha_1:alpha_5": 8.788403644639745,
+    "alpha_2:alpha_3": 4.800000000000001,
+    "alpha_2:alpha_4": 4.671180644414641,
+    "alpha_2:alpha_5": 11.022269370569397,
+    "alpha_3:alpha_4": 4.800000000000001,
+    "alpha_3:alpha_5": 9.600000000000001,
+    "alpha_4:alpha_5": 4.800000000000001
+  },
+  "minimum_sampled_static_gap_m": 1.982,
+  "peak_physical_speed_mps": 0.6,
+  "pocket_seen": false,
+  "peak_physical_speeds_mps": {
+    "alpha_1": 0.5999999999914968,
+    "alpha_2": 0.5819999999907571,
+    "alpha_3": 0.5759999999916948,
+    "alpha_4": 0.5999999999914968,
+    "alpha_5": 0.5999999999914968
+  },
+  "mean_moving_physical_speed_mps": 0.352,
+  "completed": [],
+  "events": [],
+  "maximum_concurrent_outstanding_tasks": 5,
+  "conflict_metrics": {},
+  "shared_decisions": {},
+  "final": {
+    "alpha_2": {
+      "pose": [
+        14.72912550265825,
+        23.769834272432494
+      ],
+      "state": "WAYPOINT_TRACK",
+      "waypoint": 5,
+      "route": [
+        [
+          20.2,
+          37.4
+        ],
+        [
+          20.2,
+          32.5
+        ],
+        [
+          25.0,
+          32.5
+        ],
+        [
+          25.0,
+          23.5
+        ],
+        [
+          17.225,
+          24.4
+        ],
+        [
+          12.225,
+          23.5
+        ],
+        [
+          12.225,
+          16.5
+        ],
+        [
+          12.225,
+          8.0
+        ],
+        [
+          12.225,
+          4.0
+        ],
+        [
+          11.5,
+          4.0
+        ]
+      ]
+    },
+    "alpha_1": {
+      "pose": [
+        24.662178221005238,
+        32.52452769717155
+      ],
+      "state": "ALIGN",
+      "waypoint": 3,
+      "route": [
+        [
+          15.4,
+          37.4
+        ],
+        [
+          15.4,
+          32.5
+        ],
+        [
+          25.0,
+          32.5
+        ],
+        [
+          25.0,
+          23.5
+        ],
+        [
+          12.225,
+          23.5
+        ],
+        [
+          7.225,
+          24.4
+        ],
+        [
+          2.225,
+          23.5
+        ],
+        [
+          2.225,
+          16.5
+        ],
+        [
+          2.225,
+          8.0
+        ],
+        [
+          2.225,
+          4.0
+        ],
+        [
+          5.0,
+          4.0
+        ]
+      ]
+    },
+    "alpha_4": {
+      "pose": [
+        25.417188766938988,
+        23.720440827294684
+      ],
+      "state": "WAYPOINT_TRACK",
+      "waypoint": 4,
+      "route": [
+        [
+          29.8,
+          37.4
+        ],
+        [
+          29.8,
+          32.5
+        ],
+        [
+          25.0,
+          32.5
+        ],
+        [
+          25.0,
+          23.5
+        ],
+        [
+          37.775,
+          23.5
+        ],
+        [
+          42.775,
+          24.4
+        ],
+        [
+          37.775,
+          23.5
+        ],
+        [
+          37.775,
+          16.5
+        ],
+        [
+          37.775,
+          8.0
+        ],
+        [
+          37.775,
+          4.0
+        ],
+        [
+          38.5,
+          4.0
+        ]
+      ]
+    },
+    "alpha_3": {
+      "pose": [
+        16.414687433981182,
+        5.025521987302407
+      ],
+      "state": "WAYPOINT_TRACK",
+      "waypoint": 7,
+      "route": [
+        [
+          25.0,
+          37.4
+        ],
+        [
+          25.0,
+          32.5
+        ],
+        [
+          25.0,
+          23.5
+        ],
+        [
+          25.0,
+          16.5
+        ],
+        [
+          25.0,
+          8.0
+        ],
+        [
+          17.225,
+          10.4
+        ],
+        [
+          12.225,
+          8.0
+        ],
+        [
+          18.0,
+          4.0
+        ]
+      ]
+    },
+    "alpha_5": {
+      "pose": [
+        33.446580681063196,
+        32.25936352001925
+      ],
+      "state": "WAYPOINT_TRACK",
+      "waypoint": 2,
+      "route": [
+        [
+          34.6,
+          37.4
+        ],
+        [
+          34.6,
+          32.5
+        ],
+        [
+          25.0,
+          32.5
+        ],
+        [
+          25.0,
+          23.5
+        ],
+        [
+          32.775,
+          24.4
+        ],
+        [
+          37.775,
+          23.5
+        ],
+        [
+          37.775,
+          16.5
+        ],
+        [
+          37.775,
+          8.0
+        ],
+        [
+          47.775,
+          8.0
+        ],
+        [
+          47.775,
+          4.0
+        ],
+        [
+          45.0,
+          4.0
+        ]
+      ]
+    }
+  },
+  "validator_cleanup": "Observer process exits after stopping its owned simulation"
+}

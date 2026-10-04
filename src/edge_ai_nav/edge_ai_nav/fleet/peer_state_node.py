@@ -29,6 +29,9 @@ class PeerState(Node):
         self.robot_id, self.p = p['robot_id'], p
         with open(p['config_file']) as stream:
             self.cfg = yaml.safe_load(stream)['warehouse']
+        self.large_platform=bool(self.cfg.get('scale_speed_upgrade',{}).get('experimental',False))
+        self.physical_diameter=float(self.cfg.get('amr_footprint_diameter_m',1.18))
+        self.peer_clearance=float(self.cfg.get('stage6',{}).get('physical_stop_distance_m',2.0))
         self.meta = self.cfg['stage4_peer_metadata'][self.robot_id]
         self.graph = WarehouseGraph(self.cfg)
         self.zone_request = None

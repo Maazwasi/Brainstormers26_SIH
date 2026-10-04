@@ -1,0 +1,37 @@
+[
+  {
+    "speed": 1.5,
+    "multiplier": 2.5,
+    "scenario": "motion",
+    "status": "PASS",
+    "report": "SWARMX_LARGE_20261004-171815_1.5_motion.json"
+  },
+  {
+    "speed": 1.5,
+    "multiplier": 2.5,
+    "scenario": "priority",
+    "status": "PASS",
+    "report": "SWARMX_LARGE_20261004-171815_1.5_priority.json"
+  },
+  {
+    "speed": 1.5,
+    "multiplier": 2.5,
+    "scenario": "reroute",
+    "status": "PASS",
+    "report": "SWARMX_LARGE_20261004-171815_1.5_reroute.json"
+  },
+  {
+    "speed": 1.5,
+    "multiplier": 2.5,
+    "scenario": "charging_gap",
+    "status": "PASS",
+    "report": "SWARMX_LARGE_20261004-171815_1.5_charging_gap.json"
+  },
+  {
+    "speed": 1.8,
+    "multiplier": 3.0,
+    "scenario": "motion",
+    "status": "FAIL",
+    "report": "SWARMX_LARGE_20261004-171815_1.8_motion.json"
+  }
+]

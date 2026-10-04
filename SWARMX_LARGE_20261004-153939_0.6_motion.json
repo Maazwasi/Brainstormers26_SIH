@@ -1,0 +1,163 @@
+{
+  "status": "PASS",
+  "scenario": "motion",
+  "requested_speed_mps": 0.6,
+  "linear_scale": 2.0,
+  "target_speed_mps": 1.8,
+  "log": "/tmp/swarmx-v2-motion-wgvg1e_l.log",
+  "latest_tilt_rad": {
+    "alpha_2": 7.522940544976341e-12,
+    "alpha_1": 7.522940746135734e-12,
+    "alpha_3": 2.4143921330705433e-10,
+    "alpha_4": 7.522940332630176e-12,
+    "alpha_5": 7.522940601108368e-12
+  },
+  "latest_angular_speed": {
+    "alpha_2": 5.822045974509236e-19,
+    "alpha_1": 1.2096359061130706e-19,
+    "alpha_3": 0.04235909926544261,
+    "alpha_4": 8.937724114062251e-20,
+    "alpha_5": 8.1267772715358795e-19
+  },
+  "braking_phase": "COMPLETE",
+  "braking_start_speed_mps": 0.5999999999932731,
+  "measured_stopping_distance_m": 0.22679688496516537,
+  "maximum_tilt_rad": 1.7376946484073293e-09,
+  "maximum_angular_speed_rad_s": 0.4605274148671191,
+  "yield_hold_cycles": {},
+  "maximum_lateral_speed_mps": 0.16620921176445708,
+  "corner_align_cycles": {
+    "alpha_3:1:2": 1,
+    "alpha_3:1:3": 1,
+    "alpha_3:1:4": 1,
+    "alpha_3:1:5": 1,
+    "alpha_3:1:6": 1,
+    "alpha_3:1:7": 1,
+    "alpha_3:1:8": 1
+  },
+  "minimum_sampled_separation_m": 4.8,
+  "minimum_sampled_pair_separations_m": {
+    "alpha_1:alpha_2": 4.799999999999999,
+    "alpha_1:alpha_3": 10.959762817007496,
+    "alpha_1:alpha_4": 14.4,
+    "alpha_1:alpha_5": 19.200000000000003,
+    "alpha_2:alpha_3": 7.724476924046627,
+    "alpha_2:alpha_4": 9.600000000000001,
+    "alpha_2:alpha_5": 14.400000000000002,
+    "alpha_3:alpha_4": 8.775524442463047,
+    "alpha_3:alpha_5": 12.441903873014578,
+    "alpha_4:alpha_5": 4.800000000000001
+  },
+  "minimum_sampled_static_gap_m": 2.11,
+  "peak_physical_speed_mps": 0.6,
+  "pocket_seen": false,
+  "mean_moving_physical_speed_mps": 0.322,
+  "completed": [],
+  "events": [],
+  "conflict_metrics": {},
+  "shared_decisions": {},
+  "final": {
+    "alpha_1": {
+      "pose": [
+        15.4,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          15.4,
+          37.4
+        ]
+      ]
+    },
+    "alpha_5": {
+      "pose": [
+        34.6,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          34.6,
+          37.4
+        ]
+      ]
+    },
+    "alpha_4": {
+      "pose": [
+        29.8,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          29.8,
+          37.4
+        ]
+      ]
+    },
+    "alpha_3": {
+      "pose": [
+        24.096755964055337,
+        30.730454535222957
+      ],
+      "state": "DEMO_STAGED",
+      "waypoint": 9,
+      "route": [
+        [
+          25.0,
+          4.0
+        ],
+        [
+          25.0,
+          18.0
+        ],
+        [
+          26.0,
+          19.73205080756888
+        ],
+        [
+          25.482361909794957,
+          21.663902460147014
+        ],
+        [
+          23.55051025721682,
+          22.181540550352057
+        ],
+        [
+          24.06814834742186,
+          24.113392202930193
+        ],
+        [
+          22.653934785048765,
+          25.52760576530329
+        ],
+        [
+          24.06814834742186,
+          26.941819327676384
+        ],
+        [
+          24.06814834742186,
+          30.941819327676384
+        ]
+      ]
+    },
+    "alpha_2": {
+      "pose": [
+        20.2,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          20.2,
+          37.4
+        ]
+      ]
+    }
+  }
+}

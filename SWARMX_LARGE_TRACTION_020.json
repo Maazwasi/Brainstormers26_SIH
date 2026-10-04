@@ -1,0 +1,118 @@
+{
+  "status": "PASS",
+  "scenario": "turn",
+  "requested_speed_mps": 0.6,
+  "log": "/tmp/swarmx-v2-turn-zxdxqn6a.log",
+  "latest_tilt_rad": {
+    "alpha_2": 5.060365757737634e-12,
+    "alpha_1": 5.060365651902933e-12,
+    "alpha_3": 1.4132734320089473e-10,
+    "alpha_4": 5.060366029911273e-12,
+    "alpha_5": 5.060365865936568e-12
+  },
+  "latest_angular_speed": {
+    "alpha_2": 7.898792278720001e-19,
+    "alpha_1": 4.355698292531876e-19,
+    "alpha_3": 0.022463486927358185,
+    "alpha_4": 5.9257731372629875e-19,
+    "alpha_5": 1.4755039949158339e-19
+  },
+  "braking_phase": "PENDING",
+  "braking_start_speed_mps": 0.0,
+  "measured_stopping_distance_m": null,
+  "maximum_tilt_rad": 1.1654368053160638e-09,
+  "maximum_angular_speed_rad_s": 0.46052704732604444,
+  "yield_hold_cycles": {},
+  "maximum_lateral_speed_mps": 0.023251602654497917,
+  "corner_align_cycles": {
+    "alpha_3:1:2": 1
+  },
+  "minimum_sampled_separation_m": 4.8,
+  "minimum_sampled_static_gap_m": 2.11,
+  "peak_physical_speed_mps": 0.6,
+  "pocket_seen": false,
+  "mean_moving_physical_speed_mps": 0.198,
+  "completed": [],
+  "events": [],
+  "shared_decisions": {},
+  "final": {
+    "alpha_5": {
+      "pose": [
+        34.6,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          34.6,
+          37.4
+        ]
+      ]
+    },
+    "alpha_2": {
+      "pose": [
+        20.2,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          20.2,
+          37.4
+        ]
+      ]
+    },
+    "alpha_3": {
+      "pose": [
+        26.78421794787552,
+        19.00351774238871
+      ],
+      "state": "DEMO_STAGED",
+      "waypoint": 3,
+      "route": [
+        [
+          25.0,
+          16.5
+        ],
+        [
+          25.0,
+          19.0
+        ],
+        [
+          27.0,
+          19.0
+        ]
+      ]
+    },
+    "alpha_4": {
+      "pose": [
+        29.8,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          29.8,
+          37.4
+        ]
+      ]
+    },
+    "alpha_1": {
+      "pose": [
+        15.4,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          15.4,
+          37.4
+        ]
+      ]
+    }
+  }
+}

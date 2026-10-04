@@ -1,0 +1,142 @@
+{
+  "status": "FAIL",
+  "scenario": "motion",
+  "requested_speed_mps": 0.6,
+  "log": "/tmp/swarmx-v2-motion-x0toyrvp.log",
+  "reason": "Persistent corner chasing: alpha_3:1:4",
+  "latest_tilt_rad": {
+    "alpha_2": 5.060365924668045e-12,
+    "alpha_1": 5.0603658755457076e-12,
+    "alpha_3": 2.04185675928973e-10,
+    "alpha_4": 5.060365753478984e-12,
+    "alpha_5": 5.060366066499009e-12
+  },
+  "latest_angular_speed": {
+    "alpha_2": 2.106109888751067e-20,
+    "alpha_1": 6.7650709629953005e-19,
+    "alpha_3": 0.46052733745710234,
+    "alpha_4": 5.243496965355067e-19,
+    "alpha_5": 4.970265166969859e-19
+  },
+  "braking_phase": "COMPLETE",
+  "braking_start_speed_mps": 0.5999999999932731,
+  "measured_stopping_distance_m": 0.22679688479670723,
+  "maximum_tilt_rad": 1.2018084546353087e-09,
+  "maximum_angular_speed_rad_s": 0.48617620530202077,
+  "yield_hold_cycles": {},
+  "corner_align_cycles": {
+    "alpha_3:1:4": 4
+  },
+  "minimum_sampled_separation_m": 4.2,
+  "minimum_sampled_static_gap_m": 2.51,
+  "peak_physical_speed_mps": 0.608,
+  "pocket_seen": false,
+  "mean_moving_physical_speed_mps": 0.366,
+  "completed": [],
+  "events": [],
+  "shared_decisions": {},
+  "final": {
+    "alpha_3": {
+      "pose": [
+        23.278742937160338,
+        21.699051892813813
+      ],
+      "state": "WAYPOINT_TRACK",
+      "waypoint": 4,
+      "route": [
+        [
+          25.0,
+          4.0
+        ],
+        [
+          25.0,
+          18.0
+        ],
+        [
+          26.0,
+          19.73205080756888
+        ],
+        [
+          25.482361909794957,
+          21.663902460147014
+        ],
+        [
+          23.55051025721682,
+          22.181540550352057
+        ],
+        [
+          24.06814834742186,
+          24.113392202930193
+        ],
+        [
+          22.653934785048765,
+          25.52760576530329
+        ],
+        [
+          24.06814834742186,
+          26.941819327676384
+        ],
+        [
+          24.06814834742186,
+          30.941819327676384
+        ]
+      ]
+    },
+    "alpha_1": {
+      "pose": [
+        16.6,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          16.6,
+          37.0
+        ]
+      ]
+    },
+    "alpha_2": {
+      "pose": [
+        20.8,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          20.8,
+          37.0
+        ]
+      ]
+    },
+    "alpha_4": {
+      "pose": [
+        29.2,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          29.2,
+          37.0
+        ]
+      ]
+    },
+    "alpha_5": {
+      "pose": [
+        33.4,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          33.4,
+          37.0
+        ]
+      ]
+    }
+  }
+}

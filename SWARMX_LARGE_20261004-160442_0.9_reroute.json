@@ -1,0 +1,226 @@
+{
+  "status": "FAIL",
+  "scenario": "reroute",
+  "requested_speed_mps": 0.9,
+  "linear_scale": 2.0,
+  "target_speed_mps": 1.8,
+  "log": "/tmp/swarmx-v2-reroute-q43k76mv.log",
+  "reason": "Persistent corner chasing: alpha_3:2:5",
+  "latest_tilt_rad": {
+    "alpha_1": 7.52294038272659e-12,
+    "alpha_2": 7.522940338588507e-12,
+    "alpha_3": 6.76796703944393e-11,
+    "alpha_4": 7.522940505789868e-12,
+    "alpha_5": 7.522940394313461e-12
+  },
+  "latest_angular_speed": {
+    "alpha_1": 8.398731147785356e-19,
+    "alpha_2": 3.136970143056608e-19,
+    "alpha_3": 0.34035688614162757,
+    "alpha_4": 1.1714896904447571e-18,
+    "alpha_5": 8.099970824120434e-19
+  },
+  "braking_phase": "PENDING",
+  "braking_start_speed_mps": 0.0,
+  "measured_stopping_distance_m": null,
+  "maximum_tilt_rad": 1.7762396574487173e-09,
+  "maximum_angular_speed_rad_s": 0.4605274148389969,
+  "yield_hold_cycles": {},
+  "maximum_lateral_speed_mps": 0.14104587491446055,
+  "corner_align_cycles": {
+    "alpha_3:2:1": 1,
+    "alpha_3:2:2": 1,
+    "alpha_3:2:5": 4
+  },
+  "minimum_sampled_separation_m": 4.8,
+  "minimum_sampled_pair_separations_m": {
+    "alpha_1:alpha_2": 4.799999999999999,
+    "alpha_1:alpha_3": 30.303289866102524,
+    "alpha_1:alpha_4": 14.4,
+    "alpha_1:alpha_5": 23.899803869488142,
+    "alpha_2:alpha_3": 26.04921234350126,
+    "alpha_2:alpha_4": 9.600000000000001,
+    "alpha_2:alpha_5": 19.479235739627985,
+    "alpha_3:alpha_4": 18.366696840621053,
+    "alpha_3:alpha_5": 5.19539082628485,
+    "alpha_4:alpha_5": 11.582772768210557
+  },
+  "minimum_sampled_static_gap_m": 2.008,
+  "peak_physical_speed_mps": 0.9,
+  "pocket_seen": false,
+  "peak_physical_speeds_mps": {
+    "alpha_1": 0.0,
+    "alpha_2": 0.0,
+    "alpha_3": 0.8998544711357559,
+    "alpha_4": 0.0,
+    "alpha_5": 0.8999999999907979
+  },
+  "mean_moving_physical_speed_mps": 0.614,
+  "completed": [],
+  "events": [
+    {
+      "event": "NEGOTIATION_COMPLETE",
+      "robot_id": "ALPHA 3",
+      "timestamp": 1791110480.891572,
+      "event_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 5:decision",
+      "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 5",
+      "zone": "RIGHT_INNER_CORRIDOR",
+      "authority": "ALPHA 3",
+      "decision_version": 1,
+      "winner": "ALPHA 5",
+      "loser": "ALPHA 3",
+      "loser_action": "REROUTE",
+      "decision_basis": "ZONE_COMMITTED",
+      "winner_priority": 4,
+      "loser_priority": 2,
+      "decision_latency_ms": 11.013,
+      "wait_cost_s": 25.334257301746813,
+      "reroute_cost_s": 0.0,
+      "extra_detour_m": 0.0,
+      "winner_route_preserved": true,
+      "deadlock_prevented": false
+    },
+    {
+      "event": "REROUTE_STARTED",
+      "robot_id": "alpha_3",
+      "timestamp": 1791110480.8957598,
+      "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 5",
+      "zone": "RIGHT_INNER_CORRIDOR",
+      "reason": "ZONE_COMMITTED",
+      "route_length_m": 27.36,
+      "extra_detour_m": 0.0,
+      "route_version": 2
+    }
+  ],
+  "conflict_metrics": {
+    "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 5": {
+      "initial_detection_distance_m": 6.794093435433952,
+      "relative_velocity_mps": 0.0015999544416445148,
+      "closing_velocity_mps": 0.0010832555739927843,
+      "estimated_combined_braking_distance_m": 1.969118627183085e-06,
+      "stopping_margin_m": 3.613712326864427,
+      "winner_hold_samples": 0,
+      "winner": "ALPHA 5",
+      "loser": "ALPHA 3",
+      "loser_action": "REROUTE",
+      "decision_latency_ms": 11.013109,
+      "winner_speed_sample_count": 700,
+      "winner_peak_speed_mps": 0.8999999999907979,
+      "winner_mean_sampled_speed_mps": 0.7587614763711135
+    }
+  },
+  "shared_decisions": {
+    "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 5": {
+      "alpha_3": [
+        [
+          "ALPHA 5",
+          "ALPHA 3",
+          1
+        ]
+      ],
+      "alpha_5": [
+        [
+          "ALPHA 5",
+          "ALPHA 3",
+          1
+        ]
+      ]
+    }
+  },
+  "final": {
+    "alpha_1": {
+      "pose": [
+        15.4,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          15.4,
+          37.4
+        ]
+      ]
+    },
+    "alpha_4": {
+      "pose": [
+        29.8,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          29.8,
+          37.4
+        ]
+      ]
+    },
+    "alpha_5": {
+      "pose": [
+        37.775000000000006,
+        8.210089948631966
+      ],
+      "state": "DEMO_STAGED",
+      "waypoint": 2,
+      "route": [
+        [
+          37.775,
+          29.0
+        ],
+        [
+          37.775,
+          8.0
+        ]
+      ]
+    },
+    "alpha_2": {
+      "pose": [
+        20.2,
+        37.4
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          20.2,
+          37.4
+        ]
+      ]
+    },
+    "alpha_3": {
+      "pose": [
+        45.080686208770445,
+        4.287374132193364
+      ],
+      "state": "WAYPOINT_TRACK",
+      "waypoint": 5,
+      "route": [
+        [
+          42.775000000000006,
+          24.399999999999995
+        ],
+        [
+          47.775,
+          23.5
+        ],
+        [
+          47.775,
+          16.5
+        ],
+        [
+          47.775,
+          8.0
+        ],
+        [
+          47.775,
+          4.0
+        ],
+        [
+          45.0,
+          4.0
+        ]
+      ]
+    }
+  }
+}

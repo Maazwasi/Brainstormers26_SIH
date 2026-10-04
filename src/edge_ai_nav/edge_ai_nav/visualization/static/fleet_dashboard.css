@@ -12,3 +12,4 @@ aside{display:flex;flex-direction:column;gap:9px}.panel{background:#11191f;borde
 .assignment-picker input{accent-color:#48bdd2}
 .manual-robot.hidden{display:none}
 .mission-route.original-route{stroke:#aab3bc;stroke-width:2;stroke-dasharray:5 8;opacity:.30;filter:none}
+.summary{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}.summary div{padding:9px 10px}

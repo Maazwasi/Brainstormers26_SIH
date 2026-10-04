@@ -37,6 +37,8 @@ class WarehouseGraph:
         self.zones = {k:v for k,v in load_zones(cfg).items() if k != 'obstacle_area'}
         self.obstacles = g['obstacles']
         self.clearance = g['clearance']
+        self.large_platform=bool(cfg.get('scale_speed_upgrade',{}).get('experimental',False))
+        self.peer_clearance=float(cfg.get('stage6',{}).get('physical_stop_distance_m',2.0))
         bounds = g.get('bounds', cfg.get('bounds', {'x': [-12.0, 12.0], 'y': [-9.0, 9.0]}))
         self.bounds = bounds
         self.side_aisle_cost_multiplier = float(g.get('side_aisle_cost_multiplier', 1.0))
@@ -388,7 +390,7 @@ class WarehouseGraph:
         for name in self.parking:
             point=self.nodes[name]
             if name in blocked: continue
-            if any(self.point_segment_distance(point,a,b)<0.9
+            if any(self.point_segment_distance(point,a,b)<(self.peer_clearance if self.large_platform else 0.9)
                    for route in routes for a,b in zip(route,route[1:])):
                 continue
             try: route=self.route_to(position,name)
@@ -401,7 +403,7 @@ class WarehouseGraph:
         blocked=set(unavailable); routes=[r for r in active_routes if len(r)>1]; choices=[]
         for name in self.charging:
             point=self.nodes[name]
-            if name in blocked or any(self.point_segment_distance(point,a,b)<0.8
+            if name in blocked or any(self.point_segment_distance(point,a,b)<(self.peer_clearance if self.large_platform else 0.8)
                                       for route in routes for a,b in zip(route,route[1:])):
                 continue
             try: cost,route=self.route_to_with_cost(position,name)
@@ -409,10 +411,11 @@ class WarehouseGraph:
             choices.append((cost,name,route))
         return sorted(choices,key=lambda item:(item[0],item[1]))
 
-    def intent(self,position,remaining):
+    def intent(self,position,remaining,zone_name=None):
         points=[position]+list(remaining)
         candidates=[]
         for name,zone in self.zones.items():
+            if zone_name is not None and name!=zone_name:continue
             traveled=0.; entry=None; leave=0.
             for a,b in zip(points,points[1:]):
                 length=math.dist(a,b); interval=segment_interval(a,b,zone)

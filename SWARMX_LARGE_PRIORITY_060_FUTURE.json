@@ -1,0 +1,169 @@
+{
+  "status": "PASS",
+  "scenario": "priority",
+  "requested_speed_mps": 0.6,
+  "log": "/tmp/swarmx-v2-priority-zlz4vr2_.log",
+  "latest_tilt_rad": {
+    "alpha_1": 5.060366015820032e-12,
+    "alpha_2": 2.7160857723908084e-10,
+    "alpha_3": 5.0603660343794e-12,
+    "alpha_4": 5.0603661199268144e-12,
+    "alpha_5": 5.060365948923662e-12
+  },
+  "latest_angular_speed": {
+    "alpha_1": 2.392335851676353e-19,
+    "alpha_2": 4.621543768505747e-19,
+    "alpha_3": 4.265781825112783e-19,
+    "alpha_4": 4.367144761959229e-19,
+    "alpha_5": 1.1851699450839774e-19
+  },
+  "minimum_sampled_separation_m": 4.2,
+  "minimum_sampled_static_gap_m": 2.51,
+  "peak_physical_speed_mps": 0.6,
+  "pocket_seen": false,
+  "mean_moving_physical_speed_mps": 0.279,
+  "completed": [],
+  "events": [
+    {
+      "event": "NEGOTIATION_COMPLETE",
+      "robot_id": "ALPHA 1",
+      "timestamp": 1791103371.2626462,
+      "event_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2:decision",
+      "conflict_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2",
+      "zone": "MAIN_UPPER_CROSS",
+      "authority": "ALPHA 1",
+      "decision_version": 1,
+      "winner": "ALPHA 1",
+      "loser": "ALPHA 2",
+      "loser_action": "YIELD_AND_WAIT",
+      "decision_basis": "TASK_PRIORITY",
+      "winner_priority": 4,
+      "loser_priority": 2,
+      "decision_latency_ms": 5.485,
+      "wait_cost_s": 16.74487179487179,
+      "reroute_cost_s": Infinity,
+      "extra_detour_m": null,
+      "winner_route_preserved": true,
+      "deadlock_prevented": false
+    },
+    {
+      "event": "CONFLICT_RESOLVED",
+      "robot_id": "ALPHA 1",
+      "timestamp": 1791103414.2489207,
+      "event_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2:resolved",
+      "conflict_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2",
+      "zone": "MAIN_UPPER_CROSS",
+      "winner": "ALPHA 1",
+      "loser": "ALPHA 2",
+      "actual_delay_s": 42.996,
+      "baseline_delay_s": 38.49,
+      "time_saved_s": 0.0
+    }
+  ],
+  "shared_decisions": {
+    "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2": {
+      "alpha_1": [
+        [
+          "ALPHA 1",
+          "ALPHA 2",
+          1
+        ]
+      ],
+      "alpha_2": [
+        [
+          "ALPHA 1",
+          "ALPHA 2",
+          1
+        ]
+      ]
+    }
+  },
+  "final": {
+    "alpha_3": {
+      "pose": [
+        25.0,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          25.0,
+          37.0
+        ]
+      ]
+    },
+    "alpha_5": {
+      "pose": [
+        33.4,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          33.4,
+          37.0
+        ]
+      ]
+    },
+    "alpha_4": {
+      "pose": [
+        29.2,
+        37.0
+      ],
+      "state": "CHARGING",
+      "waypoint": 0,
+      "route": [
+        [
+          29.2,
+          37.0
+        ]
+      ]
+    },
+    "alpha_1": {
+      "pose": [
+        30.794639999642772,
+        23.5
+      ],
+      "state": "DEMO_STAGED",
+      "waypoint": 3,
+      "route": [
+        [
+          19.0,
+          23.5
+        ],
+        [
+          25.0,
+          23.5
+        ],
+        [
+          31.0,
+          23.5
+        ]
+      ]
+    },
+    "alpha_2": {
+      "pose": [
+        25.0,
+        14.711171213381963
+      ],
+      "state": "DEMO_STAGED",
+      "waypoint": 3,
+      "route": [
+        [
+          25.0,
+          32.5
+        ],
+        [
+          25.0,
+          23.5
+        ],
+        [
+          25.0,
+          14.5
+        ]
+      ]
+    }
+  }
+}
