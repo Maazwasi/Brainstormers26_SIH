@@ -1,0 +1,163 @@
+<?xml version="1.0"?>
+<sdf version="1.9" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Phase 1 geometry. Phase 2 will connect these destinations with a graph. -->
+  <xacro:macro name="wall" params="id x y z sx sy">
+    <model name="wall_${id}"><static>true</static><pose>${x} ${y} ${z} 0 0 0</pose>
+      <link name="wall">
+        <collision name="collision"><geometry><box><size>${sx} ${sy} 2.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>${sx} ${sy} 2.5</size></box></geometry>
+          <material><ambient>0.64 0.69 0.72 1</ambient><diffuse>0.72 0.76 0.78 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+  </xacro:macro>
+
+  <xacro:macro name="shelf" params="id x y">
+    <model name="SHELF_${str(id).zfill(2)}"><static>true</static><pose>${x} ${y} 1.10 0 0 0</pose>
+      <link name="rack">
+        <collision name="collision"><geometry><box><size>5.8 1.1 2.2</size></box></geometry></collision>
+        <visual name="frame"><geometry><box><size>5.8 1.1 2.2</size></box></geometry>
+          <material><ambient>0.24 0.31 0.35 1</ambient><diffuse>0.33 0.42 0.47 1</diffuse></material>
+        </visual>
+        <visual name="top_rail"><pose>0 0 1.07 0 0 0</pose>
+          <geometry><box><size>5.8 1.1 0.06</size></box></geometry>
+          <material><ambient>0.72 0.48 0.12 1</ambient><diffuse>0.78 0.54 0.14 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+  </xacro:macro>
+
+  <xacro:macro name="pickup" params="id x y">
+    <model name="PICKUP_${str(id).zfill(2)}"><static>true</static><pose>${x} ${y} 0.012 0 0 0</pose>
+      <link name="floor_marker"><visual name="visual">
+        <geometry><cylinder><radius>0.48</radius><length>0.024</length></cylinder></geometry>
+        <material><ambient>0.08 0.51 0.42 1</ambient><diffuse>0.10 0.64 0.51 1</diffuse></material>
+      </visual></link>
+    </model>
+  </xacro:macro>
+
+  <xacro:macro name="drop" params="id x y">
+    <model name="DROP_${str(id).zfill(2)}"><static>true</static><pose>${x} ${y} 0.012 0 0 0</pose>
+      <link name="floor_marker"><visual name="visual">
+        <geometry><box><size>1.10 1.10 0.024</size></box></geometry>
+        <material><ambient>0.19 0.56 0.22 1</ambient><diffuse>0.27 0.68 0.29 1</diffuse></material>
+      </visual></link>
+    </model>
+  </xacro:macro>
+
+  <xacro:macro name="charge" params="id x">
+    <model name="CHARGE_${str(id).zfill(2)}"><static>true</static><pose>${x} 36.0 0.018 0 0 0</pose>
+      <link name="floor_marker">
+        <visual name="bay"><geometry><box><size>2.40 1.70 0.022</size></box></geometry>
+          <material><ambient>0.06 0.33 0.38 1</ambient><diffuse>0.07 0.43 0.48 1</diffuse></material>
+        </visual>
+        <visual name="entry_line"><pose>0 -0.82 0.012 0 0 0</pose>
+          <geometry><box><size>2.36 0.04 0.012</size></box></geometry>
+          <material><ambient>0.21 0.88 0.85 1</ambient><diffuse>0.24 0.92 0.88 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+  </xacro:macro>
+
+  <xacro:macro name="pallet" params="id x y">
+    <model name="PALLET_${str(id).zfill(2)}"><static>true</static><pose>${x} ${y} 0.30 0 0 0</pose>
+      <link name="stack">
+        <collision name="collision"><geometry><box><size>0.80 0.70 0.60</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.80 0.70 0.60</size></box></geometry>
+          <material><ambient>0.47 0.31 0.17 1</ambient><diffuse>0.58 0.39 0.22 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+  </xacro:macro>
+
+  <world name="warehouse_sih_v2">
+    <physics name="stable" type="ode"><max_step_size>0.002</max_step_size>
+      <real_time_factor>1.0</real_time_factor><real_time_update_rate>500</real_time_update_rate>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors"><render_engine>ogre2</render_engine></plugin>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+    <scene><ambient>0.56 0.59 0.62 1</ambient><background>0.12 0.15 0.18 1</background><shadows>true</shadows></scene>
+    <light name="sun" type="directional"><pose>25 20 18 0 0 0</pose>
+      <diffuse>0.92 0.93 0.91 1</diffuse><specular>0.20 0.20 0.20 1</specular>
+      <direction>-0.35 0.25 -0.9</direction><cast_shadows>true</cast_shadows>
+    </light>
+    <model name="warehouse_floor"><static>true</static><pose>25 20 -0.05 0 0 0</pose><link name="floor">
+      <collision name="collision"><geometry><box><size>50 40 0.10</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>50 40 0.10</size></box></geometry>
+        <material><ambient>0.33 0.36 0.38 1</ambient><diffuse>0.41 0.44 0.46 1</diffuse></material>
+      </visual>
+    </link></model>
+    <xacro:wall id="north" x="25" y="40" z="1.25" sx="50" sy="0.25"/>
+    <xacro:wall id="south" x="25" y="0" z="1.25" sx="50" sy="0.25"/>
+    <xacro:wall id="west" x="0" y="20" z="1.25" sx="0.25" sy="40"/>
+    <xacro:wall id="east" x="50" y="20" z="1.25" sx="0.25" sy="40"/>
+
+    <!-- Floor paint has no collision. It leaves the central route dominant. -->
+    <model name="MAIN_PATH"><static>true</static><pose>25 20 0.006 0 0 0</pose><link name="paint">
+      <visual name="visual"><geometry><box><size>11.5 31.0 0.012</size></box></geometry>
+        <material><ambient>0.30 0.38 0.41 1</ambient><diffuse>0.34 0.44 0.47 1</diffuse></material>
+      </visual>
+    </link></model>
+
+    <xacro:shelf id="01" x="7.5" y="27.0"/>
+    <xacro:shelf id="02" x="16.0" y="27.0"/>
+    <xacro:shelf id="03" x="34.0" y="27.0"/>
+    <xacro:shelf id="04" x="42.5" y="27.0"/>
+    <xacro:shelf id="05" x="7.5" y="20.0"/>
+    <xacro:shelf id="06" x="16.0" y="20.0"/>
+    <xacro:shelf id="07" x="34.0" y="20.0"/>
+    <xacro:shelf id="08" x="42.5" y="20.0"/>
+    <xacro:shelf id="09" x="7.5" y="13.0"/>
+    <xacro:shelf id="10" x="16.0" y="13.0"/>
+    <xacro:shelf id="11" x="34.0" y="13.0"/>
+    <xacro:shelf id="12" x="42.5" y="13.0"/>
+
+    <xacro:pickup id="01" x="7.5" y="25.1"/>
+    <xacro:pickup id="02" x="16.0" y="25.1"/>
+    <xacro:pickup id="03" x="34.0" y="25.1"/>
+    <xacro:pickup id="04" x="42.5" y="25.1"/>
+    <xacro:pickup id="05" x="7.5" y="18.1"/>
+    <xacro:pickup id="06" x="16.0" y="18.1"/>
+    <xacro:pickup id="07" x="34.0" y="18.1"/>
+    <xacro:pickup id="08" x="42.5" y="18.1"/>
+    <xacro:pickup id="09" x="7.5" y="11.1"/>
+    <xacro:pickup id="10" x="16.0" y="11.1"/>
+    <xacro:pickup id="11" x="34.0" y="11.1"/>
+    <xacro:pickup id="12" x="42.5" y="11.1"/>
+
+    <xacro:drop id="01" x="5.0" y="4.0"/>
+    <xacro:drop id="02" x="11.5" y="4.0"/>
+    <xacro:drop id="03" x="18.0" y="4.0"/>
+    <xacro:drop id="04" x="25.0" y="4.0"/>
+    <xacro:drop id="05" x="32.0" y="4.0"/>
+    <xacro:drop id="06" x="38.5" y="4.0"/>
+    <xacro:drop id="07" x="45.0" y="4.0"/>
+
+    <model name="CHARGING_STATION"><static>true</static><pose>25 36 0.007 0 0 0</pose><link name="paint">
+      <visual name="visual"><geometry><box><size>16.4 2.4 0.014</size></box></geometry>
+        <material><ambient>0.08 0.18 0.24 1</ambient><diffuse>0.10 0.24 0.30 1</diffuse></material>
+      </visual>
+    </link></model>
+    <!-- A short rear rail makes this a visible station, while every bay remains open to the south. -->
+    <model name="CHARGING_BACKSTOP"><static>true</static><pose>25 37.45 0.35 0 0 0</pose><link name="rail">
+      <collision name="collision"><geometry><box><size>16.4 0.18 0.70</size></box></geometry></collision>
+      <visual name="visual"><geometry><box><size>16.4 0.18 0.70</size></box></geometry>
+        <material><ambient>0.11 0.27 0.33 1</ambient><diffuse>0.14 0.34 0.41 1</diffuse></material>
+      </visual>
+    </link></model>
+    <xacro:charge id="01" x="19.0"/>
+    <xacro:charge id="02" x="22.0"/>
+    <xacro:charge id="03" x="25.0"/>
+    <xacro:charge id="04" x="28.0"/>
+    <xacro:charge id="05" x="31.0"/>
+
+    <!-- Four low pallets sit near secondary aisle edges, away from targets. -->
+    <xacro:pallet id="01" x="1.0" y="8.2"/>
+    <xacro:pallet id="02" x="49.0" y="8.2"/>
+    <xacro:pallet id="03" x="1.0" y="31.8"/>
+    <xacro:pallet id="04" x="49.0" y="31.8"/>
+  </world>
+</sdf>

@@ -13,8 +13,10 @@ def overlap(a, b, buffer=0.0):
 
 def load_zones(warehouse):
     zones = {}
-    for name in ('intersection_A', 'intersection_B', 'narrow_aisle_1', 'obstacle_demo_area'):
-        source = warehouse['zones'][name]
+    for name, source in warehouse.get('zones', {}).items():
+        if name not in ('intersection_A', 'intersection_B', 'narrow_aisle_1',
+                        'obstacle_demo_area') and not source.get('coordination_zone'):
+            continue
         zone = dict(source)
         if name == 'narrow_aisle_1':
             cx, cy = source['center']

@@ -11,10 +11,18 @@ from launch.substitutions import Command, FindExecutable, LaunchConfiguration
 from launch_ros.actions import Node
 
 
-def robot_actions(robot_id, pose, colour, robot_sdf, bridge_config, delay):
+def robot_actions(robot_id, pose, colour, robot_sdf, bridge_config, delay,
+                  max_linear_velocity=None):
     """Reusable bridge/spawn pair for one fully namespaced AMR."""
     x, y, yaw = map(float, pose)
     red, green, blue = map(float, colour)
+    sdf_command=[FindExecutable(name="xacro"), " ", robot_sdf,
+                 " namespace:=", robot_id,
+                 " color_r:=", str(red),
+                 " color_g:=", str(green),
+                 " color_b:=", str(blue)]
+    if max_linear_velocity is not None:
+        sdf_command.extend([" max_linear_velocity:=",max_linear_velocity])
     return TimerAction(period=delay, actions=[
         Node(
             package="ros_gz_bridge", executable="parameter_bridge",
@@ -30,13 +38,7 @@ def robot_actions(robot_id, pose, colour, robot_sdf, bridge_config, delay):
             namespace=robot_id, name="spawn", output="screen",
             arguments=[
                 "-name", robot_id,
-                "-string", Command([
-                    FindExecutable(name="xacro"), " ", robot_sdf,
-                    " namespace:=", robot_id,
-                    " color_r:=", str(red),
-                    " color_g:=", str(green),
-                    " color_b:=", str(blue),
-                ]),
+                "-string", Command(sdf_command),
                 "-x", str(x), "-y", str(y), "-z", "0.02", "-Y", str(yaw),
             ],
         ),

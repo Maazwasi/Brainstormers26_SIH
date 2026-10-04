@@ -1,0 +1,56 @@
+Worktree inventory, 2026-10-04 (repository-relative paths)
+M = tracked modification; ?? = untracked file.
+Includes preserved pre-existing changes, not a claim that every file was
+created or modified in this turn. No commit or push was made.
+
+ M README.md
+ M src/amr_simulation/config/nav2_params.yaml
+ M src/amr_simulation/config/warehouse_sih_demo.yaml
+ M src/edge_ai_nav/edge_ai_nav/fleet/negotiation.py
+ M src/edge_ai_nav/edge_ai_nav/fleet/peer_state_node.py
+ M src/edge_ai_nav/edge_ai_nav/fleet/route_graph.py
+ M src/edge_ai_nav/edge_ai_nav/fleet/task_bidder_node.py
+ M src/edge_ai_nav/edge_ai_nav/fleet/zone_prediction.py
+ M src/edge_ai_nav/edge_ai_nav/ros_nodes/local_waypoint_controller.py
+ M src/edge_ai_nav/edge_ai_nav/visualization/five_amr_spawn_observer.py
+ M src/edge_ai_nav/edge_ai_nav/visualization/fleet_dashboard_node.py
+ M src/edge_ai_nav/edge_ai_nav/visualization/static/fleet_dashboard.css
+ M src/edge_ai_nav/edge_ai_nav/visualization/static/fleet_dashboard.html
+ M src/edge_ai_nav/edge_ai_nav/visualization/static/fleet_dashboard.js
+ M src/edge_ai_nav/launch/five_amr_demo.launch.py
+ M src/edge_ai_nav/setup.py
+ M src/edge_ai_nav/test/test_negotiation.py
+?? PHASE_0_5_RESULT.md
+?? SWARMX_V2_BASELINE.md
+?? SWARMX_V2_CHECKPOINT.md
+?? SWARMX_V2_IMPLEMENTATION_REPORT.md
+?? SWARMX_V2_IMU_GATE.json
+?? SWARMX_V2_VISUAL_SYNC_GATE.json
+?? SWARMX_V2_VALIDATION_EVIDENCE.json
+?? run_p2p_conflict_demo.sh
+?? run_phase1_warehouse_preview.sh
+?? run_swarmx_v2_demo.sh
+?? src/amr_simulation/config/nav2_params_v2.yaml
+?? src/amr_simulation/config/warehouse_sih_v2.yaml
+?? src/amr_simulation/models/warehouse_amr_v2.sdf.xacro
+?? src/amr_simulation/worlds/warehouse_sih_v2.sdf
+?? src/amr_simulation/worlds/warehouse_sih_v2.sdf.xacro
+?? src/edge_ai_nav/config/swarmx_v2_demo.rviz
+?? src/edge_ai_nav/edge_ai_nav/fleet/p2p_conflict_demo.py
+?? src/edge_ai_nav/edge_ai_nav/fleet/path_safety.py
+?? src/edge_ai_nav/launch/swarmx_v2_demo.launch.py
+?? src/edge_ai_nav/test/test_footprint_geometry.py
+?? src/edge_ai_nav/test/test_lookahead_cardinality.py
+?? src/edge_ai_nav/test/test_p2p_conflict_demo.py
+?? src/edge_ai_nav/test/test_path_crossing_guard.py
+?? src/edge_ai_nav/test/test_v2_continuous_steering.py
+?? src/edge_ai_nav/test/test_v2_lidar_clear_beams.py
+?? src/edge_ai_nav/test/test_v2_predictive_priority.py
+?? src/edge_ai_nav/test/test_v2_proximity_guard.py
+?? src/edge_ai_nav/test/test_v2_yield_pocket.py
+?? src/edge_ai_nav/test/test_warehouse_v2_geometry.py
+?? src/edge_ai_nav/test/test_warehouse_v2_graph.py
+?? src/edge_ai_nav/test/test_warehouse_v2_robot.py
+?? validate_v2_fleet.py
+?? validate_v2_occupied_bay.py
+?? SWARMX_V2_WORKTREE_FILES.txt

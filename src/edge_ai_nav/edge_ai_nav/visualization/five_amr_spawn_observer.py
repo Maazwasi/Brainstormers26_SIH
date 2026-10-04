@@ -20,8 +20,10 @@ class FiveAMRSpawnObserver(Node):
         super().__init__("five_amr_spawn_observer_read_only")
         self.declare_parameter("config_file", "")
         self.declare_parameter("slam_robot_id", "")
+        self.declare_parameter("world_odom", False)
         config_file = str(self.get_parameter("config_file").value)
         self.slam_robot_id = str(self.get_parameter("slam_robot_id").value)
+        self.world_odom = bool(self.get_parameter("world_odom").value)
         if not config_file or not os.path.isfile(config_file):
             raise FileNotFoundError(f"warehouse config not found: {config_file}")
         with open(config_file, "r", encoding="utf-8") as stream:
@@ -55,17 +57,20 @@ class FiveAMRSpawnObserver(Node):
                 map_to_odom.header.stamp = stamp
                 map_to_odom.header.frame_id = "map"
                 map_to_odom.child_frame_id = f"{robot_id}/odom"
-                map_to_odom.transform.translation.x = float(x)
-                map_to_odom.transform.translation.y = float(y)
-                map_to_odom.transform.rotation.z = math.sin(float(yaw) / 2.0)
-                map_to_odom.transform.rotation.w = math.cos(float(yaw) / 2.0)
+                # V2 physical odometry already reports warehouse world X/Y.
+                map_to_odom.transform.translation.x = 0.0 if self.world_odom else float(x)
+                map_to_odom.transform.translation.y = 0.0 if self.world_odom else float(y)
+                map_to_odom.transform.rotation.z = 0.0 if self.world_odom else math.sin(float(yaw) / 2.0)
+                map_to_odom.transform.rotation.w = 1.0 if self.world_odom else math.cos(float(yaw) / 2.0)
                 transforms.append(map_to_odom)
 
-            for parent, child, xyz in (
-                ("base_footprint", "base_link", (0.0, 0.0, 0.01)),
-                ("base_link", "base_scan", (-0.064, 0.0, 0.271)),
-                ("base_link", "imu_link", (0.0, 0.0, 0.068)),
-            ):
+            links = (("base_footprint", "base_link", (0.0, 0.0, 0.0)),
+                     ("base_link", "base_scan", (0.12, 0.0, 0.33)),
+                     ("base_link", "imu_link", (0.0, 0.0, 0.25))) if self.world_odom else (
+                     ("base_footprint", "base_link", (0.0, 0.0, 0.01)),
+                     ("base_link", "base_scan", (-0.064, 0.0, 0.271)),
+                     ("base_link", "imu_link", (0.0, 0.0, 0.068)))
+            for parent, child, xyz in links:
                 static = TransformStamped()
                 static.header.stamp = stamp
                 static.header.frame_id = f"{robot_id}/{parent}"
@@ -99,8 +104,10 @@ class FiveAMRSpawnObserver(Node):
             spawn_x, spawn_y, spawn_yaw = self.spawns[robot_id]
             local_x = odom.pose.pose.position.x
             local_y = odom.pose.pose.position.y
-            world_x = spawn_x + math.cos(spawn_yaw) * local_x - math.sin(spawn_yaw) * local_y
-            world_y = spawn_y + math.sin(spawn_yaw) * local_x + math.cos(spawn_yaw) * local_y
+            world_x = (local_x if self.world_odom else
+                       spawn_x + math.cos(spawn_yaw) * local_x - math.sin(spawn_yaw) * local_y)
+            world_y = (local_y if self.world_odom else
+                       spawn_y + math.sin(spawn_yaw) * local_x + math.cos(spawn_yaw) * local_y)
             label = Marker()
             label.header.stamp = stamp
             label.header.frame_id = "map"

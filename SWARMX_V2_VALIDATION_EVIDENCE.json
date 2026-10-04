@@ -1,0 +1,1713 @@
+{
+  "updated": "2026-10-04",
+  "note": "Retained sampled-odometry results, including baseline charging-departure acceptance, 0.50/0.60 m/s motion and full fleets, and 0.60 m/s focused priority/recovery/reroute acceptance. Failed attempts remain marked FAIL. No contact-sensor collision claim.",
+  "results": [
+    {
+      "status": "PASS",
+      "scenario": "fleet",
+      "requested_speed_mps": 0.4,
+      "minimum_sampled_separation_m": 1.885,
+      "minimum_sampled_static_gap_m": 1.006,
+      "peak_physical_speed_mps": 0.415,
+      "mean_moving_physical_speed_mps": 0.301,
+      "pocket_seen": true,
+      "completed": [
+        "alpha_1",
+        "alpha_2",
+        "alpha_3",
+        "alpha_4",
+        "alpha_5"
+      ],
+      "reason": null,
+      "source_log": "/tmp/swarmx-v2-fleet-hfgj_ksi.log",
+      "decisions": [
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 3",
+          "decision_version": 1,
+          "winner": "ALPHA 3",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 3:ALPHA 4",
+          "decision_version": 1,
+          "winner": "ALPHA 3",
+          "loser": "ALPHA 4",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 4",
+          "decision_version": 1,
+          "winner": "ALPHA 2",
+          "loser": "ALPHA 4",
+          "decision_basis": "ROBOT_ID",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 1:ALPHA 4",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 4",
+          "decision_basis": "MISSION_PROGRESS",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "MISSION_PROGRESS",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 2,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 3,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 4,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 4",
+          "decision_version": 1,
+          "winner": "ALPHA 4",
+          "loser": "ALPHA 3",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_MID_CROSS:ALPHA 4:ALPHA 5",
+          "decision_version": 1,
+          "winner": "ALPHA 5",
+          "loser": "ALPHA 4",
+          "decision_basis": "MISSION_PROGRESS",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_MID_CROSS:ALPHA 3:ALPHA 4",
+          "decision_version": 1,
+          "winner": "ALPHA 4",
+          "loser": "ALPHA 3",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 3:ALPHA 4",
+          "decision_version": 2,
+          "winner": "ALPHA 4",
+          "loser": "ALPHA 3",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        }
+      ],
+      "reroutes": [],
+      "final_states": {
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28.033978138147614,
+            35.56780949325663
+          ]
+        },
+        "alpha_2": {
+          "state": "CHARGING",
+          "pose": [
+            18.966115287818006,
+            35.56289765265133
+          ]
+        },
+        "alpha_5": {
+          "state": "CHARGING",
+          "pose": [
+            31.030286035256506,
+            35.56359998005748
+          ]
+        },
+        "alpha_3": {
+          "state": "CHARGING",
+          "pose": [
+            21.966513418923835,
+            35.56734449011374
+          ]
+        },
+        "alpha_1": {
+          "state": "CHARGING",
+          "pose": [
+            25.035630179195856,
+            35.568229764341204
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "priority",
+      "requested_speed_mps": 0.4,
+      "minimum_sampled_separation_m": 2.311,
+      "minimum_sampled_static_gap_m": 1.172,
+      "peak_physical_speed_mps": 0.405,
+      "mean_moving_physical_speed_mps": 0.243,
+      "pocket_seen": true,
+      "completed": [],
+      "reason": null,
+      "source_log": "/tmp/swarmx-v2-priority-ebkskyv9.log",
+      "decisions": [
+        {
+          "conflict_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "TASK_PRIORITY",
+          "loser_action": "YIELD_AND_WAIT"
+        }
+      ],
+      "reroutes": [],
+      "final_states": {
+        "alpha_1": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            29.56433119966253,
+            23.5
+          ]
+        },
+        "alpha_3": {
+          "state": "CHARGING",
+          "pose": [
+            25,
+            36
+          ]
+        },
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28,
+            36
+          ]
+        },
+        "alpha_2": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            20.437580300557105,
+            23.46406615964507
+          ]
+        },
+        "alpha_5": {
+          "state": "CHARGING",
+          "pose": [
+            31,
+            36
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "equal",
+      "requested_speed_mps": 0.4,
+      "minimum_sampled_separation_m": 2.297,
+      "minimum_sampled_static_gap_m": 1.132,
+      "peak_physical_speed_mps": 0.407,
+      "mean_moving_physical_speed_mps": 0.244,
+      "pocket_seen": true,
+      "completed": [],
+      "reason": null,
+      "source_log": "/tmp/swarmx-v2-equal-lvsojb46.log",
+      "decisions": [
+        {
+          "conflict_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ROBOT_ID",
+          "loser_action": "YIELD_AND_WAIT"
+        }
+      ],
+      "reroutes": [],
+      "final_states": {
+        "alpha_3": {
+          "state": "CHARGING",
+          "pose": [
+            25,
+            36
+          ]
+        },
+        "alpha_5": {
+          "state": "CHARGING",
+          "pose": [
+            31,
+            36
+          ]
+        },
+        "alpha_1": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            29.561118399662558,
+            23.5
+          ]
+        },
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28,
+            36
+          ]
+        },
+        "alpha_2": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            20.43722536088435,
+            23.463470289436586
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "recovery",
+      "requested_speed_mps": 0.4,
+      "minimum_sampled_separation_m": 1.964,
+      "minimum_sampled_static_gap_m": 1.35,
+      "peak_physical_speed_mps": 0.284,
+      "mean_moving_physical_speed_mps": 0.194,
+      "pocket_seen": true,
+      "completed": [],
+      "reason": null,
+      "source_log": "/tmp/swarmx-v2-recovery-_7kgyq0h.log",
+      "decisions": [
+        {
+          "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 5",
+          "decision_version": 1,
+          "winner": "ALPHA 3",
+          "loser": "ALPHA 5",
+          "decision_basis": "WAITING_TIME",
+          "loser_action": "YIELD_AND_WAIT"
+        }
+      ],
+      "reroutes": [],
+      "final_states": {
+        "alpha_1": {
+          "state": "CHARGING",
+          "pose": [
+            19,
+            36
+          ]
+        },
+        "alpha_5": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            38.25000000000001,
+            8.438123210094234
+          ]
+        },
+        "alpha_2": {
+          "state": "CHARGING",
+          "pose": [
+            22,
+            36
+          ]
+        },
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28,
+            36
+          ]
+        },
+        "alpha_3": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            44.57122273936331,
+            16.462569736573794
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "reroute",
+      "requested_speed_mps": 0.4,
+      "minimum_sampled_separation_m": 3,
+      "minimum_sampled_static_gap_m": 1.127,
+      "peak_physical_speed_mps": 0.415,
+      "mean_moving_physical_speed_mps": 0.266,
+      "pocket_seen": false,
+      "completed": [],
+      "reason": null,
+      "source_log": "/tmp/swarmx-v2-reroute-1y7_fs2z.log",
+      "decisions": [
+        {
+          "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 5",
+          "decision_version": 1,
+          "winner": "ALPHA 5",
+          "loser": "ALPHA 3",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "REROUTE"
+        }
+      ],
+      "reroutes": [
+        {
+          "event": "REROUTE_STARTED",
+          "robot_id": "alpha_3",
+          "timestamp": 1791067613.551077,
+          "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 5",
+          "zone": "RIGHT_INNER_CORRIDOR",
+          "reason": "ZONE_COMMITTED",
+          "route_length_m": 28.68,
+          "extra_detour_m": 1.0524407019045086,
+          "route_version": 2
+        }
+      ],
+      "final_states": {
+        "alpha_3": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            45.437978171517535,
+            3.9998568609112897
+          ]
+        },
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28,
+            36
+          ]
+        },
+        "alpha_5": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            38.25000000000001,
+            8.436788409733765
+          ]
+        },
+        "alpha_2": {
+          "state": "CHARGING",
+          "pose": [
+            22,
+            36
+          ]
+        },
+        "alpha_1": {
+          "state": "CHARGING",
+          "pose": [
+            19,
+            36
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "later",
+      "requested_speed_mps": 0.4,
+      "minimum_sampled_separation_m": 2.303,
+      "minimum_sampled_static_gap_m": 1.14,
+      "peak_physical_speed_mps": 0.406,
+      "mean_moving_physical_speed_mps": 0.244,
+      "pocket_seen": true,
+      "completed": [],
+      "reason": null,
+      "source_log": "/tmp/swarmx-v2-later-6inhrhze.log",
+      "decisions": [
+        {
+          "conflict_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "TASK_PRIORITY",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_MID_CROSS:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "TASK_PRIORITY",
+          "loser_action": "YIELD_AND_WAIT"
+        }
+      ],
+      "reroutes": [],
+      "final_states": {
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28,
+            36
+          ]
+        },
+        "alpha_5": {
+          "state": "CHARGING",
+          "pose": [
+            31,
+            36
+          ]
+        },
+        "alpha_1": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            29.565359999662498,
+            16.5
+          ]
+        },
+        "alpha_3": {
+          "state": "CHARGING",
+          "pose": [
+            25,
+            36
+          ]
+        },
+        "alpha_2": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            20.43547466893363,
+            16.46415181260217
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "charging_gap",
+      "requested_speed_mps": 0.4,
+      "minimum_sampled_separation_m": 2.998,
+      "minimum_sampled_static_gap_m": 1.36,
+      "peak_physical_speed_mps": 0.412,
+      "mean_moving_physical_speed_mps": 0.216,
+      "pocket_seen": false,
+      "completed": [],
+      "reason": null,
+      "source_log": "/tmp/swarmx-v2-charging_gap-70d4futp.log",
+      "decisions": [],
+      "reroutes": [],
+      "final_states": {
+        "alpha_5": {
+          "state": "CHARGING",
+          "pose": [
+            31,
+            36
+          ]
+        },
+        "alpha_2": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            21.966107933972772,
+            35.56384706735305
+          ]
+        },
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28,
+            36
+          ]
+        },
+        "alpha_1": {
+          "state": "CHARGING",
+          "pose": [
+            19,
+            36
+          ]
+        },
+        "alpha_3": {
+          "state": "CHARGING",
+          "pose": [
+            25,
+            36
+          ]
+        }
+      }
+    },
+    {
+      "status": "FAIL",
+      "scenario": "fleet",
+      "requested_speed_mps": 0.5,
+      "minimum_sampled_separation_m": 1.858,
+      "minimum_sampled_static_gap_m": 1.002,
+      "peak_physical_speed_mps": 0.5,
+      "mean_moving_physical_speed_mps": 0.374,
+      "pocket_seen": false,
+      "completed": [
+        "alpha_3"
+      ],
+      "reason": "Interrupted",
+      "source_log": "/tmp/swarmx-v2-fleet-07pbqfvg.log",
+      "decisions": [
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 3",
+          "decision_version": 1,
+          "winner": "ALPHA 3",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 3:ALPHA 4",
+          "decision_version": 1,
+          "winner": "ALPHA 3",
+          "loser": "ALPHA 4",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 4",
+          "decision_version": 1,
+          "winner": "ALPHA 2",
+          "loser": "ALPHA 4",
+          "decision_basis": "ROBOT_ID",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "MISSION_PROGRESS",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 1:ALPHA 4",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 4",
+          "decision_basis": "MISSION_PROGRESS",
+          "loser_action": "YIELD_AND_WAIT"
+        }
+      ],
+      "reroutes": [],
+      "final_states": {
+        "alpha_2": {
+          "state": "COORDINATION_HOLD",
+          "pose": [
+            22.308730589983604,
+            35.233396508477895
+          ]
+        },
+        "alpha_5": {
+          "state": "COORDINATION_HOLD",
+          "pose": [
+            31.000000484070856,
+            35.99742767064638
+          ]
+        },
+        "alpha_3": {
+          "state": "WAYPOINT_TRACK",
+          "pose": [
+            24.963915318340437,
+            11.00521778612604
+          ]
+        },
+        "alpha_1": {
+          "state": "COORDINATION_HOLD",
+          "pose": [
+            20.451347142094164,
+            35.25440985334622
+          ]
+        },
+        "alpha_4": {
+          "state": "COORDINATION_HOLD",
+          "pose": [
+            27.080671523251763,
+            34.72231446298675
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "fleet",
+      "requested_speed_mps": 0.4,
+      "minimum_sampled_separation_m": 2.204,
+      "minimum_sampled_static_gap_m": 1.004,
+      "peak_physical_speed_mps": 0.415,
+      "mean_moving_physical_speed_mps": 0.299,
+      "pocket_seen": false,
+      "completed": [
+        "alpha_1",
+        "alpha_2",
+        "alpha_3",
+        "alpha_4",
+        "alpha_5"
+      ],
+      "reason": null,
+      "source_log": "/tmp/swarmx-v2-fleet-fae3bk2e.log",
+      "decisions": [
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 3",
+          "decision_version": 1,
+          "winner": "ALPHA 3",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "REROUTE"
+        },
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "MISSION_PROGRESS",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 2,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 3,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 4,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 4",
+          "decision_version": 1,
+          "winner": "ALPHA 4",
+          "loser": "ALPHA 3",
+          "decision_basis": "TASK_PRIORITY",
+          "loser_action": "YIELD_AND_WAIT"
+        }
+      ],
+      "final_states": {
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28.03393897627243,
+            35.56692779321154
+          ]
+        },
+        "alpha_3": {
+          "state": "CHARGING",
+          "pose": [
+            21.966899695585937,
+            35.56794470579718
+          ]
+        },
+        "alpha_2": {
+          "state": "CHARGING",
+          "pose": [
+            18.966078675632634,
+            35.557175839012515
+          ]
+        },
+        "alpha_1": {
+          "state": "CHARGING",
+          "pose": [
+            25.009847204146613,
+            35.56646077179819
+          ]
+        },
+        "alpha_5": {
+          "state": "CHARGING",
+          "pose": [
+            31.03004670266127,
+            35.56182750583791
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "motion",
+      "requested_speed_mps": 0.5,
+      "minimum_sampled_separation_m": 3,
+      "minimum_sampled_static_gap_m": 1.36,
+      "peak_physical_speed_mps": 0.5,
+      "mean_moving_physical_speed_mps": 0.385,
+      "pocket_seen": false,
+      "completed": [],
+      "reason": null,
+      "source_log": "/tmp/swarmx-v2-motion-3aw4dnhs.log",
+      "decisions": [],
+      "final_states": {
+        "alpha_5": {
+          "state": "CHARGING",
+          "pose": [
+            31,
+            36
+          ]
+        },
+        "alpha_3": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            27.803675093341045,
+            19.824134530917814
+          ]
+        },
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28,
+            36
+          ]
+        },
+        "alpha_2": {
+          "state": "CHARGING",
+          "pose": [
+            22,
+            36
+          ]
+        },
+        "alpha_1": {
+          "state": "CHARGING",
+          "pose": [
+            19,
+            36
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "fleet",
+      "requested_speed_mps": 0.5,
+      "minimum_sampled_separation_m": 2.295,
+      "minimum_sampled_static_gap_m": 1,
+      "peak_physical_speed_mps": 0.5,
+      "mean_moving_physical_speed_mps": 0.318,
+      "pocket_seen": false,
+      "completed": [
+        "alpha_1",
+        "alpha_2",
+        "alpha_3",
+        "alpha_4",
+        "alpha_5"
+      ],
+      "source_log": "/tmp/swarmx-v2-fleet-078203bw.log",
+      "decisions": [
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 3",
+          "decision_version": 1,
+          "winner": "ALPHA 3",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "REROUTE"
+        },
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "MISSION_PROGRESS",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 2,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 3,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 4",
+          "decision_version": 1,
+          "winner": "ALPHA 4",
+          "loser": "ALPHA 3",
+          "decision_basis": "TASK_PRIORITY",
+          "loser_action": "YIELD_AND_WAIT"
+        }
+      ],
+      "reroutes": [],
+      "final_states": {
+        "alpha_5": {
+          "state": "CHARGING",
+          "pose": [
+            31.030571802552792,
+            35.568772964012126
+          ],
+          "route": [
+            [
+              17.65324509905543,
+              4.263526791101452
+            ],
+            [
+              31,
+              32.5
+            ],
+            [
+              31,
+              36
+            ]
+          ]
+        },
+        "alpha_2": {
+          "state": "CHARGING",
+          "pose": [
+            18.966588545647078,
+            35.55905094110652
+          ],
+          "route": [
+            [
+              4.560892097531596,
+              4.002903303356522
+            ],
+            [
+              25,
+              8
+            ],
+            [
+              25,
+              16.5
+            ],
+            [
+              25,
+              23.5
+            ],
+            [
+              25,
+              32.5
+            ],
+            [
+              19,
+              32.5
+            ],
+            [
+              19,
+              36
+            ]
+          ]
+        },
+        "alpha_3": {
+          "state": "CHARGING",
+          "pose": [
+            21.96677809838493,
+            35.57358510853419
+          ],
+          "route": [
+            [
+              45.42778389670804,
+              4.0045556809475285
+            ],
+            [
+              25,
+              8
+            ],
+            [
+              25,
+              16.5
+            ],
+            [
+              25,
+              23.5
+            ],
+            [
+              25,
+              32.5
+            ],
+            [
+              22,
+              32.5
+            ],
+            [
+              22,
+              36
+            ]
+          ]
+        },
+        "alpha_1": {
+          "state": "CHARGING",
+          "pose": [
+            25.02184992014395,
+            35.56412527845136
+          ],
+          "route": [
+            [
+              11.731528451680342,
+              4.327073186444678
+            ],
+            [
+              25,
+              16.5
+            ],
+            [
+              25,
+              23.5
+            ],
+            [
+              25,
+              32.5
+            ],
+            [
+              25,
+              36
+            ]
+          ]
+        },
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28.033431506970043,
+            35.56820713716711
+          ],
+          "route": [
+            [
+              38.220566114099384,
+              4.322483062766296
+            ],
+            [
+              25,
+              16.5
+            ],
+            [
+              25,
+              23.5
+            ],
+            [
+              25,
+              32.5
+            ],
+            [
+              28,
+              32.5
+            ],
+            [
+              28,
+              36
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "motion",
+      "requested_speed_mps": 0.6,
+      "minimum_sampled_separation_m": 3,
+      "minimum_sampled_static_gap_m": 1.36,
+      "peak_physical_speed_mps": 0.6,
+      "mean_moving_physical_speed_mps": 0.437,
+      "pocket_seen": false,
+      "completed": [],
+      "source_log": "/tmp/swarmx-v2-motion-3ma3f1nz.log",
+      "decisions": [],
+      "reroutes": [],
+      "final_states": {
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28,
+            36
+          ],
+          "route": [
+            [
+              28,
+              36
+            ]
+          ]
+        },
+        "alpha_3": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            27.800423253175694,
+            19.821366333169046
+          ],
+          "route": [
+            [
+              21,
+              10
+            ],
+            [
+              25,
+              10
+            ],
+            [
+              28.464101615137753,
+              12
+            ],
+            [
+              29.240558750445317,
+              14.897777478867205
+            ],
+            [
+              26.34278127157811,
+              15.674234614174768
+            ],
+            [
+              23.445003792710907,
+              14.897777478867205
+            ],
+            [
+              22.668546657403343,
+              17.79555495773441
+            ],
+            [
+              25.56632413627055,
+              18.572012093041973
+            ],
+            [
+              28.164400347623864,
+              20.072012093041973
+            ]
+          ]
+        },
+        "alpha_2": {
+          "state": "CHARGING",
+          "pose": [
+            22,
+            36
+          ],
+          "route": [
+            [
+              22,
+              36
+            ]
+          ]
+        },
+        "alpha_1": {
+          "state": "CHARGING",
+          "pose": [
+            19,
+            36
+          ],
+          "route": [
+            [
+              19,
+              36
+            ]
+          ]
+        },
+        "alpha_5": {
+          "state": "CHARGING",
+          "pose": [
+            31,
+            36
+          ],
+          "route": [
+            [
+              31,
+              36
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "fleet",
+      "requested_speed_mps": 0.6,
+      "minimum_sampled_separation_m": 2.14,
+      "minimum_sampled_static_gap_m": 0.959,
+      "peak_physical_speed_mps": 0.6,
+      "mean_moving_physical_speed_mps": 0.337,
+      "pocket_seen": false,
+      "completed": [
+        "alpha_1",
+        "alpha_2",
+        "alpha_3",
+        "alpha_4",
+        "alpha_5"
+      ],
+      "source_log": "/tmp/swarmx-v2-fleet-_p7kfkgj.log",
+      "decisions": [
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 2:ALPHA 3",
+          "decision_version": 1,
+          "winner": "ALPHA 3",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "REROUTE"
+        },
+        {
+          "conflict_id": "MAIN_NORTH_CROSS:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "MISSION_PROGRESS",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 2,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "LEFT_INNER_CORRIDOR:ALPHA 1:ALPHA 2",
+          "decision_version": 3,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 4",
+          "decision_version": 1,
+          "winner": "ALPHA 4",
+          "loser": "ALPHA 3",
+          "decision_basis": "TASK_PRIORITY",
+          "loser_action": "YIELD_AND_WAIT"
+        },
+        {
+          "conflict_id": "MAIN_MID_CROSS:ALPHA 3:ALPHA 5",
+          "decision_version": 1,
+          "winner": "ALPHA 5",
+          "loser": "ALPHA 3",
+          "decision_basis": "MISSION_PROGRESS",
+          "loser_action": "YIELD_AND_WAIT"
+        }
+      ],
+      "reroutes": [],
+      "final_states": {
+        "alpha_2": {
+          "state": "CHARGING",
+          "pose": [
+            18.96644266371646,
+            35.564696612718684
+          ],
+          "route": [
+            [
+              4.561792719595007,
+              4.000782410908136
+            ],
+            [
+              25,
+              8
+            ],
+            [
+              25,
+              16.5
+            ],
+            [
+              25,
+              23.5
+            ],
+            [
+              25,
+              32.5
+            ],
+            [
+              19,
+              32.5
+            ],
+            [
+              19,
+              36
+            ]
+          ]
+        },
+        "alpha_3": {
+          "state": "CHARGING",
+          "pose": [
+            21.967266476716564,
+            35.56813943283052
+          ],
+          "route": [
+            [
+              45.4309745802601,
+              4.004417219644295
+            ],
+            [
+              25,
+              8
+            ],
+            [
+              25,
+              16.5
+            ],
+            [
+              25,
+              23.5
+            ],
+            [
+              25,
+              32.5
+            ],
+            [
+              22,
+              32.5
+            ],
+            [
+              22,
+              36
+            ]
+          ]
+        },
+        "alpha_5": {
+          "state": "CHARGING",
+          "pose": [
+            31.03078266591172,
+            35.565468526719805
+          ],
+          "route": [
+            [
+              17.653672929113373,
+              4.263332616646876
+            ],
+            [
+              31,
+              32.5
+            ],
+            [
+              31,
+              36
+            ]
+          ]
+        },
+        "alpha_1": {
+          "state": "CHARGING",
+          "pose": [
+            25.011724026887567,
+            35.564657122180115
+          ],
+          "route": [
+            [
+              11.72460457356325,
+              4.319475049742832
+            ],
+            [
+              25,
+              16.5
+            ],
+            [
+              25,
+              23.5
+            ],
+            [
+              25,
+              32.5
+            ],
+            [
+              25,
+              36
+            ]
+          ]
+        },
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28.03319008755246,
+            35.57157213939486
+          ],
+          "route": [
+            [
+              38.2216681696449,
+              4.303077128354794
+            ],
+            [
+              25,
+              16.5
+            ],
+            [
+              25,
+              23.5
+            ],
+            [
+              25,
+              32.5
+            ],
+            [
+              28,
+              32.5
+            ],
+            [
+              28,
+              36
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "priority",
+      "requested_speed_mps": 0.6,
+      "minimum_sampled_separation_m": 2.3,
+      "minimum_sampled_static_gap_m": 1.149,
+      "peak_physical_speed_mps": 0.582,
+      "mean_moving_physical_speed_mps": 0.265,
+      "pocket_seen": true,
+      "completed": [],
+      "source_log": "/tmp/swarmx-v2-priority-u0us9hnb.log",
+      "decisions": [
+        {
+          "conflict_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 2",
+          "decision_version": 1,
+          "winner": "ALPHA 1",
+          "loser": "ALPHA 2",
+          "decision_basis": "TASK_PRIORITY",
+          "loser_action": "YIELD_AND_WAIT"
+        }
+      ],
+      "reroutes": [],
+      "final_states": {
+        "alpha_5": {
+          "state": "CHARGING",
+          "pose": [
+            31,
+            36
+          ],
+          "route": [
+            [
+              31,
+              36
+            ]
+          ]
+        },
+        "alpha_1": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            29.56799999966849,
+            23.5
+          ],
+          "route": [
+            [
+              20,
+              23.5
+            ],
+            [
+              25,
+              23.5
+            ],
+            [
+              30,
+              23.5
+            ]
+          ]
+        },
+        "alpha_3": {
+          "state": "CHARGING",
+          "pose": [
+            25,
+            36
+          ],
+          "route": [
+            [
+              25,
+              36
+            ]
+          ]
+        },
+        "alpha_2": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            20.43601076745853,
+            23.46521886330901
+          ],
+          "route": [
+            [
+              29.9536885295259,
+              26.36946159848132
+            ],
+            [
+              25,
+              23.5
+            ],
+            [
+              20,
+              23.5
+            ]
+          ]
+        },
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28,
+            36
+          ],
+          "route": [
+            [
+              28,
+              36
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "recovery",
+      "requested_speed_mps": 0.6,
+      "minimum_sampled_separation_m": 1.967,
+      "minimum_sampled_static_gap_m": 1.35,
+      "peak_physical_speed_mps": 0.291,
+      "mean_moving_physical_speed_mps": 0.194,
+      "pocket_seen": true,
+      "completed": [],
+      "source_log": "/tmp/swarmx-v2-recovery-w7tcbmym.log",
+      "decisions": [
+        {
+          "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 5",
+          "decision_version": 1,
+          "winner": "ALPHA 3",
+          "loser": "ALPHA 5",
+          "decision_basis": "ROBOT_ID",
+          "loser_action": "YIELD_AND_WAIT"
+        }
+      ],
+      "reroutes": [],
+      "final_states": {
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28,
+            36
+          ],
+          "route": [
+            [
+              28,
+              36
+            ]
+          ]
+        },
+        "alpha_2": {
+          "state": "CHARGING",
+          "pose": [
+            22,
+            36
+          ],
+          "route": [
+            [
+              22,
+              36
+            ]
+          ]
+        },
+        "alpha_1": {
+          "state": "CHARGING",
+          "pose": [
+            19,
+            36
+          ],
+          "route": [
+            [
+              19,
+              36
+            ]
+          ]
+        },
+        "alpha_5": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            38.25000000000001,
+            8.43832961125337
+          ],
+          "route": [
+            [
+              38.25000000000001,
+              19.8
+            ],
+            [
+              38.25,
+              8
+            ]
+          ]
+        },
+        "alpha_3": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            44.57181058653523,
+            16.465621528491106
+          ],
+          "route": [
+            [
+              41.203183156478,
+              16.499917814126295
+            ],
+            [
+              45,
+              16.5
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "status": "PASS",
+      "scenario": "reroute",
+      "requested_speed_mps": 0.6,
+      "minimum_sampled_separation_m": 3,
+      "minimum_sampled_static_gap_m": 1.131,
+      "peak_physical_speed_mps": 0.6,
+      "mean_moving_physical_speed_mps": 0.299,
+      "pocket_seen": false,
+      "completed": [],
+      "source_log": "/tmp/swarmx-v2-reroute-s8sudc65.log",
+      "decisions": [
+        {
+          "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 5",
+          "decision_version": 1,
+          "winner": "ALPHA 5",
+          "loser": "ALPHA 3",
+          "decision_basis": "ZONE_COMMITTED",
+          "loser_action": "REROUTE"
+        }
+      ],
+      "reroutes": [
+        {
+          "event": "REROUTE_STARTED",
+          "robot_id": "alpha_3",
+          "timestamp": 1791070825.7158873,
+          "conflict_id": "RIGHT_INNER_CORRIDOR:ALPHA 3:ALPHA 5",
+          "zone": "RIGHT_INNER_CORRIDOR",
+          "reason": "ZONE_COMMITTED",
+          "route_length_m": 28.69,
+          "extra_detour_m": 0.9984123271324634,
+          "route_version": 2
+        }
+      ],
+      "final_states": {
+        "alpha_4": {
+          "state": "CHARGING",
+          "pose": [
+            28,
+            36
+          ],
+          "route": [
+            [
+              28,
+              36
+            ]
+          ]
+        },
+        "alpha_2": {
+          "state": "CHARGING",
+          "pose": [
+            22,
+            36
+          ],
+          "route": [
+            [
+              22,
+              36
+            ]
+          ]
+        },
+        "alpha_1": {
+          "state": "CHARGING",
+          "pose": [
+            19,
+            36
+          ],
+          "route": [
+            [
+              19,
+              36
+            ]
+          ]
+        },
+        "alpha_3": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            45.43971654871678,
+            4.000875040455417
+          ],
+          "route": [
+            [
+              41.00000000000001,
+              25.099260804868287
+            ],
+            [
+              47.5,
+              23.5
+            ],
+            [
+              47.5,
+              16.5
+            ],
+            [
+              47.5,
+              8
+            ],
+            [
+              47.5,
+              4
+            ],
+            [
+              45,
+              4
+            ]
+          ]
+        },
+        "alpha_5": {
+          "state": "DEMO_STAGED",
+          "pose": [
+            38.25000000000001,
+            8.439744009733747
+          ],
+          "route": [
+            [
+              38.25,
+              29
+            ],
+            [
+              38.25,
+              8
+            ]
+          ]
+        }
+      }
+    }
+  ]
+}

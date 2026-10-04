@@ -11,3 +11,4 @@ aside{display:flex;flex-direction:column;gap:9px}.panel{background:#11191f;borde
 .assignment-picker .primary-mode{border-color:#48bdd2;color:#b8f5ff;font-weight:950}
 .assignment-picker input{accent-color:#48bdd2}
 .manual-robot.hidden{display:none}
+.mission-route.original-route{stroke:#aab3bc;stroke-width:2;stroke-dasharray:5 8;opacity:.30;filter:none}

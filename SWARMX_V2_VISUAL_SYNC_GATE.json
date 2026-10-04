@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-04",
+  "status": "PASS",
+  "scope": "Live physical odometry compared with RViz TF and name labels while a normal manual inspection task moved ALPHA 3; desktop rendering was not independently screen-captured",
+  "odom_robots": 5,
+  "tf_robots": 5,
+  "label_robots": 5,
+  "identity_map_to_odom_transforms": 5,
+  "maximum_tf_xy_difference_m": 0.03,
+  "maximum_label_xy_difference_m": 0.12,
+  "comparison_tolerance_m": 0.25,
+  "matched_samples": 6552,
+  "alpha_3_physical_displacement_m": 7.3288,
+  "assignment_mode": "MANUAL",
+  "pickup": "MAIN_NORTH",
+  "destination": "MAIN_UPPER",
+  "gazebo_gui_started": true,
+  "rviz_process_alive": true,
+  "dashboard_online_robots": 5
+}

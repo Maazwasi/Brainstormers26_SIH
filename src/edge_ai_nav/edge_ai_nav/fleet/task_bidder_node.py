@@ -13,15 +13,6 @@ from .route_graph import WarehouseGraph
 from .negotiation import bid_eligible
 
 
-DISPLAY = {
-    'amr_alpha': 'ALPHA 1', 'amr_bravo': 'ALPHA 2',
-    'amr_charlie': 'ALPHA 3', 'amr_delta': 'ALPHA 4',
-    'amr_echo': 'ALPHA 5',
-}
-BATTERY = {'amr_alpha': 92, 'amr_bravo': 87, 'amr_charlie': 95,
-           'amr_delta': 81, 'amr_echo': 89}
-
-
 class TaskBidder(Node):
     def __init__(self):
         super().__init__('task_bidder')
@@ -30,6 +21,9 @@ class TaskBidder(Node):
         self.rid = self.get_parameter('robot_id').value
         with open(self.get_parameter('config_file').value) as stream:
             self.config = yaml.safe_load(stream)['warehouse']
+        self.display = {rid: visual['label'] for rid, visual in
+                        self.config['robot_visuals'].items()}
+        self.fleet_ids = set(self.config['robot_spawns'])
         self.pose = None
         self.pose_received = 0.0
         self.graph = WarehouseGraph(self.config)
@@ -39,7 +33,8 @@ class TaskBidder(Node):
         self.claimed_tasks = set()
         self.task_started = None
         self.assignments = []
-        self.battery_percent = float(BATTERY[self.rid])
+        self.battery_percent = float(self.config.get('battery_initial_percent', {}).get(
+            self.rid, 90))
         self.battery_state = 'NORMAL'
         self.bid_pub = self.create_publisher(String, '/fleet/task_bids', 20)
         self.claim_pub = self.create_publisher(String, '/fleet/task_claims', 10)
@@ -107,7 +102,7 @@ class TaskBidder(Node):
         bid = {'task_id': task_id, 'robot_id': self.rid,
                'pickup': task.get('pickup'), 'destination': task.get('destination'),
                'priority': priority, 'type': task.get('type'),
-               'display_name': DISPLAY[self.rid], 'eligible': eligible,
+               'display_name': self.display[self.rid], 'eligible': eligible,
                'distance_to_pickup': round(distance, 2), 'battery': battery,
                'battery_state': self.battery_state,
                'score': score, 'timestamp': time.time()}
@@ -117,7 +112,7 @@ class TaskBidder(Node):
     def on_bid(self, msg):
         bid = self.decode(msg)
         pending = self.pending.get(bid.get('task_id'))
-        if pending and bid.get('robot_id') in DISPLAY:
+        if pending and bid.get('robot_id') in self.fleet_ids:
             pending['bids'][bid['robot_id']] = bid
 
     def resolve(self):
@@ -130,7 +125,7 @@ class TaskBidder(Node):
         for task_id, pending in list(self.pending.items()):
             if now < pending['deadline']:
                 continue
-            if len(pending['bids']) < len(DISPLAY) and now < pending['hard_deadline']:
+            if len(pending['bids']) < len(self.fleet_ids) and now < pending['hard_deadline']:
                 continue
             eligible = [b for b in pending['bids'].values() if b.get('eligible')]
             if not eligible:
@@ -158,7 +153,7 @@ class TaskBidder(Node):
                              expanded_nodes=plan['expanded_nodes'],
                              raw_route_cost=round(plan['raw_route_cost'],3),
                              smoothed_route_length=round(plan['smoothed_route_length'],3),
-                             display_name=DISPLAY[self.rid], state='CLAIMED',
+                             display_name=self.display[self.rid], state='CLAIMED',
                              battery=winner['battery'],
                              distance=winner['distance_to_pickup'],
                              score=winner['score'], bid_count=len(pending['bids']),

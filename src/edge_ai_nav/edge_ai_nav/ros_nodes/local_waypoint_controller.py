@@ -21,20 +21,47 @@ def wrap(angle):
     return math.atan2(math.sin(angle), math.cos(angle))
 
 
+def heading_rate(error, gain, limit):
+    """Proportional angular correction for any signed target angle."""
+    return 0.0 if abs(error)<0.05 else max(-limit,min(limit,gain*error))
+
+
+def passed_waypoint(pose, previous, target, lateral_tolerance=0.45):
+    """Advance a nonterminal waypoint once its inbound segment is traversed.
+
+    A waypoint need not be hit to centimetre precision during a smooth arc;
+    lateral error is still bounded, and the caller checks next-edge visibility.
+    """
+    dx, dy = target[0]-previous[0], target[1]-previous[1]
+    length2 = dx*dx+dy*dy
+    if length2 < 1e-12:
+        return False
+    along = ((pose[0]-previous[0])*dx+(pose[1]-previous[1])*dy)/length2
+    lateral = abs((pose[0]-previous[0])*dy-(pose[1]-previous[1])*dx)/math.sqrt(length2)
+    return along >= 0.88 and lateral <= lateral_tolerance
+
+
 def sectors(scan):
     buckets = {k: [] for k in ('front', 'left', 'right')}
+    clear_beams = {k: False for k in buckets}
     for i, distance in enumerate(scan.ranges):
-        if not math.isfinite(distance) or not scan.range_min <= distance <= scan.range_max:
-            continue
         a = wrap(scan.angle_min + i * scan.angle_increment)
+        names=[]
         if abs(a) < 0.38:
-            buckets['front'].append(distance)
+            names.append('front')
         if 0.38 <= a <= 1.5:
-            buckets['left'].append(distance)
+            names.append('left')
         if -1.5 <= a <= -0.38:
-            buckets['right'].append(distance)
+            names.append('right')
+        for name in names:
+            if math.isinf(distance) and distance > 0:
+                clear_beams[name] = True
+            elif math.isfinite(distance) and scan.range_min <= distance <= scan.range_max:
+                buckets[name].append(distance)
     # Third-smallest return rejects up to two isolated noise beams.
-    return {k: sorted(v)[min(2, len(v)-1)] if v else None for k, v in buckets.items()}
+    return {k: (sorted(v)[min(2, len(v)-1)] if v else
+                scan.range_max if clear_beams[k] else None)
+            for k, v in buckets.items()}
 
 
 class LocalController(Node):
@@ -44,6 +71,7 @@ class LocalController(Node):
                         odom_coordinates='local',
                         max_linear_speed=0.50, max_angular_speed=0.50,
                         lookahead_distance=0.55, linear_acceleration=0.65,
+                        smooth_steering=False,
                         controller_trace=False, enable_obstacle_replan=False,
                         diagnostic_mode=False,
                         battery_low_threshold=30.0,
@@ -53,6 +81,7 @@ class LocalController(Node):
                         charging_slot_tolerance=0.22,
                         performance_profile_dir='~/.ros/swarmx_profiles',
                         goal_tolerance=0.16, obstacle_stop_distance=0.85,
+                        waypoint_tolerance=0.16,
                         obstacle_prepare_distance=1.25,
                         obstacle_clear_distance=1.10, sensor_timeout=2.0)
         for k, v in defaults.items():
@@ -63,7 +92,8 @@ class LocalController(Node):
             config = yaml.safe_load(f)['warehouse']
         self.spawn = config['robot_spawns'][self.rid]
         self.graph = WarehouseGraph(config)
-        self.task_priority = int(config['stage4_peer_metadata'][config['robot_visuals'][self.rid]['label']]['priority'])
+        self.logical_id = config['robot_visuals'][self.rid]['label']
+        self.task_priority = int(config['stage4_peer_metadata'][self.logical_id]['priority'])
         self.pickup = self.destination = ''
         self.accepted_tasks = set()
         # Missions are authored in the warehouse drawing's coordinates, but the
@@ -95,6 +125,7 @@ class LocalController(Node):
         self.applied_reroutes = set()
         self.mission_kind = 'TASK'
         self.completed_at = None
+        self.demo_hold = False
         self.parking_target = ''
         self.parking_state = 'FREE'
         self.parking_mode = ''
@@ -110,8 +141,7 @@ class LocalController(Node):
         self.obstacle_event_sent = False
         self.obstacle_reroutes = set()
         self.trace_at = 0.0
-        self.sim_battery={'amr_alpha':92.,'amr_bravo':87.,'amr_charlie':95.,
-                          'amr_delta':81.,'amr_echo':89.}.get(self.rid,90.)
+        self.sim_battery = float(config.get('battery_initial_percent', {}).get(self.rid, 90.))
         self.battery_tick=time.monotonic()
         self.battery_last_pose=None
         self.battery_full_emitted=False
@@ -174,6 +204,18 @@ class LocalController(Node):
                 self.coordination_received = time.monotonic()
                 action=command.get('state')
                 cid=command.get('conflict_id','')
+                if (action=='RESUME' and command.get('resume_route') and
+                        command.get('resume_token')!=getattr(self,'last_yield_resume',None)):
+                    self.last_yield_resume=command['resume_token']
+                    self.route_version+=1
+                    self.install_new_route(command['resume_route'],self.route_version)
+                    self.coordination_holding=False
+                    self.change('WAYPOINT_TRACK')
+                    self.mission_pub.publish(String(data=json.dumps(dict(robot_id=self.rid,
+                        task_id=self.active_task,route=self.world_route,
+                        route_version=self.route_version))))
+                    self.emit('YIELD_MISSION_REJOIN',conflict_id=cid,
+                              route_version=self.route_version,destination=self.destination)
                 if (cid and action in ('YIELD','YIELD_AND_WAIT','WAIT_FOR_CLEAR','REROUTE','MOVE_ASIDE')
                         and cid not in self.action_events):
                     detected_ns=int(command.get('detection_monotonic_ns',0) or 0)
@@ -279,7 +321,7 @@ class LocalController(Node):
 
     @property
     def graph_robot_id(self):
-        return self.rid.replace('amr_','').upper()
+        return self.logical_id
 
     def emit(self,event,**fields):
         self.event_pub.publish(String(data=json.dumps(dict(event=event,
@@ -320,6 +362,10 @@ class LocalController(Node):
         the return leg.  The route index is authoritative, so projection stays
         on the segment currently being traversed.
         """
+        if not self.route:
+            return None
+        if len(self.route) == 1 or self.index >= len(self.route):
+            return self.route[-1]
         x,y,_=self.pose
         first=max(0,min(self.index-1,len(self.route)-2))
         nearest_progress=self.route_cumulative[first]
@@ -330,6 +376,9 @@ class LocalController(Node):
             fraction=max(0.,min(1.,((x-a[0])*dx+(y-a[1])*dy)/(length*length)))
             nearest_progress=self.route_cumulative[first]+fraction*length
         ahead=float(self.p['lookahead_distance'])*self.performance.lookahead_factor
+        if self.p.get('smooth_steering', False):
+            speed=max(0.0,float(getattr(self,'last_linear_command',0.0)))
+            ahead=min(1.20,ahead+0.35*speed/max(0.1,float(self.p['max_linear_speed'])))
         # Preserve a warehouse corner and approach it with a shorter target.
         # Once the route index advances, normal 0.55 m look-ahead resumes.
         if 0 < self.index < len(self.route)-1:
@@ -339,11 +388,18 @@ class LocalController(Node):
             outgoing=math.atan2(nxt[1]-corner[1],nxt[0]-corner[0])
             turn=wrap(outgoing-incoming)
             if abs(turn)>math.pi/4:
-                ahead=0.35
+                ahead=min(ahead,0.55 if self.p.get('smooth_steering',False) else 0.35)
         # A target only advances for a fixed route version; it cannot jump
         # behind the AMR when odometry jitters or it turns in place.
         target_progress=max(self.lookahead_progress,
                             nearest_progress+ahead)
+        # A charger is reached through its own perpendicular entry.  Do not
+        # cut a lookahead arc past either docking-area bend: that can carry a
+        # robot north of the cross aisle and into an occupied bay's brake zone.
+        for corner in (self.index, self.index+1):
+            if LocalController.charging_bend(self,corner):
+                target_progress=min(target_progress,self.route_cumulative[corner])
+                break
         self.lookahead_progress=min(target_progress,self.route_cumulative[-1])
         for i in range(len(self.route)-1):
             if self.route_cumulative[i+1] >= self.lookahead_progress:
@@ -352,6 +408,25 @@ class LocalController(Node):
                 return (self.route[i][0]+fraction*(self.route[i+1][0]-self.route[i][0]),
                         self.route[i][1]+fraction*(self.route[i+1][1]-self.route[i][1]))
         return self.route[-1]
+
+    def charging_bend(self, index):
+        graph=getattr(self,'graph',None)
+        if (graph is None or not graph.forward_rejoin or
+                not 1 <= index < len(self.route)-1):
+            return False
+        docking=(getattr(self,'destination','') in graph.charging and
+                 index >= max(1,len(self.route)-3))
+        departure=(index==1 and any(
+            math.dist(self.route[index],point)<.03
+            for name,point in getattr(graph,'nodes',{}).items()
+            if name.endswith('_APPROACH') and
+            name.removesuffix('_APPROACH') in graph.charging))
+        if not (docking or departure):
+            return False
+        previous,corner,next_point=self.route[index-1:index+2]
+        inbound=math.atan2(corner[1]-previous[1],corner[0]-previous[0])
+        outbound=math.atan2(next_point[1]-corner[1],next_point[0]-corner[0])
+        return abs(wrap(outbound-inbound)) > math.pi/4
 
     def desired_speed(self, error):
         """Adaptive profile for clear corridors, controlled zones and bends."""
@@ -363,9 +438,17 @@ class LocalController(Node):
             target=self.graph.nodes.get(self.parking_target)
             base=0.18 if target and math.dist(self.world_pose(),target)<0.80 else 0.28
         elif self.mission_kind=='PARKING': base=0.42
-        else: base=0.50
+        else: base=(max(0.50,float(self.p['max_linear_speed']))
+                    if self.p.get('smooth_steering',False) else 0.50)
         base*=self.performance.speed_factor
         magnitude=abs(error)
+        if self.p.get('smooth_steering', False):
+            # Continuous curvature/heading slowdown; only near-reversal
+            # errors require in-place alignment.
+            if magnitude > 1.7:
+                return 0.0
+            return min(base*max(0.18,1.0-magnitude/1.6),
+                       float(self.p['max_linear_speed']))
         if magnitude < .10: return min(base,float(self.p['max_linear_speed']))
         if magnitude < .30: return min(base*.84,float(self.p['max_linear_speed']))
         if magnitude < .55: return min(base*.67,float(self.p['max_linear_speed']))
@@ -487,6 +570,9 @@ class LocalController(Node):
             self.index = 0
             self.enabled = True
             self.mission_kind = 'TASK'; self.completed_at=None
+            # Used only by the deterministic video helper to hold at a
+            # graph-defined staging node.  Normal assignments omit it.
+            self.demo_hold=bool(data.get('demo_hold',False))
             self.parking_target=''; self.parking_state='FREE'
             self.parking_mode=''; self.docking_event_sent=False
             self.coordination_holding = False
@@ -610,7 +696,7 @@ class LocalController(Node):
                 bounds.get('y', [float('inf'), -float('inf')])[0]-margin <= wy <= bounds.get('y', [-float('inf'), float('inf')])[1]+margin)
 
     def active_peer_routes(self):
-        inactive=('DISABLED','MISSION_COMPLETE','PARKED','AVAILABLE','UNKNOWN')
+        inactive=('DISABLED','MISSION_COMPLETE','PARKED','AVAILABLE','DEMO_STAGED','UNKNOWN')
         return [p.get('remaining_route',[]) for p in self.peer_states.values()
                 if p.get('local_nav_state') not in inactive and p.get('remaining_route')]
 
@@ -682,7 +768,7 @@ class LocalController(Node):
             # It is not traffic and must never displace a parked AMR.
             if peer.get('active_task') in (None,'NONE','PARKING'):
                 continue
-            if peer.get('local_nav_state') in ('DISABLED','MISSION_COMPLETE','PARKED','AVAILABLE','UNKNOWN'):
+            if peer.get('local_nav_state') in ('DISABLED','MISSION_COMPLETE','PARKED','AVAILABLE','DEMO_STAGED','UNKNOWN'):
                 continue
             route=peer.get('remaining_route') or []
             if len(route)>1 and any(self.graph.point_segment_distance(self.pose[:2],a,b)<0.82
@@ -739,12 +825,16 @@ class LocalController(Node):
             elif not self.start_parking('POST_TASK_REPOSITION'):
                 self.idle_charge_retry_at=now+1.0
         if not self.enabled:
-            if self.state in ('PARKED','CHARGING','AVAILABLE'):
+            if self.state in ('PARKED','CHARGING','AVAILABLE','DEMO_STAGED'):
                 self.command(0,0); return
             self.change('DISABLED'); self.command(0, 0); return
         if self.pose is None or now-min(self.odom_time, self.scan_time) > self.p['sensor_timeout']:
             self.change('SENSOR_STALE_SAFE_STOP'); self.command(0, 0); return
         if self.index >= len(self.route):
+            if self.demo_hold:
+                self.enabled=False
+                self.change('DEMO_STAGED'); self.command(0,0)
+                return
             if self.mission_kind in ('PARKING','CHARGING'):
                 completed_mode=self.parking_mode
                 self.enabled=False; self.parking_state='OCCUPIED'
@@ -765,6 +855,24 @@ class LocalController(Node):
             return
         x, y, yaw = self.pose
         front, left, right = (self.scan[k] for k in ('front', 'left', 'right'))
+        if any(value is None for value in (front,left,right)):
+            self.change('SENSOR_STALE_SAFE_STOP'); self.command(0,0); return
+        if self.coordination_command.get('state')=='YIELD_RELOCATE':
+            target=self.coordination_command.get('target')
+            if (now-self.coordination_received>1.0 or not target or
+                    not self.graph.visible(self.world_pose(),target)):
+                self.change('COORDINATION_HOLD'); self.command(0,0); return
+            wx,wy=self.world_pose()
+            distance=math.hypot(target[0]-wx,target[1]-wy)
+            if distance<.18:
+                self.change('YIELD_POCKET'); self.command(0,0); return
+            # Pocket recovery is V2/world-odom only. Keep the original route,
+            # index and destination untouched so normal following can resume.
+            error=wrap(math.atan2(target[1]-wy,target[0]-wx)-yaw)
+            speed=0.22 if abs(error)<.25 and front>self.p['obstacle_stop_distance'] else 0.
+            self.change('YIELD_RELOCATING')
+            self.command(speed,heading_rate(error,1.25,float(self.p['max_angular_speed'])))
+            return
         requested_hold = self.should_hold_for_coordination()
         # All moving branches (including obstacle avoidance) obey a peer hold.
         if requested_hold:
@@ -802,7 +910,14 @@ class LocalController(Node):
             self.change('AVOID_TURN'); self.command(0, self.side*0.60); return
         gx, gy = self.route[self.index]
         distance = math.hypot(gx-x, gy-y)
-        while self.index < len(self.route)-1 and distance < self.p['goal_tolerance']:
+        while self.index < len(self.route)-1 and (
+                distance < (0.25 if self.charging_bend(self.index)
+                            else self.p['waypoint_tolerance']) or
+                (self.p['smooth_steering'] and self.index > 0 and
+                 not self.charging_bend(self.index) and
+                 passed_waypoint((x,y),self.route[self.index-1],self.route[self.index],
+                                 float(self.p['waypoint_tolerance'])) and
+                 self.graph.visible(self.world_pose(),self.world_route[self.index+1]))):
             self.get_logger().info(f'WAYPOINT_REACHED {self.index+1}')
             self.index += 1
             self.obstacle_side = None
@@ -862,20 +977,32 @@ class LocalController(Node):
                 self.get_logger().info(f'[{self.rid}] COORDINATION RESUME')
         # Hysteretic alignment prevents the rotate/forward/rotate thrash that
         # appeared when every minor waypoint correction was treated as a turn.
-        if not self.aligning and abs(error) > 0.55:
+        docking_turn=self.charging_bend(self.index-1)
+        enter_align = (0.9 if docking_turn else 1.7) if self.p['smooth_steering'] else 0.55
+        exit_align = (0.25 if docking_turn else 0.45) if self.p['smooth_steering'] else 0.20
+        if not self.aligning and abs(error) > enter_align:
             self.aligning=True; self.align_episodes += 1
             self.change('ALIGN')
-        elif self.aligning and abs(error) < 0.20:
+        elif self.aligning and abs(error) < exit_align:
             self.aligning=False
             self.change('WAYPOINT_TRACK')
         if self.aligning:
             self.change('ALIGN')
-            v=0.0 if abs(error)>0.85 else 0.12
+            v=(0.0 if docking_turn or abs(error)>1.8 else 0.10) if self.p['smooth_steering'] else (
+                0.0 if abs(error)>0.85 else 0.12)
         else:
             self.change('WAYPOINT_TRACK')
             v=self.desired_speed(error)
+        if self.charging_bend(self.index) and distance < 2.0:
+            v=min(v,0.15)
+        if self.graph.forward_rejoin and self.index == len(self.route)-1:
+            # V2's larger robot must settle on the terminal pad instead of
+            # crossing it at cruise speed and repeatedly turning near a wall.
+            v=min(v,0.20 if distance>=1.0 else 0.12)
+            if distance<1.2 and abs(error)>0.8:
+                v=0.0
         steering_gain=1.25*self.performance.steering_factor
-        w=0.0 if abs(error)<0.05 else max(-self.p['max_angular_speed'], min(self.p['max_angular_speed'],steering_gain*error))
+        w=heading_rate(error,steering_gain,float(self.p['max_angular_speed']))
         self.command(v, w)
 
 

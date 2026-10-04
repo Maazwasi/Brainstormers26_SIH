@@ -3,7 +3,19 @@ warehouse:
   bounds:
     x: [-12.0, 12.0]
     y: [-9.0, 9.0]
-  amr_footprint_diameter_m: 0.36
+  # Chassis x +/-0.30, wheel collision y +/-0.255; the scalar is the
+  # circumscribed chassis-corner diameter used when a polygon is unavailable.
+  amr_footprint_diameter_m: 0.75
+  amr_collision_bounds_m: {x: [-0.30, 0.30], y: [-0.255, 0.255]}
+  amr_footprint_polygon_m:
+    - [-0.30, -0.225]
+    - [-0.265, -0.255]
+    - [0.265, -0.255]
+    - [0.30, -0.225]
+    - [0.30, 0.225]
+    - [0.265, 0.255]
+    - [-0.265, 0.255]
+    - [-0.30, 0.225]
 
   zones:
     loading_bay:
@@ -154,7 +166,7 @@ warehouse:
 
   # Navigation metadata only: these coordinates follow the existing rack geometry.
   route_graph:
-    clearance: 0.36
+    clearance: 0.375
     # Shared decentralized refuge resources.  They sit outside stations,
     # controlled zones, aisle portals and the centreline of travel corridors.
     parking_hotspots: [PARK_01, PARK_02, PARK_03, PARK_04, PARK_05, PARK_06]
@@ -188,9 +200,13 @@ warehouse:
       CHARGE_SLOT_5: [-10.2, 3.6]
       MAIN_CORRIDOR_WEST: [-5.0, 0.0]
       INTERSECTION_A_WEST: [-1.8, 0.0]
+      # Demo-only safe staging holds, 1.95 m outside the 1.05 m
+      # Intersection A boundary.  They are graph nodes, not arbitrary poses.
+      INTERSECTION_A_WEST_HOLD: [-3.0, 0.0]
       INTERSECTION_A: [0.0, 0.0]
       INTERSECTION_A_EAST: [1.8, 0.0]
       INTERSECTION_A_SOUTH: [0.0, -2.5]
+      INTERSECTION_A_SOUTH_HOLD: [0.0, -3.0]
       INTERSECTION_A_NORTH: [0.0, 2.5]
       MAIN_CORRIDOR_MID: [3.3, 0.0]
       INTERSECTION_B: [5.0, 0.0]
@@ -222,8 +238,10 @@ warehouse:
       - [CHARGING_STATION_ENTRY, CHARGE_SLOT_5]
       - [LOADING_BAY, MAIN_CORRIDOR_WEST]
       - [MAIN_CORRIDOR_WEST, INTERSECTION_A_WEST]
+      - [INTERSECTION_A_WEST_HOLD, INTERSECTION_A_WEST]
       - [INTERSECTION_A_WEST, INTERSECTION_A]
       - [INTERSECTION_A_SOUTH, INTERSECTION_A]
+      - [INTERSECTION_A_SOUTH_HOLD, INTERSECTION_A_SOUTH]
       - [INTERSECTION_A_NORTH, INTERSECTION_A]
       - [INTERSECTION_A, INTERSECTION_A_EAST]
       - [INTERSECTION_A_EAST, MAIN_CORRIDOR_MID]

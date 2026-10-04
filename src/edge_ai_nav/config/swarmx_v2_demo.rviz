@@ -1,0 +1,100 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: 50 x 40 m Warehouse Grid
+      Enabled: true
+      Plane: XY
+      Cell Size: 1
+      Plane Cell Count: 60
+      Color: 110; 120; 135
+      Alpha: 0.45
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Live ALPHA 1-5 Labels
+      Enabled: true
+      Topic:
+        Value: /fleet/spawn_labels
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 10
+      Value: true
+    - Class: rviz_default_plugins/TF
+      Name: Physical Robot Frames
+      Enabled: true
+      Show Names: true
+      Show Axes: true
+      Show Arrows: false
+      Marker Scale: 0.5
+      Frame Timeout: 15
+      Update Interval: 0
+      Frames:
+        All Enabled: true
+      Value: true
+    - Class: rviz_default_plugins/LaserScan
+      Name: ALPHA 1 LiDAR
+      Enabled: true
+      Topic: {Value: /alpha_1/scan, Reliability Policy: Best Effort, Durability Policy: Volatile, History Policy: Keep Last, Depth: 5}
+      Color: 255; 75; 75
+      Size (Pixels): 3
+      Style: Flat Squares
+      Value: true
+    - Class: rviz_default_plugins/LaserScan
+      Name: ALPHA 2 LiDAR
+      Enabled: true
+      Topic: {Value: /alpha_2/scan, Reliability Policy: Best Effort, Durability Policy: Volatile, History Policy: Keep Last, Depth: 5}
+      Color: 75; 150; 255
+      Size (Pixels): 3
+      Style: Flat Squares
+      Value: true
+    - Class: rviz_default_plugins/LaserScan
+      Name: ALPHA 3 LiDAR
+      Enabled: true
+      Topic: {Value: /alpha_3/scan, Reliability Policy: Best Effort, Durability Policy: Volatile, History Policy: Keep Last, Depth: 5}
+      Color: 75; 255; 120
+      Size (Pixels): 3
+      Style: Flat Squares
+      Value: true
+    - Class: rviz_default_plugins/LaserScan
+      Name: ALPHA 4 LiDAR
+      Enabled: true
+      Topic: {Value: /alpha_4/scan, Reliability Policy: Best Effort, Durability Policy: Volatile, History Policy: Keep Last, Depth: 5}
+      Color: 255; 175; 50
+      Size (Pixels): 3
+      Style: Flat Squares
+      Value: true
+    - Class: rviz_default_plugins/LaserScan
+      Name: ALPHA 5 LiDAR
+      Enabled: true
+      Topic: {Value: /alpha_5/scan, Reliability Policy: Best Effort, Durability Policy: Volatile, History Policy: Keep Last, Depth: 5}
+      Color: 190; 90; 255
+      Size (Pixels): 3
+      Style: Flat Squares
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 22; 24; 30
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: SWARMX V2
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: Warehouse Overview
+      Target Frame: <Fixed Frame>
+      Scale: 1.35
+      X: 25.0
+      Y: 20.0
+      Value: TopDownOrtho (rviz_default_plugins)

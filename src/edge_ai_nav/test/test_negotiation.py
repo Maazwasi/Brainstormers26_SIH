@@ -1,6 +1,7 @@
 import unittest
 
 from edge_ai_nav.fleet.negotiation import (NegotiationBook, choose_winner, resolve_conflict,
+                                            conflict_identity, coordination_action,
                                             motion_gate, outside_with_margin,
                                             reservation_distance)
 
@@ -94,6 +95,106 @@ class NegotiationTest(unittest.TestCase):
         zone = {'center': [0, 0], 'radius': 1}
         self.assertFalse(outside_with_margin({'x': 1.2, 'y': 0}, zone, .4))
         self.assertTrue(outside_with_margin({'x': 1.4, 'y': 0}, zone, .4))
+
+
+class SharedDecisionProtocolTest(unittest.TestCase):
+    cid='intersection_A:ALPHA:BRAVO'
+
+    @staticmethod
+    def active(rid,priority=3,**fields):
+        value=dict(robot_id=rid,task_priority=priority,waiting_time=0,
+                   local_nav_state='WAYPOINT_TRACK',zone_reserved=False,
+                   zone_committed=False,safety_emergency=False)
+        value.update(fields)
+        return value
+
+    def authority_decision(self,costs=None):
+        book=NegotiationBook()
+        decision=book.create_authoritative(self.cid,'ALPHA',
+            self.active('ALPHA',4),self.active('BRAVO',2),
+            {'ALPHA':2.0,'BRAVO':2.5},now=10.,first_detected=9.5,
+            zone='intersection_A',route_costs=costs)
+        return book,decision
+
+    def test_shared_01_canonical_authority_from_both_perspectives(self):
+        self.assertEqual(('intersection_A',('ALPHA','BRAVO'),'ALPHA'),
+                         conflict_identity(self.cid))
+        self.assertEqual('ALPHA',conflict_identity(
+            'intersection_A:ALPHA:BRAVO')[2])
+
+    def test_shared_02_staggered_peers_adopt_same_version_and_winner(self):
+        authority,wire=self.authority_decision()
+        peer=NegotiationBook()
+        delayed=dict(wire,decision_timestamp=wire['decision_timestamp']+0.7)
+        self.assertTrue(peer.adopt(delayed))
+        adopted=peer.get(self.cid)
+        self.assertEqual((wire['winner'],wire['loser'],wire['decision_version']),
+                         (adopted['winner'],adopted['loser'],adopted['decision_version']))
+        self.assertEqual(authority.get(self.cid)['authority_robot_id'],'ALPHA')
+
+    def test_shared_03_double_loser_is_impossible_after_adoption(self):
+        _,wire=self.authority_decision({'BRAVO':{
+            'wait':8.,'reroute':2.,'route':[[0,0],[1,0]]}})
+        peer=NegotiationBook(); self.assertTrue(peer.adopt(wire))
+        actions={rid:coordination_action(peer.get(self.cid),rid)
+                 for rid in ('ALPHA','BRAVO')}
+        self.assertEqual(1,sum(action=='REROUTE' for action in actions.values()))
+        self.assertEqual(1,sum(action=='PROCEED' for action in actions.values()))
+
+    def test_shared_04_winner_never_reroutes(self):
+        _,wire=self.authority_decision({'BRAVO':{
+            'wait':8.,'reroute':2.,'route':[[0,0],[1,0]]}})
+        self.assertEqual('PROCEED',coordination_action(wire,wire['winner']))
+        self.assertNotEqual('REROUTE',coordination_action(wire,wire['winner']))
+
+    def test_shared_05_loser_yields_and_preserves_route_policy(self):
+        _,wire=self.authority_decision({'BRAVO':{
+            'wait':2.,'reroute':20.,'route':[[0,0],[1,0]]}})
+        self.assertEqual('YIELD_AND_WAIT',coordination_action(wire,wire['loser']))
+        self.assertEqual('WAIT_FOR_CLEAR',coordination_action(wire,wire['loser'],True))
+
+    def test_shared_06_only_loser_reroutes_when_cheaper(self):
+        _,wire=self.authority_decision({'BRAVO':{
+            'wait':8.,'reroute':2.,'route':[[0,0],[1,0]]}})
+        self.assertEqual('REROUTE',coordination_action(wire,'BRAVO'))
+        self.assertEqual('PROCEED',coordination_action(wire,'ALPHA'))
+
+    def test_shared_07_clear_is_versioned_and_enables_resume(self):
+        authority,wire=self.authority_decision()
+        peer=NegotiationBook(); self.assertTrue(peer.adopt(wire))
+        clear=authority.clear_message(self.cid,'WINNER_CLEARED',20.)
+        self.assertEqual(wire['decision_version'],clear['decision_version'])
+        removed=peer.adopt_clear(clear)
+        self.assertEqual('BRAVO',removed['loser'])
+        self.assertIsNone(peer.get(self.cid))
+
+    def test_shared_08_stale_and_wrong_authority_decisions_are_rejected(self):
+        authority,wire=self.authority_decision()
+        peer=NegotiationBook(); self.assertTrue(peer.adopt(wire))
+        clear=authority.clear_message(self.cid,'WINNER_CLEARED',20.)
+        self.assertIsNotNone(authority.adopt_clear(clear))
+        self.assertIsNotNone(peer.adopt_clear(clear))
+        self.assertFalse(peer.adopt(wire))
+        newer=dict(wire,decision_version=wire['decision_version']+1,
+                   authority_robot_id='BRAVO')
+        self.assertFalse(peer.adopt(newer))
+        next_encounter=authority.create_authoritative(self.cid,'ALPHA',
+            self.active('ALPHA',4),self.active('BRAVO',2),
+            {'ALPHA':2.,'BRAVO':3.},now=30.,first_detected=29.,
+            zone='intersection_A')
+        self.assertEqual(wire['decision_version']+1,
+                         next_encounter['decision_version'])
+
+    def test_shared_09_missing_authority_decision_is_safe_wait(self):
+        self.assertEqual('SAFE_WAIT',coordination_action(None,'BRAVO'))
+
+    def test_shared_10_existing_hierarchy_is_preserved(self):
+        alpha=self.active('ALPHA',4)
+        bravo=self.active('BRAVO',1,zone_committed=True)
+        decision=resolve_conflict(alpha,bravo,'intersection_A',
+                                  etas={'ALPHA':1.,'BRAVO':5.})
+        self.assertEqual(('BRAVO','ALPHA','ZONE_COMMITTED'),
+                         (decision.winner,decision.loser,decision.reason))
 
 
 if __name__ == '__main__':

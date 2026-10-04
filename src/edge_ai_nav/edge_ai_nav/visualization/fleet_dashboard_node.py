@@ -15,25 +15,37 @@ from std_msgs.msg import String
 from edge_ai_nav.fleet.route_graph import WarehouseGraph
 
 
-ROBOTS = {
-    'amr_alpha': ('ALPHA 1', '#ff3b5c', 92),
-    'amr_bravo': ('ALPHA 2', '#3284ff', 87),
-    'amr_charlie': ('ALPHA 3', '#20dc77', 95),
-    'amr_delta': ('ALPHA 4', '#ff8a2b', 81),
-    'amr_echo': ('ALPHA 5', '#a96cff', 89),
-}
-
-
 class FleetDashboard(Node):
     def __init__(self):
         super().__init__('fleet_dashboard')
         self.declare_parameter('port', 8090)
+        self.declare_parameter('config_file', '')
         self.static_dir = os.path.join(get_package_share_directory('edge_ai_nav'),
                                        'visualization', 'static')
-        config_path = os.path.join(get_package_share_directory('amr_simulation'),
-                                   'config', 'warehouse_sih_demo.yaml')
+        config_path = (self.get_parameter('config_file').value or
+            os.path.join(get_package_share_directory('amr_simulation'),
+                         'config', 'warehouse_sih_demo.yaml'))
         with open(config_path) as stream:
             self.config = yaml.safe_load(stream)['warehouse']
+        bounds = self.config.get('bounds', {})
+        self.v2_map = (bounds.get('x') == [0.0, 50.0] and
+                       bounds.get('y') == [0.0, 40.0])
+        self.map_layout = (dict(kind='v2', bounds=bounds,
+            shelves=self.config.get('shelves', {}),
+            pickups=self.config.get('pickups', {}),
+            drops=self.config.get('drops', {}),
+            charging_station=self.config.get('charging_station', {}),
+            charging_bays=self.config.get('charging_bays', {}),
+            cross_aisles=self.config.get('cross_aisle_centrelines', []),
+            coordination_zones={name: zone for name, zone in
+                self.config.get('zones', {}).items()
+                if zone.get('coordination_zone')}) if self.v2_map else None)
+        palette = ('#ff3b5c', '#3284ff', '#20dc77', '#ff8a2b', '#a96cff')
+        battery = self.config.get('battery_initial_percent', {})
+        self.robots = {rid: (visual['label'], palette[index % len(palette)],
+                             battery.get(rid, 90))
+                       for index, (rid, visual) in
+                       enumerate(self.config['robot_visuals'].items())}
         self.graph = WarehouseGraph(self.config)
         self.coordination_events = {}
         self.data = {rid: {'robot_id': rid, 'name': name, 'color': color,
@@ -41,10 +53,12 @@ class FleetDashboard(Node):
                           'battery_state': 'NORMAL', 'is_charging': False,
                           'zone': 'UNKNOWN', 'localization': 'ODOM',
                           'coordination': 'NONE', 'peers': 0, 'progress': 0,
+                          'priority': 0, 'destination': 'NONE',
+                          'nav_state': 'UNKNOWN',
                           'last_seen': 0, 'active_since': None,
                           'x': 0, 'y': 0, 'yaw': 0, 'route': [],
                           'waypoint': 0, 'parking_target': ''}
-                     for rid, (name, color, battery) in ROBOTS.items()}
+                     for rid, (name, color, battery) in self.robots.items()}
         # Session-scoped, human-readable IDs; time seed avoids reusing an ID
         # when only the dashboard is restarted while AMR bidders stay alive.
         self.task_counter = int(time.time()) % 900 + 99
@@ -64,7 +78,7 @@ class FleetDashboard(Node):
         self.create_subscription(String, '/fleet/task_claims', self.on_claim, 10)
         self.create_subscription(String, '/fleet/mission_routes', self.on_route, 10)
         self.create_subscription(String, '/fleet/coordination_events', self.on_edge_event, 20)
-        for rid in ROBOTS:
+        for rid in self.robots:
             self.create_subscription(String, f'/{rid}/local_status',
                 lambda m, r=rid: self.on_status(r, m), 10)
             self.create_subscription(String, f'/{rid}/coordination_command',
@@ -75,7 +89,8 @@ class FleetDashboard(Node):
                 lambda m, r=rid: self.on_odom(r, m), 10)
         self.server = self.make_server(int(self.get_parameter('port').value))
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
-        self.get_logger().info('SIH Fleet Command Dashboard: http://localhost:8090/fleet')
+        self.get_logger().info('SIH Fleet Command Dashboard: '
+                               f'http://localhost:{self.get_parameter("port").value}/fleet')
 
     @staticmethod
     def decode(msg):
@@ -93,32 +108,38 @@ class FleetDashboard(Node):
         bid = self.decode(msg)
         task = self.tasks.get(bid.get('task_id'))
         rid = bid.get('robot_id')
-        if not task or rid not in ROBOTS or rid in task['bids']:
+        if not task or rid not in self.robots or rid in task['bids']:
             return
         task['bids'][rid] = bid
         task['available'] = sum(bool(b.get('eligible')) for b in task['bids'].values())
-        self.event(f"{ROBOTS[rid][0]} bid received · score {bid.get('score')}")
+        self.event(f"{self.robots[rid][0]} bid received · score {bid.get('score')}")
 
     def on_claim(self, msg):
         claim = self.decode(msg)
         task = self.tasks.get(claim.get('task_id'))
         rid = claim.get('winner')
-        if not task or rid not in ROBOTS:
+        if not task or rid not in self.robots:
             return
-        task.update(status='CLAIMED', winner=rid, display_name=ROBOTS[rid][0],
+        task.update(status='CLAIMED', winner=rid, display_name=self.robots[rid][0],
                     route=claim.get('route',[]),
                     reason=claim.get('reason', 'Best deterministic suitability score'),
                     battery=claim.get('battery'), distance=claim.get('distance'),
                     score=claim.get('score'), bid_count=claim.get('bid_count', 0),
                     assignment_source='AUTO — DECENTRALIZED')
+        if task['route']:
+            task.setdefault('original_route',list(task['route']))
         self.data[rid].update(status='ASSIGNED', task=task['task_id'], progress=0)
         self.event(f"DECENTRALIZED CONSENSUS · {task['bid_count']} bids")
-        self.event(f"{task['task_id']} claimed by {ROBOTS[rid][0]}")
+        self.event(f"{task['task_id']} claimed by {self.robots[rid][0]}")
 
     def on_route(self,msg):
         data=self.decode(msg)
         task=self.tasks.get(data.get('task_id'))
         if task and data.get('robot_id')==task.get('winner'):
+            if task.get('route'):
+                task.setdefault('original_route',list(task['route']))
+            elif data.get('route') and int(data.get('route_version',0))<=1:
+                task.setdefault('original_route',list(data['route']))
             task['route']=data.get('route',[])
             task['route_version']=data.get('route_version',task.get('route_version',0))
 
@@ -130,6 +151,9 @@ class FleetDashboard(Node):
         task_id = d.get('active_task', item['task'])
         item.update(last_seen=time.monotonic(), task=task_id,
                     progress=round(float(d.get('task_progress', 0))),
+                    priority=int(d.get('task_priority',item['priority'])),
+                    destination=d.get('destination',item['destination']) or 'NONE',
+                    nav_state=state,
                     coordination=d.get('coordination_state', item['coordination']),
                     route=d.get('route',item['route']),
                     waypoint=int(d.get('waypoint',item['waypoint'])),
@@ -153,8 +177,8 @@ class FleetDashboard(Node):
                           'DOCKING' if state == 'DOCKING' else
                           'RETURNING TO CHARGE' if mission_kind=='CHARGING' and task_id in ('', 'NONE', None) else
                           'RETURNING TO CHARGE' if state in ('GOING_TO_CHARGE','RETURNING_TO_CHARGE') else
-                          'REPOSITIONING' if state in ('CLEARING_DROP_ZONE','POST_TASK_REPOSITION','MOVE_ASIDE','REROUTING') else
-                          'WAITING' if state in ('COORDINATION_HOLD', 'OBSTACLE_STOP') else
+                          'REPOSITIONING' if state in ('CLEARING_DROP_ZONE','POST_TASK_REPOSITION','MOVE_ASIDE','REROUTING','YIELD_RELOCATING') else
+                          'WAITING' if state in ('COORDINATION_HOLD', 'OBSTACLE_STOP','YIELD_POCKET') else
                           'IDLE' if state in ('DISABLED', 'MISSION_COMPLETE') else 'EXECUTING')
         item['active_since'] = None
         task = self.tasks.get(task_id)
@@ -164,7 +188,7 @@ class FleetDashboard(Node):
             task = dict(task_id=task_id, type='WAREHOUSE_TRANSFER',
                         pickup=d.get('pickup'), destination=d.get('destination'),
                         priority=d.get('task_priority', 3), status='CLAIMED',
-                        winner=rid, display_name=ROBOTS[rid][0], bids={}, available=0,
+                        winner=rid, display_name=self.robots[rid][0], bids={}, available=0,
                         reason='Live mission reattached; original bid metrics unavailable',
                         battery=item['battery'], distance='N/A', score='N/A',
                         route=d['route'])
@@ -174,14 +198,18 @@ class FleetDashboard(Node):
             if task_id.startswith('TASK-') and task_id[5:].isdigit():
                 self.task_counter = max(self.task_counter, int(task_id[5:]))
         if task and d.get('route'):
+            if task.get('route'):
+                task.setdefault('original_route',list(task['route']))
+            elif int(d.get('route_version',0))<=1:
+                task.setdefault('original_route',list(d['route']))
             task['route']=d['route']; task['waypoint']=d.get('waypoint',0)
             task['route_version']=d.get('route_version',task.get('route_version',0))
         if task and item['status'] == 'EXECUTING' and task['status'] in ('CLAIMED','BIDDING'):
             task['status'] = 'EXECUTING'
-            self.event(f"{ROBOTS[rid][0]} executing {task_id}")
+            self.event(f"{self.robots[rid][0]} executing {task_id}")
         if task and item['status'] == 'COMPLETED' and task['status'] != 'COMPLETED':
             task['status'] = 'COMPLETED'
-            self.event(f"{task_id} completed by {ROBOTS[rid][0]}")
+            self.event(f"{task_id} completed by {self.robots[rid][0]}")
 
     def on_coordination(self, rid, msg):
         d=self.decode(msg); state=d.get('state','NONE')
@@ -190,15 +218,13 @@ class FleetDashboard(Node):
         if self.coordination_events.get(rid)!=key and state!='NONE':
             zone=d.get('zone','').upper()
             label='AISLE RESERVED / PROCEED' if state=='PROCEED' and zone=='NARROW_AISLE_1' else state
-            self.event(f'{ROBOTS[rid][0]} → {label} · {zone}')
+            self.event(f'{self.robots[rid][0]} → {label} · {zone}')
             if state in ('YIELD','YIELD_AND_WAIT'): self.event(f'P2P CONFLICT DETECTED · {zone}')
         self.coordination_events[rid]=key
 
-    @staticmethod
-    def robot_name(rid):
-        if rid in ROBOTS: return ROBOTS[rid][0]
-        key='amr_'+str(rid).lower()
-        return ROBOTS.get(key,(str(rid),))[0]
+    def robot_name(self, rid):
+        if rid in self.robots: return self.robots[rid][0]
+        return next((name for name, _, _ in self.robots.values() if name == rid), str(rid))
 
     def on_edge_event(self,msg):
         d=self.decode(msg); kind=d.get('event','')
@@ -208,7 +234,7 @@ class FleetDashboard(Node):
         if kind=='CONFLICT_DETECTED':
             self.metrics['conflicts_detected']+=1
             robots=' ↔ '.join(self.robot_name(r) for r in d.get('robots',[]))
-            self.event(f"EDGE AI CONFLICT DETECTED · {d.get('zone','').upper()} · {robots}")
+            self.event(f"P2P CONFLICT PREDICTED · {d.get('zone','').upper()} · {robots} · ETA overlap detected")
         elif kind=='NEGOTIATION_COMPLETE':
             self.metrics['p2p_negotiations']+=1
             latency=d.get('decision_latency_ms')
@@ -221,7 +247,11 @@ class FleetDashboard(Node):
             if action=='REROUTE': self.metrics['reroutes']+=1
             if d.get('deadlock_prevented'): self.metrics['deadlocks_prevented']+=1
             self.event(f"P2P NEGOTIATION COMPLETE · {self.robot_name(d.get('winner'))} → PROCEED (ORIGINAL A* ROUTE) · {self.robot_name(d.get('loser'))} → {action}")
-            self.event(f"DECISION BASIS · {str(d.get('decision_basis','')).replace('_',' ')}")
+            basis=str(d.get('decision_basis','')).replace('_',' ')
+            if d.get('decision_basis') == 'TASK_PRIORITY':
+                labels={1:'LOW', 2:'NORMAL', 3:'HIGH', 4:'URGENT'}
+                basis=f"{labels.get(d.get('winner_priority'), 'HIGH')} > {labels.get(d.get('loser_priority'), 'NORMAL')}"
+            self.event(f"DECISION BASIS · {basis}")
             if latency is not None:
                 self.event(f"EDGE AI DECISION COMMITTED · {float(latency):.3f} ms")
         elif kind=='NEGOTIATION_ACTION_APPLIED':
@@ -242,6 +272,10 @@ class FleetDashboard(Node):
             self.event(f"PATH OBSTRUCTION DETECTED · Idle {self.robot_name(d.get('robot_id'))} → MOVE ASIDE · {d.get('parking_target')}")
         elif kind=='MOVE_ASIDE_COMPLETE':
             self.event(f"ROUTE CLEARED · {self.robot_name(d.get('robot_id'))} parked at {d.get('parking_target')}")
+        elif kind=='YIELD_POCKET_SELECTED':
+            self.event(f"SAFE WAIT POSITION · {self.robot_name(d.get('loser'))} moving aside for {self.robot_name(d.get('winner'))}")
+        elif kind=='YIELD_POCKET_CLEARED':
+            self.event(f"PATH CLEAR · {self.robot_name(d.get('robot_id'))} resumes original task")
         elif kind=='TASK_COMPLETED':
             self.event(f"TASK COMPLETED · {self.robot_name(d.get('robot_id'))} cleared {d.get('destination')}")
         elif kind=='POST_TASK_REPOSITION':
@@ -294,9 +328,22 @@ class FleetDashboard(Node):
         item['yaw'] = round(math.atan2(2*(q.w*q.z+q.x*q.y),
                                        1-2*(q.y*q.y+q.z*q.z)), 3)
         x, y = item['x'], item['y']
-        item['zone'] = ('INTERSECTION A' if x*x+y*y < 1.7 else
-                        'LOADING BAY' if x < -7 else
-                        'NARROW AISLE' if x > 7 and y > 1 else 'MAIN CORRIDOR')
+        if self.v2_map:
+            station=self.config['charging_station']
+            cx,cy=station['center']; width,height=station['size']
+            zone=next((name.replace('_',' ') for name,z in
+                self.map_layout['coordination_zones'].items()
+                if (math.dist((x,y),z['center']) <= z['radius']
+                    if 'radius' in z else
+                    z['bounds']['x'][0] <= x <= z['bounds']['x'][1] and
+                    z['bounds']['y'][0] <= y <= z['bounds']['y'][1])),None)
+            at_charger=(abs(x-cx)<=width/2 and abs(y-cy)<=height/2)
+            item['zone']=(zone or ('CHARGING STATION' if at_charger else
+                           'MAIN AISLE' if abs(x-cx)<2.0 else 'WAREHOUSE AISLE'))
+        else:
+            item['zone'] = ('INTERSECTION A' if x*x+y*y < 1.7 else
+                            'LOADING BAY' if x < -7 else
+                            'NARROW AISLE' if x > 7 and y > 1 else 'MAIN CORRIDOR')
 
     def create_task(self, payload):
         required = ('type', 'pickup', 'destination', 'priority')
@@ -309,17 +356,17 @@ class FleetDashboard(Node):
         if mode not in ('AUTO','MANUAL'):
             return {'success':False,'reason':'Invalid assignment mode'}
         if mode=='MANUAL':
-            if manual_robot not in ROBOTS:
+            if manual_robot not in self.robots:
                 return {'success':False,'reason':'Select a valid AMR'}
             robot=self.data[manual_robot]
             if time.monotonic()-robot['last_seen']>3 or robot['status']=='OFFLINE':
-                return {'success':False,'reason':f'{ROBOTS[manual_robot][0]} is OFFLINE'}
+                return {'success':False,'reason':f'{self.robots[manual_robot][0]} is OFFLINE'}
             if robot.get('battery_state')=='CRITICAL':
-                return {'success':False,'reason':f'{ROBOTS[manual_robot][0]} has CRITICAL BATTERY'}
+                return {'success':False,'reason':f'{self.robots[manual_robot][0]} has CRITICAL BATTERY'}
             if robot['status'] in ('EXECUTING','ASSIGNED','WAITING','REPOSITIONING'):
-                return {'success':False,'reason':f'{ROBOTS[manual_robot][0]} is already executing a mission'}
+                return {'success':False,'reason':f'{self.robots[manual_robot][0]} is already executing a mission'}
             if robot['status']=='FAULTED':
-                return {'success':False,'reason':f'{ROBOTS[manual_robot][0]} is FAULTED'}
+                return {'success':False,'reason':f'{self.robots[manual_robot][0]} is FAULTED'}
             try:
                 plan=self.graph.mission_plan((robot['x'],robot['y']),payload['pickup'],payload['destination'])
             except ValueError as error:
@@ -345,7 +392,7 @@ class FleetDashboard(Node):
                 ('task_id', 'type', 'pickup', 'destination', 'priority', 'timestamp')})))
         else:
             robot=self.data[manual_robot]
-            task.update(display_name=ROBOTS[manual_robot][0],
+            task.update(display_name=self.robots[manual_robot][0],
                         reason='Explicit operator override; local safety remains active',
                         battery=robot['battery'],distance=round(
                             self.graph.pickup_distance((robot['x'],robot['y']),task['pickup']),2),
@@ -358,7 +405,7 @@ class FleetDashboard(Node):
                 expanded_nodes=plan['expanded_nodes'],raw_route_cost=plan['raw_route_cost'],
                 assignment_source='MANUAL_OPERATOR_OVERRIDE')
             self.assignment_pub.publish(String(data=json.dumps(assignment)))
-            self.event(f"OPERATOR OVERRIDE · {task_id} assigned to {ROBOTS[manual_robot][0]} · safety layers active")
+            self.event(f"OPERATOR OVERRIDE · {task_id} assigned to {self.robots[manual_robot][0]} · safety layers active")
         return {'success':True,'task_id':task_id,'assignment_mode':mode}
 
     def snapshot(self):
@@ -374,10 +421,12 @@ class FleetDashboard(Node):
         if latest:
             latest = dict(latest)
             latest['bids'] = list(latest['bids'].values())
-        coordination = sum(r['coordination'] in ('YIELD','YIELD_AND_WAIT','WAIT_FOR_CLEAR','SAFE_WAIT')
+        coordination = sum(r['coordination'] in ('YIELD','YIELD_AND_WAIT','WAIT_FOR_CLEAR','SAFE_WAIT','YIELD_RELOCATE')
                            for r in robots)
         return {'robots': robots, 'latest_task': latest, 'events': self.events,
-                'routes': [{k:t.get(k) for k in ('task_id','winner','route','waypoint','route_version','status')}
+                'map_layout': self.map_layout,
+                'routes': [{k:t.get(k) for k in ('task_id','winner','route','original_route',
+                                                 'waypoint','route_version','status')}
                            for t in self.tasks.values() if t.get('winner') and t['status']!='COMPLETED'],
                 'active_robots': sum(r['status'] != 'OFFLINE' for r in robots),
                 'active_tasks': sum(t['status'] in ('BIDDING', 'CLAIMED', 'EXECUTING')
