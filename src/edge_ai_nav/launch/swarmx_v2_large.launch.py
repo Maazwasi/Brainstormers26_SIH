@@ -1,12 +1,13 @@
-"""EXPERIMENTAL 2x platform. Default .60 m/s, 3x speed awaits physical gates."""
+"""Five-AMR warehouse with Gazebo, dashboard and live LiDAR/SLAM RViz."""
 import importlib.util
 import os
 
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, TimerAction
 from launch.conditions import IfCondition, UnlessCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -20,8 +21,17 @@ def generate_launch_description():
     front_overhang=max(cfg['amr_collision_bounds_m']['x'])-cfg['scale_speed_upgrade']['lidar_pose_m'][0]
     world = os.path.join(sim, 'worlds', cfg['world_file'])
     robot_sdf = os.path.join(sim, 'models', 'warehouse_amr_v2_large.sdf.xacro')
-    bridge = os.path.join(edge, 'config', 'five_amr_bridge.yaml')
-    rviz = os.path.join(edge, 'config', 'swarmx_v2_demo.rviz')
+    bridge = os.path.join(edge, 'config', 'five_amr_bridge_large.yaml')
+    if not os.path.isfile(bridge):
+        raise FileNotFoundError(
+            f'Missing installed Gazebo bridge config: {bridge}. '
+            'Run colcon build --symlink-install --packages-select amr_simulation edge_ai_nav '
+            'before starting the simulation.'
+        )
+    rviz = os.path.join(edge, 'config', 'swarmx_v2_slam.rviz')
+    slam_config = os.path.join(edge, 'config', 'swarmx_v2_slam.yaml')
+    slam_launch = os.path.join(get_package_share_directory('slam_toolbox'),
+                               'launch', 'online_async_launch.py')
     helper_path = os.path.join(edge, 'launch', 'five_amr_demo.launch.py')
     spec = importlib.util.spec_from_file_location('swarmx_spawn_helper', helper_path)
     helper = importlib.util.module_from_spec(spec)
@@ -36,12 +46,12 @@ def generate_launch_description():
     max_angular_speed = LaunchConfiguration('max_angular_speed')
     actions = [
         DeclareLaunchArgument('headless', default_value='false'),
-        DeclareLaunchArgument('use_rviz', default_value='false'),
+        DeclareLaunchArgument('use_rviz', default_value='true'),
         DeclareLaunchArgument('enabled', default_value='false'),
         DeclareLaunchArgument('dashboard_port', default_value='8091'),
         DeclareLaunchArgument('allow_reroute',default_value=str(cfg['stage6']['allow_reroute']).lower()),
-        DeclareLaunchArgument('max_linear_speed',default_value='0.60'),
-        DeclareLaunchArgument('max_angular_speed',default_value='0.50'),
+        DeclareLaunchArgument('max_linear_speed',default_value='3.80'),
+        DeclareLaunchArgument('max_angular_speed',default_value='7.50'),
         ExecuteProcess(cmd=['gz', 'sim', '-r', world], output='screen',
                        condition=UnlessCondition(headless)),
         ExecuteProcess(cmd=['gz', 'sim', '-s', '-r', world], output='screen',
@@ -55,7 +65,8 @@ def generate_launch_description():
         visual = cfg['robot_visuals'][rid]
         actions.append(helper.robot_actions(rid, pose, visual['colour'],
                                            robot_sdf, bridge, 3.0 + 0.4 * index,
-                                           max_linear_velocity=max_linear_speed))
+                                           max_linear_velocity=max_linear_speed,
+                                           max_angular_velocity=max_angular_speed))
         common = {'config_file': config_file}
         actions.append(TimerAction(period=7.0, actions=[
             Node(package='edge_ai_nav', executable='local_waypoint_controller',
@@ -93,5 +104,18 @@ def generate_launch_description():
         Node(package='rviz2', executable='rviz2', name='swarmx_v2_rviz',
              arguments=['-d', rviz], parameters=[{'use_sim_time': True}],
              output='screen', condition=IfCondition(use_rviz)),
+    ]))
+    actions.append(TimerAction(period=20.0, actions=[
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(slam_launch),
+            launch_arguments={
+                'use_sim_time': 'true',
+                'autostart': 'false',
+                'slam_params_file': slam_config,
+            }.items(),
+            condition=IfCondition(use_rviz)),
+        Node(package='edge_ai_nav', executable='slam_lifecycle_guard',
+             name='slam_lifecycle_guard', output='screen',
+             condition=IfCondition(use_rviz)),
     ]))
     return LaunchDescription(actions)

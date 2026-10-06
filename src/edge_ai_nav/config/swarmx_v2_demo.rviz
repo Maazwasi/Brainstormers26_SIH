@@ -1,79 +1,317 @@
 Panels:
   - Class: rviz_common/Displays
+    Help Height: 70
     Name: Displays
+    Property Tree Widget:
+      Expanded: ~
+      Splitter Ratio: 0.5
+    Tree Height: 310
 Visualization Manager:
   Class: ""
   Displays:
-    - Class: rviz_default_plugins/Grid
-      Name: 50 x 40 m Warehouse Grid
-      Enabled: true
-      Plane: XY
+    - Alpha: 0.44999998807907104
       Cell Size: 1
-      Plane Cell Count: 60
+      Class: rviz_default_plugins/Grid
       Color: 110; 120; 135
-      Alpha: 0.45
+      Enabled: true
+      Line Style:
+        Line Width: 0.029999999329447746
+        Value: Lines
+      Name: 50 x 40 m Warehouse Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 60
+      Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Name: Live ALPHA 1-5 Labels
       Enabled: true
+      Name: Live ALPHA 1-5 Labels
+      Namespaces:
+        Value: true
+        stage2_robot_names: true
       Topic:
-        Value: /fleet/spawn_labels
-        Reliability Policy: Reliable
+        Depth: 10
         Durability Policy: Volatile
         History Policy: Keep Last
-        Depth: 10
+        Reliability Policy: Reliable
+        Value: /fleet/spawn_labels
       Value: true
     - Class: rviz_default_plugins/TF
-      Name: Physical Robot Frames
       Enabled: true
-      Show Names: true
-      Show Axes: true
-      Show Arrows: false
-      Marker Scale: 0.5
+      Filter (blacklist): ""
+      Filter (whitelist): ""
       Frame Timeout: 15
-      Update Interval: 0
       Frames:
         All Enabled: true
+        alpha_1/base_footprint:
+          Value: true
+        alpha_1/base_link:
+          Value: true
+        alpha_1/base_scan:
+          Value: true
+        alpha_1/imu_link:
+          Value: true
+        alpha_1/odom:
+          Value: true
+        alpha_2/base_footprint:
+          Value: true
+        alpha_2/base_link:
+          Value: true
+        alpha_2/base_scan:
+          Value: true
+        alpha_2/imu_link:
+          Value: true
+        alpha_2/odom:
+          Value: true
+        alpha_3/base_footprint:
+          Value: true
+        alpha_3/base_link:
+          Value: true
+        alpha_3/base_scan:
+          Value: true
+        alpha_3/imu_link:
+          Value: true
+        alpha_3/odom:
+          Value: true
+        alpha_4/base_footprint:
+          Value: true
+        alpha_4/base_link:
+          Value: true
+        alpha_4/base_scan:
+          Value: true
+        alpha_4/imu_link:
+          Value: true
+        alpha_4/odom:
+          Value: true
+        alpha_5/base_footprint:
+          Value: true
+        alpha_5/base_link:
+          Value: true
+        alpha_5/base_scan:
+          Value: true
+        alpha_5/imu_link:
+          Value: true
+        alpha_5/odom:
+          Value: true
+        map:
+          Value: true
+      Marker Scale: 0.5
+      Name: Physical Robot Frames
+      Show Arrows: false
+      Show Axes: true
+      Show Names: true
+      Tree:
+        map:
+          alpha_1/odom:
+            alpha_1/base_footprint:
+              alpha_1/base_link:
+                alpha_1/base_scan:
+                  {}
+                alpha_1/imu_link:
+                  {}
+          alpha_2/odom:
+            alpha_2/base_footprint:
+              alpha_2/base_link:
+                alpha_2/base_scan:
+                  {}
+                alpha_2/imu_link:
+                  {}
+          alpha_3/odom:
+            alpha_3/base_footprint:
+              alpha_3/base_link:
+                alpha_3/base_scan:
+                  {}
+                alpha_3/imu_link:
+                  {}
+          alpha_4/odom:
+            alpha_4/base_footprint:
+              alpha_4/base_link:
+                alpha_4/base_scan:
+                  {}
+                alpha_4/imu_link:
+                  {}
+          alpha_5/odom:
+            alpha_5/base_footprint:
+              alpha_5/base_link:
+                alpha_5/base_scan:
+                  {}
+                alpha_5/imu_link:
+                  {}
+      Update Interval: 0
       Value: true
-    - Class: rviz_default_plugins/LaserScan
-      Name: ALPHA 1 LiDAR
-      Enabled: true
-      Topic: {Value: /alpha_1/scan, Reliability Policy: Best Effort, Durability Policy: Volatile, History Policy: Keep Last, Depth: 5}
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/LaserScan
       Color: 255; 75; 75
-      Size (Pixels): 3
-      Style: Flat Squares
-      Value: true
-    - Class: rviz_default_plugins/LaserScan
-      Name: ALPHA 2 LiDAR
+      Color Transformer: Intensity
+      Decay Time: 0
       Enabled: true
-      Topic: {Value: /alpha_2/scan, Reliability Policy: Best Effort, Durability Policy: Volatile, History Policy: Keep Last, Depth: 5}
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: ALPHA 1 LiDAR
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /alpha_1/scan
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/LaserScan
       Color: 75; 150; 255
-      Size (Pixels): 3
-      Style: Flat Squares
-      Value: true
-    - Class: rviz_default_plugins/LaserScan
-      Name: ALPHA 3 LiDAR
+      Color Transformer: Intensity
+      Decay Time: 0
       Enabled: true
-      Topic: {Value: /alpha_3/scan, Reliability Policy: Best Effort, Durability Policy: Volatile, History Policy: Keep Last, Depth: 5}
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: ALPHA 2 LiDAR
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /alpha_2/scan
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/LaserScan
       Color: 75; 255; 120
-      Size (Pixels): 3
-      Style: Flat Squares
-      Value: true
-    - Class: rviz_default_plugins/LaserScan
-      Name: ALPHA 4 LiDAR
+      Color Transformer: Intensity
+      Decay Time: 0
       Enabled: true
-      Topic: {Value: /alpha_4/scan, Reliability Policy: Best Effort, Durability Policy: Volatile, History Policy: Keep Last, Depth: 5}
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: ALPHA 3 LiDAR
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /alpha_3/scan
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/LaserScan
       Color: 255; 175; 50
-      Size (Pixels): 3
-      Style: Flat Squares
-      Value: true
-    - Class: rviz_default_plugins/LaserScan
-      Name: ALPHA 5 LiDAR
+      Color Transformer: Intensity
+      Decay Time: 0
       Enabled: true
-      Topic: {Value: /alpha_5/scan, Reliability Policy: Best Effort, Durability Policy: Volatile, History Policy: Keep Last, Depth: 5}
-      Color: 190; 90; 255
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: ALPHA 4 LiDAR
+      Position Transformer: XYZ
+      Selectable: true
       Size (Pixels): 3
+      Size (m): 0.009999999776482582
       Style: Flat Squares
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /alpha_4/scan
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/LaserScan
+      Color: 190; 90; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: ALPHA 5 LiDAR
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /alpha_5/scan
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
@@ -83,6 +321,7 @@ Visualization Manager:
   Name: SWARMX V2
   Tools:
     - Class: rviz_default_plugins/Interact
+      Hide Inactive Objects: true
     - Class: rviz_default_plugins/MoveCamera
     - Class: rviz_default_plugins/Select
   Transformation:
@@ -91,10 +330,29 @@ Visualization Manager:
   Value: true
   Views:
     Current:
+      Angle: 0
       Class: rviz_default_plugins/TopDownOrtho
-      Name: Warehouse Overview
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.009999999776482582
+      Scale: 1.350000023841858
       Target Frame: <Fixed Frame>
-      Scale: 1.35
-      X: 25.0
-      Y: 20.0
       Value: TopDownOrtho (rviz_default_plugins)
+      X: 25
+      Y: 20
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 534
+  Hide Left Dock: false
+  Hide Right Dock: false
+  QMainWindow State: 000000ff00000000fd000000010000000000000156000001bafc0200000001fb000000100044006900730070006c006100790073010000003e000001ba000000ca00ffffff00000160000001ba00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Width: 700
+  X: 1220
+  Y: 38

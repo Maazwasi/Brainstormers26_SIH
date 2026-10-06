@@ -30,6 +30,8 @@ class FiveAMRSpawnObserver(Node):
             warehouse = yaml.safe_load(stream)["warehouse"]
         self.spawns = warehouse["robot_spawns"]
         self.physical_scale=float(warehouse.get('scale_speed_upgrade',{}).get('linear_scale',1.0))
+        low_lidar=warehouse.get('scale_speed_upgrade',{}).get('low_lidar_pose_m')
+        self.low_lidar_pose=tuple(map(float,low_lidar)) if low_lidar else None
         self.visuals = warehouse["robot_visuals"]
         self.latest: Dict[str, Odometry] = {}
         self.dynamic_tf = TransformBroadcaster(self)
@@ -71,6 +73,9 @@ class FiveAMRSpawnObserver(Node):
                      ("base_footprint", "base_link", (0.0, 0.0, 0.01)),
                      ("base_link", "base_scan", (-0.064, 0.0, 0.271)),
                      ("base_link", "imu_link", (0.0, 0.0, 0.068)))
+            if self.world_odom and self.low_lidar_pose:
+                links += (("base_link", "base_scan_low",
+                           tuple(value/self.physical_scale for value in self.low_lidar_pose)),)
             for parent, child, xyz in links:
                 if self.world_odom:
                     xyz=tuple(value*self.physical_scale for value in xyz)

@@ -906,6 +906,10 @@ warehouse:
     - 0.24
     - 0.0
     - 0.66
+    low_lidar_pose_m:
+    - 1.04
+    - 0.0
+    - 0.35
     imu_pose_m:
     - 0.0
     - 0.0

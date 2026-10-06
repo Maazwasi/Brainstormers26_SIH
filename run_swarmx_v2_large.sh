@@ -8,6 +8,12 @@ if pgrep -f '[g]z sim' >/dev/null; then
 fi
 source /opt/ros/lyrical/setup.bash
 source "$workspace/install/setup.bash"
+bridge_config="$workspace/install/edge_ai_nav/share/edge_ai_nav/config/five_amr_bridge_large.yaml"
+if [ ! -r "$bridge_config" ]; then
+  echo "Missing installed Gazebo bridge config: $bridge_config" >&2
+  echo "Run: cd $workspace && colcon build --symlink-install --packages-select amr_simulation edge_ai_nav" >&2
+  exit 1
+fi
 # The lock-owning wrapper retains its FD, but --close prevents Gazebo helper
 # children from inheriting it and holding a stale lock after ROS has stopped.
 exec flock --nonblock --close "${XDG_RUNTIME_DIR:-/tmp}/swarmx-v2-${UID}.lock" \

@@ -5,6 +5,7 @@
   <xacro:arg name="color_g" default="0.1"/>
   <xacro:arg name="color_b" default="0.1"/>
   <xacro:arg name="max_linear_velocity" default="0.60"/>
+  <xacro:arg name="max_angular_velocity" default="0.60"/>
 
   <!-- Experimental 2x-linear midpoint V2: geometry x2, mass x8, inertia x32.
        Original V2 remains unchanged. Physical acceptance is required.
@@ -159,6 +160,22 @@
       </sensor>
     </link>
 
+    <!-- Low forward sensor sits ahead of the chassis, so the chassis cannot
+         mask short crates. The upper scan remains the SLAM source. -->
+    <link name="base_scan_low">
+      <pose>1.04 0 0.35 0 0 0</pose>
+      <inertial><mass>0.2</mass><inertia><ixx>0.0001</ixx><ixy>0</ixy><ixz>0</ixz><iyy>0.0001</iyy><iyz>0</iyz><izz>0.0001</izz></inertia></inertial>
+      <sensor name="warehouse_low_obstacle_lidar" type="gpu_lidar">
+        <always_on>true</always_on><visualize>false</visualize><update_rate>10</update_rate>
+        <topic>$(arg namespace)/scan_low</topic>
+        <frame_id>$(arg namespace)/base_scan_low</frame_id>
+        <ray>
+          <scan><horizontal><samples>181</samples><resolution>1</resolution><min_angle>-1.57079632679</min_angle><max_angle>1.57079632679</max_angle></horizontal></scan>
+          <range><min>0.05</min><max>20.0</max><resolution>0.015</resolution></range>
+        </ray>
+      </sensor>
+    </link>
+
     <link name="imu_link">
       <pose>0 0 0.5 0 0 0</pose>
       <inertial><mass>0.08</mass><inertia><ixx>0.000032</ixx><ixy>0</ixy><ixz>0</ixz><iyy>0.000032</iyy><iyz>0</iyz><izz>0.000032</izz></inertia></inertial>
@@ -189,6 +206,9 @@
     <joint name="lidar_joint" type="fixed">
       <parent>base_link</parent><child>base_scan</child>
     </joint>
+    <joint name="low_lidar_joint" type="fixed">
+      <parent>base_link</parent><child>base_scan_low</child>
+    </joint>
     <joint name="imu_joint" type="fixed">
       <parent>base_link</parent><child>imu_link</child>
     </joint>
@@ -200,7 +220,7 @@
       <max_linear_acceleration>0.8</max_linear_acceleration><min_linear_acceleration>-0.8</min_linear_acceleration>
       <max_angular_acceleration>0.6</max_angular_acceleration><min_angular_acceleration>-0.6</min_angular_acceleration>
       <max_linear_velocity>$(arg max_linear_velocity)</max_linear_velocity><min_linear_velocity>-$(arg max_linear_velocity)</min_linear_velocity>
-      <max_angular_velocity>0.6</max_angular_velocity><min_angular_velocity>-0.6</min_angular_velocity>
+      <max_angular_velocity>$(arg max_angular_velocity)</max_angular_velocity><min_angular_velocity>-$(arg max_angular_velocity)</min_angular_velocity>
       <topic>$(arg namespace)/cmd_vel</topic>
       <odom_topic>$(arg namespace)/command_odom</odom_topic><tf_topic>$(arg namespace)/command_tf</tf_topic>
       <frame_id>$(arg namespace)/odom</frame_id><child_frame_id>$(arg namespace)/base_footprint</child_frame_id>

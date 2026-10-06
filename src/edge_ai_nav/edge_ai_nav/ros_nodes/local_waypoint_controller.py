@@ -100,6 +100,7 @@ class LocalController(Node):
         bounds=config.get('amr_collision_bounds_m',{'x':[-.45,.45],'y':[-.38,.38]})
         self.physical_half_width=max(abs(v) for v in bounds['y'])
         self.lidar_x=float(config.get('scale_speed_upgrade',{}).get('lidar_pose_m',[.12,0,.33])[0])
+        self.low_lidar_x=float(config.get('scale_speed_upgrade',{}).get('low_lidar_pose_m',[1.04,0,.35])[0])
         self.front_overhang=max(bounds['x'])-self.lidar_x
         self.terminal_approach_distance=2.0*(max(bounds['x'])-min(bounds['x']))
         self.peer_clearance=float(config.get('stage6',{}).get('physical_stop_distance_m',2.0))
@@ -126,7 +127,9 @@ class LocalController(Node):
         self.enabled = self.p['enabled']
         self.pose = None
         self.scan = None
+        self.low_scan = None
         self.odom_time = self.scan_time = 0.0
+        self.low_scan_time = 0.0
         self.index = 0
         self.state = 'DISABLED'
         self.side = 1
@@ -180,6 +183,8 @@ class LocalController(Node):
         self.event_pub = self.create_publisher(String, '/fleet/coordination_events', 20)
         self.create_subscription(Odometry, 'odom', self.odom, qos_profile_sensor_data)
         self.create_subscription(LaserScan, 'scan', self.lidar, qos_profile_sensor_data)
+        if self.large_platform:
+            self.create_subscription(LaserScan, 'scan_low', self.low_lidar, qos_profile_sensor_data)
         self.create_subscription(String, 'coordination_command', self.coordination, 10)
         self.create_subscription(String, '/fleet/task_assignment', self.task_assignment, 10)
         self.create_subscription(String, '/fleet/peer_state', self.peer_state, 20)
@@ -216,6 +221,14 @@ class LocalController(Node):
         self.scan = values
         if all(v is not None for v in values.values()):
             self.scan_time = time.monotonic()
+
+    def low_lidar(self, m):
+        values=sectors(m)
+        values['front']=forward_scan(m,half_width=self.physical_half_width,
+                                     lidar_x=self.low_lidar_x)
+        self.low_scan=values
+        if all(v is not None for v in values.values()):
+            self.low_scan_time=time.monotonic()
 
     def coordination(self, msg):
         try:
@@ -874,7 +887,9 @@ class LocalController(Node):
             if self.state in ('PARKED','CHARGING','AVAILABLE','DEMO_STAGED'):
                 self.command(0,0); return
             self.change('DISABLED'); self.command(0, 0); return
-        if self.pose is None or now-min(self.odom_time, self.scan_time) > self.p['sensor_timeout']:
+        if (self.pose is None or now-min(self.odom_time, self.scan_time) > self.p['sensor_timeout'] or
+                (self.large_platform and
+                 (self.low_scan is None or now-self.low_scan_time>self.p['sensor_timeout']))):
             self.change('SENSOR_STALE_SAFE_STOP'); self.command(0, 0); return
         if self.index >= len(self.route):
             if self.demo_hold:
@@ -901,6 +916,10 @@ class LocalController(Node):
             return
         x, y, yaw = self.pose
         front, left, right = (self.scan[k] for k in ('front', 'left', 'right'))
+        if self.large_platform and self.low_scan is not None:
+            front, left, right = (min(self.scan[k],self.low_scan[k])
+                                  if self.scan[k] is not None and self.low_scan[k] is not None
+                                  else None for k in ('front','left','right'))
         if any(value is None for value in (front,left,right)):
             self.change('SENSOR_STALE_SAFE_STOP'); self.command(0,0); return
         if self.coordination_command.get('state')=='YIELD_RELOCATE':
@@ -1029,11 +1048,16 @@ class LocalController(Node):
         gate = motion_gate(front, stop_distance, requested_hold)
         # At 0.50 m/s, start reacting long before the hard-stop threshold.
         # The crate's *position* is never trusted: LaserScan is the evidence.
-        if front < self.p['obstacle_prepare_distance']:
+        # At the requested high-speed cap the braking gate can be farther
+        # away than the old fixed prepare distance. Detection must still be
+        # reported as soon as the physical safety gate reacts.
+        if front < max(self.p['obstacle_prepare_distance'], stop_distance):
             self.obstacle_seen_at=self.obstacle_seen_at or now
             if not self.obstacle_event_sent:
                 self.obstacle_event_sent=True
                 self.emit('LIDAR_OBSTACLE_DETECTED',distance_m=round(front,3),
+                          sensor=('LOW' if self.large_platform and self.low_scan and
+                                  self.low_scan['front']<self.scan['front'] else 'UPPER'),
                           preset=self.live_obstacle.get('preset','UNKNOWN'))
             if now-self.obstacle_seen_at >= 1.5 and self.persistent_obstacle_replan():
                 return

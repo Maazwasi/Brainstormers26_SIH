@@ -12,7 +12,7 @@ from launch_ros.actions import Node
 
 
 def robot_actions(robot_id, pose, colour, robot_sdf, bridge_config, delay,
-                  max_linear_velocity=None):
+                  max_linear_velocity=None, max_angular_velocity=None):
     """Reusable bridge/spawn pair for one fully namespaced AMR."""
     x, y, yaw = map(float, pose)
     red, green, blue = map(float, colour)
@@ -23,6 +23,8 @@ def robot_actions(robot_id, pose, colour, robot_sdf, bridge_config, delay,
                  " color_b:=", str(blue)]
     if max_linear_velocity is not None:
         sdf_command.extend([" max_linear_velocity:=",max_linear_velocity])
+    if max_angular_velocity is not None:
+        sdf_command.extend([" max_angular_velocity:=",max_angular_velocity])
     return TimerAction(period=delay, actions=[
         Node(
             package="ros_gz_bridge", executable="parameter_bridge",

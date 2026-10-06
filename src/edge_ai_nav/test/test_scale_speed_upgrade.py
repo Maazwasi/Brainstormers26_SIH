@@ -20,6 +20,14 @@ GRAPH=WarehouseGraph(CFG)
 def test_every_physical_length_and_inertial_scales():
     old=ET.parse(SIM/'models/warehouse_amr_v2.sdf.xacro').getroot()
     new=ET.parse(SIM/'models/warehouse_amr_v2_large.sdf.xacro').getroot()
+    low=new.find("model/link[@name='base_scan_low']")
+    assert low is not None
+    assert list(map(float,low.findtext('pose').split()))[:3]==pytest.approx([1.04,0,.35])
+    assert low.find('sensor[@name="warehouse_low_obstacle_lidar"]') is not None
+    assert low.find('collision') is None
+    # The extra, non-contact safety sensor is not part of the original
+    # platform's 2x geometry/inertia scaling comparison.
+    new.find('model').remove(low)
     for tag,factor in [('size',2),('radius',2),('length',2),('mass',8),
                        ('ixx',32),('iyy',32),('izz',32),('wheel_radius',2),('wheel_separation',2)]:
         a=list(old.iter(tag));b=list(new.iter(tag));assert len(a)==len(b)

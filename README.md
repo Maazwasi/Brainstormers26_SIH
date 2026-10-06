@@ -261,12 +261,19 @@ is acceptable if physical movement remains stable enough for the demo.
 The operator revised the size from 3× to 2× original: chassis
 1.80 × 1.40 × 0.40 m, wheel-inclusive footprint 1.80 × 1.52 m.
 The warehouse is unchanged from the enlarged variant. View all five parked
-robots at the conservative 0.60 m/s cap in Ubuntu Terminal:
+robots with Gazebo, one RViz SLAM/LiDAR view, and the dashboard in Ubuntu Terminal:
 
 ```bash
 cd /home/maaz-wasi/amr_ws
-bash run_swarmx_v2_large.sh enabled:=false use_rviz:=true
+bash run_swarmx_v2_large.sh enabled:=false use_rviz:=true max_linear_speed:=3.80 max_angular_speed:=7.50
 ```
+
+Open <http://localhost:8091/fleet>, assign ALPHA 1 a task, and watch its
+live `/map` and red LiDAR returns in RViz. The requested speed values are
+caps; obstacle avoidance and the controller can command less. This 3.80 m/s,
+7.50 rad/s profile is not physically validated. For the conservative tested
+profile, override with `max_linear_speed:=0.60 max_angular_speed:=0.50`.
+See [SLAM recording instructions](SLAM_RECORDING.md).
 
 Existing 3× physical reports do not validate this revised 2× platform.
 
@@ -287,7 +294,7 @@ The runner advances through 0.60 → 0.90 → 1.20 → 1.50 → 1.80 m/s
 only after each stage's gates pass. It stops on failure. Detailed
 attempts are saved as `SWARMX_LARGE_*.json`; current completed gates are in
 `SWARMX_LARGE_STAGE_PROGRESS.json`. Viewing the enlarged fleet at the conservative
-initial cap: `bash run_swarmx_v2_large.sh enabled:=false use_rviz:=true`.
+initial cap: `bash run_swarmx_v2_large.sh enabled:=false use_rviz:=true max_linear_speed:=0.60 max_angular_speed:=0.50`.
 Dashboard: <http://localhost:8091/fleet>. Do not describe 1.80 m/s as verified
 until the final physical and concurrent-fleet gates have passed.
 
