@@ -13,6 +13,7 @@ from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from std_msgs.msg import String
 from edge_ai_nav.fleet.route_graph import WarehouseGraph
+from edge_ai_nav.visualization.simulation_process_manager import SimulationProcessManager
 
 
 class FleetDashboard(Node):
@@ -87,6 +88,16 @@ class FleetDashboard(Node):
                 lambda m, r=rid: self.on_peers(r, m), 10)
             self.create_subscription(Odometry, f'/{rid}/odom',
                 lambda m, r=rid: self.on_odom(r, m), 10)
+        workspace = '/home/maaz-wasi/amr_ws'
+        self.simulation = SimulationProcessManager(
+            command=(os.path.join(workspace, 'run_swarmx_v2_large.sh'),
+                     'use_nav2:=false', 'enabled:=false', 'use_rviz:=true',
+                     'use_dashboard:=false'),
+            workspace=workspace,
+            readiness_probe=lambda: any(
+                time.monotonic()-robot['last_seen'] < 3.0
+                for robot in self.data.values()),
+            logger=self.get_logger())
         self.server = self.make_server(int(self.get_parameter('port').value))
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
         self.get_logger().info('SIH Fleet Command Dashboard: '
@@ -458,6 +469,8 @@ class FleetDashboard(Node):
                     return self.send_json(list(node.graph.nodes))
                 if self.path == '/api/fleet':
                     return self.send_json(node.snapshot())
+                if self.path == '/api/simulation/status':
+                    return self.send_json(node.simulation.status())
                 name = 'fleet_dashboard.html' if self.path in ('/fleet', '/fleet/') else self.path.lstrip('/')
                 if name not in ('fleet_dashboard.html', 'fleet_dashboard.css', 'fleet_dashboard.js'):
                     return self.send_error(404)
@@ -471,6 +484,13 @@ class FleetDashboard(Node):
                 self.send_header('Content-Length', str(len(body))); self.end_headers()
                 self.wfile.write(body)
             def do_POST(self):
+                simulation_actions = {
+                    '/api/simulation/start': node.simulation.start,
+                    '/api/simulation/stop': node.simulation.stop,
+                    '/api/simulation/restart': node.simulation.restart,
+                }
+                if self.path in simulation_actions:
+                    return self.send_json(simulation_actions[self.path]())
                 if self.path != '/api/tasks':
                     return self.send_error(404)
                 try:

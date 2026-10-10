@@ -43,6 +43,7 @@ def generate_launch_description():
     headless = LaunchConfiguration('headless')
     use_rviz = LaunchConfiguration('use_rviz')
     use_nav2 = LaunchConfiguration('use_nav2')
+    use_dashboard = LaunchConfiguration('use_dashboard')
     enabled = LaunchConfiguration('enabled')
     dashboard_port = LaunchConfiguration('dashboard_port')
     allow_reroute = LaunchConfiguration('allow_reroute')
@@ -55,6 +56,7 @@ def generate_launch_description():
         # demo machine.  Keep it opt-in so a missing Nav2 component cannot
         # tear down Gazebo, RViz, SLAM, and the SWARMX controller fleet.
         DeclareLaunchArgument('use_nav2', default_value='false'),
+        DeclareLaunchArgument('use_dashboard', default_value='true'),
         DeclareLaunchArgument('enabled', default_value='false'),
         DeclareLaunchArgument('dashboard_port', default_value='8091'),
         DeclareLaunchArgument('allow_reroute',default_value=str(cfg['stage6']['allow_reroute']).lower()),
@@ -192,7 +194,8 @@ def generate_launch_description():
              condition=IfCondition(use_rviz)),
         Node(package='edge_ai_nav', executable='fleet_dashboard',
              name='fleet_dashboard', output='screen',
-             parameters=[{'config_file': config_file, 'port': dashboard_port}]),
+             parameters=[{'config_file': config_file, 'port': dashboard_port}],
+             condition=IfCondition(use_dashboard)),
         Node(package='edge_ai_nav', executable='fleet_route_visualizer',
              name='fleet_route_visualizer', output='screen',
              parameters=[{'use_sim_time': True}],
