@@ -49,7 +49,7 @@ bt_navigator:
     filter_duration: 0.3
     default_server_timeout: 20
     default_cancel_timeout: 50
-    wait_for_service_timeout: 1000
+    wait_for_service_timeout: 10000
     introspection_mode: "disabled"
     navigators: ["navigate_to_pose", "navigate_through_poses"]
     navigate_to_pose:
@@ -288,6 +288,7 @@ local_costmap:
           obstacle_min_range: 0.0
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
+        map_topic: "/map"
         map_subscribe_transient_local: true
       always_send_full_costmap: true
       introspection_mode: "disabled"
@@ -337,6 +338,7 @@ global_costmap:
           obstacle_min_range: 0.0
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
+        map_topic: "/map"
         map_subscribe_transient_local: true
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"

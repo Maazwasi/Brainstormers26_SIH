@@ -36,9 +36,11 @@ setup(
             'fleet_visualizer = edge_ai_nav.fleet.fleet_visualizer:main',
             'five_amr_spawn_observer = edge_ai_nav.visualization.five_amr_spawn_observer:main',
             'fleet_dashboard = edge_ai_nav.visualization.fleet_dashboard_node:main',
+            'fleet_route_visualizer = edge_ai_nav.visualization.fleet_route_visualizer:main',
             'task_bidder = edge_ai_nav.fleet.task_bidder_node:main',
             'slam_lifecycle_guard = edge_ai_nav.ros_nodes.slam_lifecycle_guard:main',
             'p2p_conflict_demo = edge_ai_nav.fleet.p2p_conflict_demo:main',
+            'p3_obstacle_demo = edge_ai_nav.ros_nodes.p3_obstacle_demo:main',
         ],
     },
 )

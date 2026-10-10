@@ -288,6 +288,13 @@ class FleetDashboard(Node):
             self.event(f"A* ROUTE PLANNED · {self.robot_name(d.get('robot_id'))} · expanded {d.get('expanded_nodes',0)} · raw {d.get('raw_astar_nodes',0)} → smooth {d.get('smoothed_waypoints',0)}")
         elif kind=='LIDAR_OBSTACLE_DETECTED':
             self.event(f"LIDAR OBSTACLE DETECTED · {self.robot_name(d.get('robot_id'))} · {d.get('distance_m')} m")
+        elif kind=='OBSTACLE_EDGE_BLOCKED':
+            edge=d.get('blocked_edge') or ['?','?']
+            self.event(f"OBSTACLE YIELD · blocked edge {edge[0]} → {edge[-1]}")
+        elif kind=='OBSTACLE_REPLAN_NO_ROUTE':
+            self.event(f"OBSTACLE SAFE WAIT · {self.robot_name(d.get('robot_id'))} · retrying A*")
+        elif kind=='OBSTACLE_NAVIGATION_RESUMED':
+            self.event(f"OBSTACLE REROUTED · {self.robot_name(d.get('robot_id'))} resumed to {d.get('destination')}")
         elif kind=='LOCAL_EDGE_AVOIDANCE_ACTIVE':
             self.event(f"LOCAL EDGE AVOIDANCE ACTIVE · {self.robot_name(d.get('robot_id'))} → {d.get('side')}")
         elif kind=='ORIGINAL_ASTAR_ROUTE_REACQUIRED':

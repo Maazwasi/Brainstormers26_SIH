@@ -27,6 +27,15 @@ def heading_rate(error, gain, limit):
     return 0.0 if abs(error)<0.05 else max(-limit,min(limit,gain*error))
 
 
+def decisive_turn_rate(error, limit=2.2):
+    """Fast turn with a tapered final approach and no low-rate crawl."""
+    magnitude=abs(error)
+    if magnitude < 0.04:
+        return 0.0
+    rate=min(float(limit),max(0.45,2.0*magnitude))
+    return math.copysign(rate,error)
+
+
 def traction_limited_speed(speed, angular_rate):
     """Keep the scaled four-wheel chassis in its measured steering envelope."""
     return min(speed,0.55) if abs(angular_rate)>1e-6 else speed
@@ -89,7 +98,14 @@ class LocalController(Node):
                         goal_tolerance=0.16, obstacle_stop_distance=0.85,
                         waypoint_tolerance=0.16,
                         obstacle_prepare_distance=1.25,
-                        obstacle_clear_distance=1.10, sensor_timeout=2.0)
+                        obstacle_clear_distance=1.10, sensor_timeout=2.0,
+                        emergency_deceleration=3.0,
+                        route_corridor_margin=0.15,
+                        emergency_close_distance=1.30,
+                        bypass_clearance_margin=0.35,
+                        bypass_exit_angle=0.78,
+                        bypass_rear_clearance=0.55,
+                        turn_angular_speed=2.20)
         for k, v in defaults.items():
             self.declare_parameter(k, v)
         self.p = {k: self.get_parameter(k).value for k in defaults}
@@ -160,6 +176,11 @@ class LocalController(Node):
         self.obstacle_seen_at = None
         self.obstacle_event_sent = False
         self.obstacle_reroutes = set()
+        self.obstacle_encounter_sequence = 0
+        self.obstacle_encounter_id = None
+        self.obstacle_full_stop_logged = False
+        self.bypass = None
+        self.obstacle_release = None
         self.trace_at = 0.0
         self.sim_battery = float(config.get('battery_initial_percent', {}).get(self.rid, 90.))
         self.battery_tick=time.monotonic()
@@ -219,6 +240,7 @@ class LocalController(Node):
         if getattr(self,'large_platform',False):
             values['front'] = forward_scan(m,half_width=self.physical_half_width,lidar_x=self.lidar_x)
         self.scan = values
+        self.scan_msg = m
         if all(v is not None for v in values.values()):
             self.scan_time = time.monotonic()
 
@@ -227,8 +249,341 @@ class LocalController(Node):
         values['front']=forward_scan(m,half_width=self.physical_half_width,
                                      lidar_x=self.low_lidar_x)
         self.low_scan=values
+        self.low_scan_msg=m
         if all(v is not None for v in values.values()):
             self.low_scan_time=time.monotonic()
+
+    def remaining_route_obstacle(self, scan):
+        """Closest forward return inside the unfinished route's physical corridor.
+
+        LiDAR remains fully available.  This only decides whether a return can
+        block the remaining route.  Bounded projections deliberately exclude
+        geometry beyond the terminal waypoint.
+        """
+        if scan is None or self.pose is None or self.index >= len(self.route):
+            return None
+        x, y, yaw = self.pose
+        route = [(x, y)] + list(self.route[self.index:])
+        if len(route) < 2:
+            return None
+        corridor = self.physical_half_width + float(self.p['route_corridor_margin'])
+        nearest = None
+        for i, distance in enumerate(scan.ranges):
+            if not (math.isfinite(distance) and scan.range_min <= distance <= scan.range_max):
+                continue
+            angle = scan.angle_min + i * scan.angle_increment
+            if abs(angle) > math.pi / 2:
+                continue
+            lx, ly = distance * math.cos(angle), distance * math.sin(angle)
+            if lx < 0.0:
+                continue
+            px = x + lx * math.cos(yaw) - ly * math.sin(yaw)
+            py = y + lx * math.sin(yaw) + ly * math.cos(yaw)
+            for a, b in zip(route, route[1:]):
+                dx, dy = b[0] - a[0], b[1] - a[1]
+                length2 = dx * dx + dy * dy
+                if length2 < 1e-9:
+                    continue
+                t = ((px - a[0]) * dx + (py - a[1]) * dy) / length2
+                if 0.0 <= t <= 1.0:
+                    qx, qy = a[0] + t * dx, a[1] + t * dy
+                    if math.hypot(px - qx, py - qy) <= corridor:
+                        if nearest is None or lx < nearest:
+                            nearest = lx
+                        break
+        return nearest
+
+    def new_obstacle_encounter(self):
+        self.obstacle_encounter_sequence += 1
+        self.obstacle_encounter_id = (
+            f'OBS-{self.logical_id.replace(" ", "")}-{self.obstacle_encounter_sequence:04d}')
+        self.obstacle_full_stop_logged = False
+        return self.obstacle_encounter_id
+
+    def obstacle_log(self, label, **fields):
+        encounter_id=self.obstacle_encounter_id or self.new_obstacle_encounter()
+        detail=' '.join(f'{key}={value}' for key,value in fields.items())
+        self.get_logger().info(f'[{encounter_id}] {label}' + (f' {detail}' if detail else ''))
+        self.emit('OBSTACLE_'+label,encounter_id=encounter_id,**fields)
+
+    @staticmethod
+    def scan_side_clearance(scan, side):
+        """Robust side/rear-side clearance while passing an obstacle."""
+        if scan is None:
+            return None
+        lo,hi=((0.25,2.55) if side>0 else (-2.55,-0.25))
+        values=[]; clear=False
+        for i,distance in enumerate(scan.ranges):
+            angle=wrap(scan.angle_min+i*scan.angle_increment)
+            if not lo <= angle <= hi:
+                continue
+            if math.isinf(distance) and distance>0:
+                clear=True
+            elif math.isfinite(distance) and scan.range_min<=distance<=scan.range_max:
+                values.append(distance)
+        return (sorted(values)[min(2,len(values)-1)] if values else
+                scan.range_max if clear else None)
+
+    def lidar_points(self):
+        """Finite upper/lower LiDAR returns expressed in controller odometry."""
+        if self.pose is None:
+            return []
+        x,y,yaw=self.pose; points=[]
+        sources=[(getattr(self,'scan_msg',None),self.lidar_x)]
+        if self.large_platform:
+            sources.append((getattr(self,'low_scan_msg',None),self.low_lidar_x))
+        for scan,lidar_x in sources:
+            if scan is None:
+                continue
+            for i,distance in enumerate(scan.ranges):
+                if not (math.isfinite(distance) and scan.range_min<=distance<=scan.range_max):
+                    continue
+                angle=scan.angle_min+i*scan.angle_increment
+                bx=lidar_x+distance*math.cos(angle); by=distance*math.sin(angle)
+                points.append((x+bx*math.cos(yaw)-by*math.sin(yaw),
+                               y+bx*math.sin(yaw)+by*math.cos(yaw)))
+        return points
+
+    def obstacle_lateral_extent(self, heading):
+        """Measure the blocking object's front-face lateral extent from LiDAR."""
+        x,y,_=self.pose; forward=(math.cos(heading),math.sin(heading))
+        normal=(-forward[1],forward[0]); samples=[]
+        for px,py in self.lidar_points():
+            dx,dy=px-x,py-y
+            along=dx*forward[0]+dy*forward[1]
+            lateral=dx*normal[0]+dy*normal[1]
+            if along>0 and abs(lateral)<=self.physical_half_width+0.70:
+                samples.append((along,lateral))
+        if not samples:
+            return (-0.30,0.30)
+        nearest=min(value[0] for value in samples)
+        face=[lateral for along,lateral in samples if along<=nearest+0.80]
+        return (min(face),max(face)) if face else (-0.30,0.30)
+
+    def corridor_clear(self, start, end, margin):
+        """True when the complete rectangular footprint can sweep start→end."""
+        dx,dy=end[0]-start[0],end[1]-start[1]
+        length=math.hypot(dx,dy)
+        if length<1e-6:
+            return True
+        ux,uy=dx/length,dy/length
+        half_length=max(0.0,self.front_overhang+self.lidar_x)
+        half_width=self.physical_half_width+margin
+        for px,py in self.lidar_points():
+            rx,ry=px-start[0],py-start[1]
+            along=rx*ux+ry*uy
+            lateral=abs(-rx*uy+ry*ux)
+            if -half_length<=along<=length+half_length and lateral<=half_width:
+                return False
+        return True
+
+    def begin_local_bypass(self, left, right, front):
+        safety=float(self.p['bypass_clearance_margin'])
+        base_required=self.physical_half_width+safety
+        candidates=[]
+        if left is not None and left>=base_required: candidates.append((left,1,'LEFT'))
+        if right is not None and right>=base_required: candidates.append((right,-1,'RIGHT'))
+        if not candidates:
+            self.obstacle_log('LOCAL_BYPASS_UNAVAILABLE',required_m=round(base_required,2),
+                              left_m=round(left,2),right_m=round(right,2))
+            return False
+        clearance,side,label=max(candidates,key=lambda item:(item[0],item[1]))
+        x,y,yaw=self.pose
+        obstacle_min,obstacle_max=self.obstacle_lateral_extent(yaw)
+        obstacle_edge=obstacle_max if side>0 else obstacle_min
+        required=(obstacle_edge+base_required if side>0 else
+                  -obstacle_edge+base_required)
+        required=max(base_required,required)
+        usable_forward=max(.12,min(3.0,front-self.front_overhang-safety))
+        exit_angle=max(.61,min(1.48,math.atan2(required,usable_forward)))
+        segment_start=(self.route[self.index-1] if self.index>0 else (x,y))
+        segment_end=self.route[self.index]
+        self.bypass=dict(encounter_id=self.obstacle_encounter_id,side=side,
+                         label=label,original_heading=yaw,origin=(x,y),
+                         saved_index=self.index,
+                         segment_start=segment_start,segment_end=segment_end,
+                         obstacle_extent=(obstacle_min,obstacle_max),
+                         obstacle_width=obstacle_max-obstacle_min,
+                         obstacle_edge=obstacle_edge,
+                         safety_margin=safety,lateral_distance=required,
+                         exit_angle=exit_angle,actual_lateral=0.0,
+                         minimum_side_clearance=None,parallel_start=None,
+                         clear_pose=None,rejoin=None)
+        self.obstacle_log('LOCAL_BYPASS_AVAILABLE',side=label,
+                          clearance_m=round(clearance,2),
+                          obstacle_width_m=round(obstacle_max-obstacle_min,2),
+                          required_lateral_m=round(required,2),
+                          exit_angle_deg=round(math.degrees(exit_angle),1))
+        self.obstacle_log('SIDE',selected=label)
+        self.change('BYPASS_LATERAL_EXIT')
+        self.obstacle_log('LATERAL_EXIT')
+        return True
+
+    def begin_global_obstacle_reroute(self):
+        if not self.destination:
+            self.change('BLOCKED_WAIT'); self.command(0,0)
+            return True
+        try:
+            route,edge,attach=self.graph.reroute_blocked_edge(
+                self.world_pose(),self.destination,self.pose[2])
+        except ValueError:
+            self.change('BLOCKED_WAIT'); self.command(0,0)
+            self.obstacle_log('GLOBAL_REROUTE_FAILED')
+            return True
+        self.route_version+=1
+        self.install_new_route(route,self.route_version)
+        self.route_metadata.update(planner='A*',blocked_edge=list(edge),
+                                   physical_obstacle=True)
+        self.bypass=None
+        self.obstacle_log('GLOBAL_REROUTE',blocked_edge=list(edge),attach=attach)
+        self.mission_pub.publish(String(data=json.dumps(dict(
+            robot_id=self.rid,task_id=self.active_task,route=self.world_route,
+            route_version=self.route_version,reroute=True,obstacle=True,
+            blocked_edge=list(edge)))))
+        self.change('REROUTING')
+        return True
+
+    def select_forward_rejoin(self):
+        """First safe route-ordered waypoint ahead of the bypassed obstacle."""
+        x,y,_=self.pose
+        saved=max(0,int(self.bypass['saved_index']))
+        for candidate_index in range(saved,len(self.route)):
+            candidate=self.route[candidate_index]
+            if candidate_index>0:
+                previous=self.route[candidate_index-1]
+                tangent=(candidate[0]-previous[0],candidate[1]-previous[1])
+            elif len(self.route)>1:
+                tangent=(self.route[1][0]-candidate[0],self.route[1][1]-candidate[1])
+            else:
+                tangent=(math.cos(self.bypass['original_heading']),
+                         math.sin(self.bypass['original_heading']))
+            length=math.hypot(*tangent)
+            if length<1e-6:
+                continue
+            tangent=(tangent[0]/length,tangent[1]/length)
+            to_candidate=(candidate[0]-x,candidate[1]-y)
+            # Route order alone is not enough: a passed waypoint is rejected.
+            if to_candidate[0]*tangent[0]+to_candidate[1]*tangent[1] <= .05:
+                continue
+            if not self.corridor_clear((x,y),candidate,self.bypass['safety_margin']):
+                continue
+            if (self.p['odom_coordinates']=='world' and
+                    not self.graph.visible(self.world_pose(),candidate)):
+                continue
+            return candidate,candidate_index,tangent
+        return None
+
+    def execute_local_bypass(self, front):
+        """Execute one encounter-locked, temporary lane-change maneuver."""
+        if self.bypass is None:
+            return False
+        x,y,yaw=self.pose; data=self.bypass
+        # A genuinely new close obstruction always overrides the maneuver.
+        if front < float(self.p['emergency_close_distance']):
+            self.obstacle_log('BYPASS_EMERGENCY_STOP',distance_m=round(front,2))
+            self.bypass=None; self.new_obstacle_encounter()
+            self.change('OBSTACLE_STOP'); self.command(0,0)
+            return True
+        turn_limit=float(self.p['turn_angular_speed'])
+        state=self.state
+        if state=='BYPASS_LATERAL_EXIT':
+            target=wrap(data['original_heading']+data['side']*data['exit_angle'])
+            error=wrap(target-yaw)
+            if abs(error)>.08:
+                self.command(0,decisive_turn_rate(error,turn_limit)); return True
+            ox,oy=data['origin']; nx=-math.sin(data['original_heading']); ny=math.cos(data['original_heading'])
+            lateral=data['side']*((x-ox)*nx+(y-oy)*ny)
+            data['actual_lateral']=max(data['actual_lateral'],lateral)
+            obstacle_separation=data['side']*(data['side']*lateral-data['obstacle_edge'])
+            base_required=self.physical_half_width+data['safety_margin']
+            parallel_end=(x+2.0*math.cos(data['original_heading']),
+                          y+2.0*math.sin(data['original_heading']))
+            parallel_clear=self.corridor_clear((x,y),parallel_end,data['safety_margin'])
+            if (lateral<data['lateral_distance'] or
+                    obstacle_separation<base_required or not parallel_clear):
+                self.command(0.70,heading_rate(error,1.5,turn_limit)); return True
+            self.obstacle_log('LATERAL_CLEARANCE_CONFIRMED',
+                              actual_lateral_m=round(lateral,2),
+                              obstacle_separation_m=round(obstacle_separation,2))
+            self.change('BYPASS_ALIGN_FORWARD'); return True
+        if state=='BYPASS_ALIGN_FORWARD':
+            error=wrap(data['original_heading']-yaw)
+            if abs(error)>.08:
+                self.command(0,decisive_turn_rate(error,turn_limit)); return True
+            data['parallel_start']=(x,y)
+            self.change('BYPASS_PARALLEL_PASS')
+            self.obstacle_log('PARALLEL_PASS')
+            return True
+        if state=='BYPASS_PARALLEL_PASS':
+            obstacle_side=-data['side']
+            side_values=[self.scan_side_clearance(getattr(self,'scan_msg',None),obstacle_side)]
+            if self.large_platform:
+                side_values.append(self.scan_side_clearance(getattr(self,'low_scan_msg',None),obstacle_side))
+            side_clear=min((v for v in side_values if v is not None),default=None)
+            if side_clear is not None:
+                prior=data['minimum_side_clearance']
+                data['minimum_side_clearance']=(side_clear if prior is None else
+                                                min(prior,side_clear))
+            travelled=math.dist(data['parallel_start'],(x,y))
+            clear_threshold=self.physical_half_width+float(self.p['bypass_clearance_margin'])
+            if travelled>1.0 and side_clear is not None and side_clear>clear_threshold:
+                data['clear_pose']=data['clear_pose'] or (x,y)
+            if data['clear_pose'] is not None and math.dist(data['clear_pose'],(x,y))>=float(self.p['bypass_rear_clearance']):
+                selected=self.select_forward_rejoin()
+                if selected is not None:
+                    rejoin,rejoin_index,rejoin_tangent=selected
+                    data['rejoin']=rejoin
+                    data['rejoin_index']=rejoin_index
+                    data['rejoin_tangent']=rejoin_tangent
+                    # Progress is monotonic and cannot return to a pre-bypass
+                    # waypoint or the entry side of the blocked segment.
+                    self.index=max(data['saved_index'],rejoin_index)
+                    self.lookahead_progress=self.route_cumulative[
+                        max(0,min(self.index,len(self.route_cumulative)-1))]
+                    self.last_target=None
+                    self.align_exit_pose=None; self.align_release_at=0.0
+                    data['return_turn_angle']=abs(wrap(
+                        math.atan2(rejoin[1]-y,rejoin[0]-x)-yaw))
+                    self.obstacle_log('OBSTACLE_CLEARED',
+                                      saved_index=data['saved_index'],
+                                      rejoin_index=rejoin_index,
+                                      minimum_side_clearance_m=round(
+                                          data['minimum_side_clearance'] or 0.,2))
+                    self.change('BYPASS_RETURN')
+                    self.obstacle_log('REJOINING',return_angle_deg=round(
+                        math.degrees(data['return_turn_angle']),1))
+                    return True
+            error=wrap(data['original_heading']-yaw)
+            self.command(0.90,heading_rate(error,1.5,turn_limit)); return True
+        if state=='BYPASS_RETURN':
+            target=data['rejoin']; distance=math.dist((x,y),target)
+            error=wrap(math.atan2(target[1]-y,target[0]-x)-yaw)
+            if distance<.30:
+                self.change('BYPASS_REJOIN'); self.command(0,0); return True
+            if abs(error)>.18:
+                self.command(0,decisive_turn_rate(error,turn_limit)); return True
+            self.command(0.65,heading_rate(error,1.5,turn_limit)); return True
+        if state=='BYPASS_REJOIN':
+            route_heading=math.atan2(data['rejoin_tangent'][1],data['rejoin_tangent'][0])
+            error=wrap(route_heading-yaw)
+            if abs(error)>.08:
+                self.command(0,decisive_turn_rate(error,turn_limit)); return True
+            self.obstacle_log('REJOIN_COMPLETE')
+            self.obstacle_release=dict(
+                encounter_id=data['encounter_id'],rejoin=data['rejoin'],
+                rejoin_index=data['rejoin_index'],tangent=data['rejoin_tangent'],
+                release_distance=.75)
+            self.bypass=None; self.obstacle_seen_at=None
+            # Keep the encounter locked until spatial forward progress proves
+            # the same object is behind the robot.
+            self.obstacle_event_sent=True
+            self.last_target=None
+            self.lookahead_progress=self.route_cumulative[
+                max(0,min(self.index,len(self.route_cumulative)-1))]
+            self.aligning=False; self.align_exit_pose=None; self.align_release_at=0.0
+            self.change('WAYPOINT_TRACK'); self.command(0,0)
+            return True
+        return False
 
     def coordination(self, msg):
         try:
@@ -950,23 +1305,8 @@ class LocalController(Node):
         if self.coordination_holding:
             self.coordination_holding=False
             self.change('WAYPOINT_TRACK')
-        if self.state == 'AVOID_TURN':
-            # Commit to a clear side before trying to re-acquire the original
-            # waypoint.  A shallow turn / short advance can otherwise make a
-            # circular re-detection around a wide static obstacle.
-            if front > self.p['obstacle_clear_distance'] and abs(wrap(yaw-self.turn_start)) > 1.15:
-                self.avoid_start = (x, y)
-                self.change('AVOID_FORWARD')
-                self.emit('LOCAL_EDGE_AVOIDANCE_ACTIVE',side='LEFT' if self.side==1 else 'RIGHT')
-            else:
-                self.command(0, self.side*0.60); return
-        if self.state == 'AVOID_FORWARD':
-            if front < 0.40:
-                self.change('OBSTACLE_STOP'); self.command(0, 0); return
-            if math.hypot(x-self.avoid_start[0], y-self.avoid_start[1]) < 1.15:
-                self.command(0.12, 0); return
-            self.change('REACQUIRE_WAYPOINT')
-            self.emit('ORIGINAL_ASTAR_ROUTE_REACQUIRED',route_version=self.route_version)
+        if self.state.startswith('BYPASS_') and self.execute_local_bypass(front):
+            return
         if self.state == 'OBSTACLE_STOP':
             # The scaled four-wheel chassis must finish its physical stop
             # before an avoidance turn starts.  Applying yaw while residual
@@ -974,15 +1314,16 @@ class LocalController(Node):
             if (getattr(self,'large_platform',False) and
                     abs(self.actual_speed)>.08):
                 self.command(0,0); return
-            # Pick the safer side from the first scan and retain it while
-            # clearing this waypoint's obstacle.  Re-picking on each scan can
-            # make a robot alternate around the two faces of one crate.
-            if self.obstacle_side is None:
-                self.obstacle_side = 1 if left >= right else -1
-            self.side = self.obstacle_side
-            self.turn_start = yaw
-            self.get_logger().info(f'AVOID_DIRECTION={"LEFT" if self.side==1 else "RIGHT"} front={front:.3f} left={left:.3f} right={right:.3f}')
-            self.change('AVOID_TURN'); self.command(0, self.side*0.60); return
+            if not self.obstacle_full_stop_logged:
+                self.obstacle_full_stop_logged=True
+                encounter_id=self.obstacle_encounter_id or self.new_obstacle_encounter()
+                self.get_logger().info(f'[{encounter_id}] FULL_STOP')
+                self.emit('OBSTACLE_FULL_STOP',encounter_id=encounter_id)
+            self.change('CHECK_LOCAL_CLEARANCE')
+        if self.state == 'CHECK_LOCAL_CLEARANCE':
+            if self.begin_local_bypass(left,right,front):
+                self.command(0,0); return
+            self.begin_global_obstacle_reroute(); return
         gx, gy = self.route[self.index]
         distance = math.hypot(gx-x, gy-y)
         # A live reroute's first point is an origin snapshot. At high speed the
@@ -1044,30 +1385,69 @@ class LocalController(Node):
         requested_hold = self.should_hold_for_coordination()
         stop_distance=self.p['obstacle_stop_distance']
         if getattr(self,'large_platform',False):
-            stop_distance=obstacle_distance(max(abs(self.actual_speed),self.last_linear_command),front_overhang=self.front_overhang)
-        gate = motion_gate(front, stop_distance, requested_hold)
+            stop_distance=obstacle_distance(
+                max(abs(self.actual_speed),self.last_linear_command),
+                front_overhang=self.front_overhang,
+                deceleration=float(self.p['emergency_deceleration']))
+        route_fronts=[self.remaining_route_obstacle(getattr(self,'scan_msg',None))]
+        if self.large_platform:
+            route_fronts.append(self.remaining_route_obstacle(
+                getattr(self,'low_scan_msg',None)))
+        route_front=min((d for d in route_fronts if d is not None),default=None)
+        if self.obstacle_release is not None:
+            release=self.obstacle_release
+            rx=x-release['rejoin'][0]; ry=y-release['rejoin'][1]
+            forward_progress=(rx*release['tangent'][0]+ry*release['tangent'][1])
+            corridor_clear=(route_front is None or route_front>
+                            max(self.p['obstacle_prepare_distance'],stop_distance))
+            if forward_progress>=release['release_distance'] and corridor_clear:
+                self.obstacle_log('ENCOUNTER_RELEASED',
+                                  forward_progress_m=round(forward_progress,2),
+                                  rejoin_index=release['rejoin_index'])
+                self.obstacle_release=None
+                self.obstacle_encounter_id=None
+                self.obstacle_event_sent=False
+        # Retain a short-range physical emergency layer even for an object
+        # outside the route corridor.  Normal route handling is route-aware.
+        emergency_close=front < float(self.p['emergency_close_distance'])
+        safety_front=(route_front if route_front is not None else
+                      (front if emergency_close else math.inf))
+        gate = motion_gate(safety_front, stop_distance, requested_hold)
         # At 0.50 m/s, start reacting long before the hard-stop threshold.
         # The crate's *position* is never trusted: LaserScan is the evidence.
         # At the requested high-speed cap the braking gate can be farther
         # away than the old fixed prepare distance. Detection must still be
         # reported as soon as the physical safety gate reacts.
-        if front < max(self.p['obstacle_prepare_distance'], stop_distance):
+        if route_front is not None and route_front < max(self.p['obstacle_prepare_distance'], stop_distance):
             self.obstacle_seen_at=self.obstacle_seen_at or now
             if not self.obstacle_event_sent:
                 self.obstacle_event_sent=True
-                self.emit('LIDAR_OBSTACLE_DETECTED',distance_m=round(front,3),
+                encounter_id=self.new_obstacle_encounter()
+                self.get_logger().info(f'[{encounter_id}] DETECTED route_distance={route_front:.3f}')
+                self.emit('LIDAR_OBSTACLE_DETECTED',encounter_id=encounter_id,
+                          route_blocking=True,distance_m=round(route_front,3),
                           sensor=('LOW' if self.large_platform and self.low_scan and
                                   self.low_scan['front']<self.scan['front'] else 'UPPER'),
                           preset=self.live_obstacle.get('preset','UNKNOWN'))
-            if now-self.obstacle_seen_at >= 1.5 and self.persistent_obstacle_replan():
+            if (self.obstacle_release is None and
+                    now-self.obstacle_seen_at >= 1.5 and
+                    self.persistent_obstacle_replan()):
                 return
         else:
-            self.obstacle_seen_at=None; self.obstacle_event_sent=False
+            self.obstacle_seen_at=None
+            if self.obstacle_release is None:
+                self.obstacle_event_sent=False
         # Physical sensor safety is intentionally evaluated before the fleet
         # decision, including when the local command says PROCEED.
         if gate == 'LIDAR_STOP' and (abs(error) < 0.55 or
                 (getattr(self,'large_platform',False) and abs(self.actual_speed)>.05)):
-            self.get_logger().info(f'LIDAR_OBSTACLE front={front:.3f} left={left:.3f} right={right:.3f}')
+            encounter_id=self.obstacle_encounter_id or self.new_obstacle_encounter()
+            self.get_logger().info(
+                f'[{encounter_id}] STOP_COMMAND front={front:.3f} route_front={route_front}')
+            self.emit('OBSTACLE_STOP_COMMAND',encounter_id=encounter_id,
+                      route_blocking=route_front is not None,
+                      emergency_close=emergency_close,
+                      distance_m=round(safety_front,3))
             self.change('OBSTACLE_STOP'); self.command(0, 0); return
         if gate == 'COORDINATION_HOLD':
             if not self.coordination_holding:
@@ -1162,7 +1542,9 @@ class LocalController(Node):
             if distance<1.2 and abs(error)>0.8:
                 v=0.0
         steering_gain=1.25*self.performance.steering_factor
-        w=heading_rate(error,steering_gain,float(self.p['max_angular_speed']))
+        w=(decisive_turn_rate(error,float(self.p['turn_angular_speed']))
+           if self.aligning else
+           heading_rate(error,steering_gain,float(self.p['max_angular_speed'])))
         if getattr(self,'large_platform',False):
             # Straight aisles retain the accepted 1.80 m/s peak.  Any active
             # steering correction stays within the four-wheel chassis's

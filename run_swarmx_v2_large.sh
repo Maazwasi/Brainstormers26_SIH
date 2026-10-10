@@ -7,7 +7,13 @@ if pgrep -f '[g]z sim' >/dev/null; then
   exit 1
 fi
 source /opt/ros/lyrical/setup.bash
-source "$workspace/install/setup.bash"
+nav2_setup="/home/maaz-wasi/nav2_ws/install/setup.bash"
+if [ ! -r "$nav2_setup" ]; then
+  echo "Missing Nav2 installation: $nav2_setup" >&2
+  exit 1
+fi
+source "$nav2_setup"
+source "$workspace/install/local_setup.bash"
 bridge_config="$workspace/install/edge_ai_nav/share/edge_ai_nav/config/five_amr_bridge_large.yaml"
 if [ ! -r "$bridge_config" ]; then
   echo "Missing installed Gazebo bridge config: $bridge_config" >&2

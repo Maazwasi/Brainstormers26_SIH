@@ -13,8 +13,9 @@ slam_toolbox:
     # for any existing map -> alpha_N/odom transform.
     odom_frame: map
     map_frame: slam_map
-    base_frame: alpha_1/base_footprint
-    scan_topic: /alpha_1/scan
+    # Demo mapping source: build the shared occupancy cloud around ALPHA 3.
+    base_frame: alpha_3/base_footprint
+    scan_topic: /alpha_3/scan
     use_map_saver: true
     throttle_scans: 1
     transform_publish_period: 0.05

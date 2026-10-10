@@ -217,8 +217,12 @@
       <left_joint>wheel_left_joint</left_joint><left_joint>wheel_rear_left_joint</left_joint>
       <right_joint>wheel_right_joint</right_joint><right_joint>wheel_rear_right_joint</right_joint>
       <wheel_separation>1.4</wheel_separation><wheel_radius>0.22</wheel_radius>
-      <max_linear_acceleration>0.8</max_linear_acceleration><min_linear_acceleration>-0.8</min_linear_acceleration>
-      <max_angular_acceleration>0.6</max_angular_acceleration><min_angular_acceleration>-0.6</min_angular_acceleration>
+      <!-- Emergency braking is deliberately stronger than launch acceleration.
+           The previous -0.8 m/s² limit required roughly 9 m to stop at the
+           approved 3.80 m/s cruise speed.  -3.0 m/s² is within the wheel
+           effort/contact envelope and keeps the four-wheel chassis stable. -->
+      <max_linear_acceleration>0.8</max_linear_acceleration><min_linear_acceleration>-3.0</min_linear_acceleration>
+      <max_angular_acceleration>4.0</max_angular_acceleration><min_angular_acceleration>-4.0</min_angular_acceleration>
       <max_linear_velocity>$(arg max_linear_velocity)</max_linear_velocity><min_linear_velocity>-$(arg max_linear_velocity)</min_linear_velocity>
       <max_angular_velocity>$(arg max_angular_velocity)</max_angular_velocity><min_angular_velocity>-$(arg max_angular_velocity)</min_angular_velocity>
       <topic>$(arg namespace)/cmd_vel</topic>

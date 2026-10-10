@@ -10,6 +10,8 @@ from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.descriptions import ParameterFile
+from nav2_common.launch import RewrittenYaml
 
 
 def generate_launch_description():
@@ -28,10 +30,11 @@ def generate_launch_description():
             'Run colcon build --symlink-install --packages-select amr_simulation edge_ai_nav '
             'before starting the simulation.'
         )
-    rviz = os.path.join(edge, 'config', 'swarmx_v2_slam.rviz')
+    rviz = os.path.join(edge, 'config', 'swarmx_v2_fleet.rviz')
     slam_config = os.path.join(edge, 'config', 'swarmx_v2_slam.yaml')
     slam_launch = os.path.join(get_package_share_directory('slam_toolbox'),
                                'launch', 'online_async_launch.py')
+    nav2_params = os.path.join(sim, 'config', 'nav2_params.yaml')
     helper_path = os.path.join(edge, 'launch', 'five_amr_demo.launch.py')
     spec = importlib.util.spec_from_file_location('swarmx_spawn_helper', helper_path)
     helper = importlib.util.module_from_spec(spec)
@@ -39,6 +42,7 @@ def generate_launch_description():
 
     headless = LaunchConfiguration('headless')
     use_rviz = LaunchConfiguration('use_rviz')
+    use_nav2 = LaunchConfiguration('use_nav2')
     enabled = LaunchConfiguration('enabled')
     dashboard_port = LaunchConfiguration('dashboard_port')
     allow_reroute = LaunchConfiguration('allow_reroute')
@@ -47,6 +51,10 @@ def generate_launch_description():
     actions = [
         DeclareLaunchArgument('headless', default_value='false'),
         DeclareLaunchArgument('use_rviz', default_value='true'),
+        # Nav2 is an optional passive companion and is not installed on every
+        # demo machine.  Keep it opt-in so a missing Nav2 component cannot
+        # tear down Gazebo, RViz, SLAM, and the SWARMX controller fleet.
+        DeclareLaunchArgument('use_nav2', default_value='false'),
         DeclareLaunchArgument('enabled', default_value='false'),
         DeclareLaunchArgument('dashboard_port', default_value='8091'),
         DeclareLaunchArgument('allow_reroute',default_value=str(cfg['stage6']['allow_reroute']).lower()),
@@ -81,6 +89,15 @@ def generate_launch_description():
                                   obstacle_stop_distance=front_overhang+0.64,
                                   obstacle_prepare_distance=front_overhang+6.76,
                                   obstacle_clear_distance=front_overhang+0.96,
+                                  # Matches the model's measured emergency
+                                  # braking limit; acceleration remains 0.8.
+                                  emergency_deceleration=3.0,
+                                  route_corridor_margin=0.15,
+                                  emergency_close_distance=1.30,
+                                  bypass_clearance_margin=0.35,
+                                  bypass_exit_angle=0.78,
+                                  bypass_rear_clearance=0.55,
+                                  turn_angular_speed=2.20,
                                   goal_tolerance=0.22)]),
             Node(package='edge_ai_nav', executable='task_bidder',
                  namespace=rid, name='task_bidder', output='screen',
@@ -92,6 +109,81 @@ def generate_launch_description():
                                   allow_reroute=allow_reroute,
                                   apply_spawn_transform=False)]),
         ]))
+        # Nav2 is a passive, namespaced companion to the existing SWARMX
+        # controller.  SLAM Toolbox remains the only map/localization stack,
+        # and every Nav2 motion output is isolated from the Gazebo cmd_vel
+        # bridge so local_waypoint_controller keeps exclusive motion control.
+        nav2_parameters = ParameterFile(
+            RewrittenYaml(
+                source_file=nav2_params,
+                root_key=rid,
+                param_rewrites={
+                    'base_frame_id': f'{rid}/base_footprint',
+                    'robot_base_frame': f'{rid}/base_link',
+                    'base_frame': f'{rid}/base_link',
+                    'odom_frame_id': f'{rid}/odom',
+                    'odom_frame': f'{rid}/odom',
+                    'local_frame': f'{rid}/odom',
+                    'fixed_frame': f'{rid}/odom',
+                    'global_frame_id': 'slam_map',
+                    'global_frame': 'slam_map',
+                },
+                value_rewrites={
+                    'KEEPOUT_ZONE_ENABLED': 'false',
+                    'SPEED_ZONE_ENABLED': 'false',
+                },
+                convert_types=True,
+            ),
+            allow_substs=True,
+        )
+        nav2_remappings = [
+            ('/tf', '/tf'),
+            ('/tf_static', '/tf_static'),
+            ('map', '/map'),
+            ('cmd_vel', 'nav2_cmd_vel'),
+        ]
+        nav2_nodes = [
+            Node(package='nav2_controller', executable='controller_server',
+                 namespace=rid, name='controller_server', output='screen',
+                 parameters=[nav2_parameters], remappings=nav2_remappings),
+            Node(package='nav2_planner', executable='planner_server',
+                 namespace=rid, name='planner_server', output='screen',
+                 parameters=[nav2_parameters], remappings=nav2_remappings),
+            Node(package='nav2_smoother', executable='smoother_server',
+                 namespace=rid, name='smoother_server', output='screen',
+                 parameters=[nav2_parameters], remappings=nav2_remappings),
+            Node(package='nav2_behaviors', executable='behavior_server',
+                 namespace=rid, name='behavior_server', output='screen',
+                 parameters=[nav2_parameters], remappings=nav2_remappings),
+            Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
+                 namespace=rid, name='lifecycle_manager_navigation_core', output='screen',
+                 parameters=[nav2_parameters, {
+                     'autostart': True,
+                     'bond_timeout': 15.0,
+                     'node_names': [
+                         'controller_server', 'smoother_server', 'planner_server',
+                         'behavior_server',
+                     ],
+                 }]),
+        ]
+        nav2_bt_nodes = [
+            Node(package='nav2_bt_navigator', executable='bt_navigator',
+                 namespace=rid, name='bt_navigator', output='screen',
+                 parameters=[nav2_parameters], remappings=nav2_remappings),
+            Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
+                 namespace=rid, name='lifecycle_manager_navigation', output='screen',
+                 parameters=[nav2_parameters, {
+                     'autostart': True,
+                     'bond_timeout': 15.0,
+                     'node_names': ['bt_navigator'],
+                 }]),
+        ]
+        # SLAM must publish slam_map before costmaps activate.  Staggering the
+        # five stacks also avoids lifecycle bond timeouts on this simulation.
+        actions.append(TimerAction(period=42.0 + 6.0 * index, actions=nav2_nodes,
+                                   condition=IfCondition(use_nav2)))
+        actions.append(TimerAction(period=52.0 + 6.0 * index, actions=nav2_bt_nodes,
+                                   condition=IfCondition(use_nav2)))
     actions.append(TimerAction(period=5.5, actions=[
         Node(package='edge_ai_nav', executable='five_amr_spawn_observer',
              name='swarmx_v2_visual_observer', output='screen',
@@ -101,6 +193,10 @@ def generate_launch_description():
         Node(package='edge_ai_nav', executable='fleet_dashboard',
              name='fleet_dashboard', output='screen',
              parameters=[{'config_file': config_file, 'port': dashboard_port}]),
+        Node(package='edge_ai_nav', executable='fleet_route_visualizer',
+             name='fleet_route_visualizer', output='screen',
+             parameters=[{'use_sim_time': True}],
+             condition=IfCondition(use_rviz)),
         Node(package='rviz2', executable='rviz2', name='swarmx_v2_rviz',
              arguments=['-d', rviz], parameters=[{'use_sim_time': True}],
              output='screen', condition=IfCondition(use_rviz)),

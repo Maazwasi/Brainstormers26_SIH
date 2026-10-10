@@ -314,6 +314,54 @@ class WarehouseGraph:
         alternate=self.route_to(position,destination,{blocked_zone:math.inf})
         return alternate,max(0.,self.polyline_length(alternate)-direct)
 
+    def reroute_blocked_edge(self, position, destination, heading):
+        """A* fallback when a physical obstacle closes the current aisle edge.
+
+        The global graph is not mutated.  The closest forward edge is excluded
+        for this one plan and the robot first returns to a visible node behind
+        the blockage, preventing a direct attachment through the obstacle.
+        """
+        if destination not in self.nodes:
+            raise ValueError('Unknown destination')
+        forward=(math.cos(heading),math.sin(heading))
+        unique=[]
+        for a,neighbors in self.edges.items():
+            for b,_ in neighbors:
+                if a < b:
+                    midpoint=((self.nodes[a][0]+self.nodes[b][0])/2,
+                              (self.nodes[a][1]+self.nodes[b][1])/2)
+                    along=((midpoint[0]-position[0])*forward[0]+
+                           (midpoint[1]-position[1])*forward[1])
+                    distance=self.point_segment_distance(position,self.nodes[a],self.nodes[b])
+                    if along >= 0.15:
+                        unique.append((distance,max(0.,along),a,b))
+        if not unique:
+            raise ValueError('No forward graph edge to block')
+        _,_,edge_a,edge_b=min(unique)
+        behind=[]
+        for name,point in self.nodes.items():
+            along=((point[0]-position[0])*forward[0]+(point[1]-position[1])*forward[1])
+            if along <= 0.15 and self.visible(position,point):
+                behind.append((math.dist(position,point),name))
+        blocked=((edge_a,edge_b),)
+        candidates=[]
+        for distance,attach in sorted(behind):
+            try:
+                cost,names=self.astar(attach,destination,blocked_edges=blocked)
+            except ValueError:
+                continue
+            route=[list(position)]
+            for name in names:
+                point=list(self.nodes[name])
+                if math.dist(route[-1],point)>.03:
+                    route.append(point)
+            if all(self.visible(a,b) for a,b in zip(route,route[1:])):
+                candidates.append((distance+cost,attach,route))
+        if not candidates:
+            raise ValueError('No A* route around blocked aisle edge')
+        _,attach,route=min(candidates,key=lambda item:(item[0],item[1]))
+        return route,(edge_a,edge_b),attach
+
     def reroute_forward(self, position, remaining, destination, blocked_zone):
         """Avoid a zone, then rejoin an original-route node strictly downstream.
 

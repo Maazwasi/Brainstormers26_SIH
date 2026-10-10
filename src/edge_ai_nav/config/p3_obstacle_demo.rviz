@@ -1,0 +1,48 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Warehouse Grid
+      Enabled: true
+      Cell Size: 1
+      Plane Cell Count: 50
+      Value: true
+    - Class: rviz_default_plugins/TF
+      Name: ALPHA 1 TF
+      Enabled: true
+      Frame Timeout: 15
+      Show Axes: true
+      Show Names: true
+      Value: true
+    - Class: rviz_default_plugins/LaserScan
+      Name: ALPHA 1 LiDAR
+      Enabled: true
+      Size (Pixels): 4
+      Style: Flat Squares
+      Topic:
+        Depth: 5
+        Reliability Policy: Best Effort
+        Value: /alpha_1/scan
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Name: Active route (straight then P3)
+      Enabled: true
+      Line Style: Lines
+      Line Width: 0.12
+      Color: 255; 40; 220
+      Topic:
+        Depth: 5
+        Reliability Policy: Reliable
+        Value: /alpha_1/demo_path
+      Value: true
+  Global Options:
+    Background Color: 28; 32; 38
+    Fixed Frame: alpha_1/odom
+    Frame Rate: 30
+  Name: root
+Window Geometry:
+  Height: 800
+  Width: 1200
