@@ -63,7 +63,14 @@ class SimulationProcessManager:
 
     def _log(self, message, error=False):
         line = f'[SIM] {message}'
-        (self.logger.error if error else self.logger.info)(line)
+        # rclpy binds logging severity to the Python call site.  Selecting the
+        # method dynamically on one source line makes a later INFO -> ERROR
+        # transition raise "Logger severity cannot be changed between calls"
+        # on ROS 2 Lyrical.  Keep each severity on its own stable call site.
+        if error:
+            self.logger.error(line)
+        else:
+            self.logger.info(line)
 
     def _set_error(self, message):
         with self.lock:

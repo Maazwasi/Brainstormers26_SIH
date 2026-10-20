@@ -467,6 +467,11 @@ warehouse:
     priority_first: true
     path_crossing_guard: true
     physical_stop_distance_m: 3.18
+    # Combined-footprint clearance used only when the locked winner passes a
+    # stationary yielded peer through the existing LiDAR local bypass.
+    local_pass_safety_margin_m: 0.35
+    local_pass_authorization_margin_m: 1.50
+    stationary_negotiation_yield: true
     allow_reroute: true
     reroute_clearance_m: 3.18
     hold_margin: 1.33

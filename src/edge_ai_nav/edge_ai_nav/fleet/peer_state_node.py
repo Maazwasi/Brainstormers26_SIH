@@ -40,6 +40,7 @@ class PeerState(Node):
         self.path_guard_enabled=bool(self.cfg.get('stage6',{}).get('path_crossing_guard',False))
         self.path_guard_active=''
         self.physical_guard_peer=''
+        self.local_pass_conflict=''
         self.yield_relocation=None
         self.detector = None
         if self.get_parameter('conflict_detection').value or self.negotiation_enabled:
@@ -318,12 +319,12 @@ class PeerState(Node):
                     distance_m=round(crossing['own_distance'],2))
 
     def physical_guard(self, own, unavailable):
-        """Brake even a negotiated winner when a peer occupies its safety gap.
+        """Brake for peer occupancy, except for one locked local-pass winner.
 
-        Yielding does not make the loser's physical body disappear. This V2
-        emergency hold includes charging/idle robots and return trips. It can
-        leave a blocked pair waiting until its path is cleared; it must never
-        grant the winner permission to drive through the stopped peer.
+        A yielded robot remains a physical obstacle.  The canonical winner is
+        therefore released only after the loser reports a stationary hold;
+        LiDAR and the local bypass controller must still prove a safe side.
+        Every other close-peer case remains a hard physical hold.
         """
         stop=float(self.cfg['stage6'].get('physical_stop_distance_m',2.0))
         candidates=[]
@@ -332,22 +333,86 @@ class PeerState(Node):
                 continue
             distance=math.hypot(float(own['x'])-float(peer['x']),
                                 float(own['y'])-float(peer['y']))
+            decision=PeerState.physical_encounter_decision(self,own,rid,peer)
+            loser_stationary=(peer.get('local_nav_state') in
+                ('COORDINATION_HOLD','OBSTACLE_STOP','YIELD_POCKET') and
+                abs(float(peer.get('linear_velocity',0.0)))<0.08)
             # Hysteresis retains the brake while both robots are stopped.
             threshold=stop+(0.20 if self.physical_guard_peer==rid else 0.0)
+            # Hand the known stationary peer to the local planner before the
+            # hard LiDAR stop.  This is authorization to plan, not permission
+            # to ignore sensor safety; the controller still stops first and
+            # proves its full-footprint side corridor.
+            if (decision and decision['winner']==self.robot_id and
+                    decision['loser']==rid and loser_stationary):
+                threshold=max(threshold,stop+float(self.cfg.get('stage6',{}).get(
+                    'local_pass_authorization_margin_m',1.50)))
             if distance<threshold:
                 candidates.append((distance,rid))
         if not candidates:
             self.physical_guard_peer=''
+            self.local_pass_conflict=''
             return None
         distance,rid=min(candidates)
         self.physical_guard_peer=rid
-        decision=next((item for item in self.book.values()
-            if {item['winner'],item['loser']}=={self.robot_id,rid}),None)
+        peer=self.peer_states[rid]
+        decision=PeerState.physical_encounter_decision(self,own,rid,peer)
+        loser_stationary=(peer.get('local_nav_state') in
+            ('COORDINATION_HOLD','OBSTACLE_STOP','YIELD_POCKET') and
+            abs(float(peer.get('linear_velocity',0.0)))<0.08)
+        if (decision and decision['winner']==self.robot_id and
+                decision['loser']==rid and loser_stationary):
+            bounds=self.cfg.get('amr_collision_bounds_m',{}).get('y',[-.59,.59])
+            half_width=max(abs(float(value)) for value in bounds)
+            x_bounds=self.cfg.get('amr_collision_bounds_m',{}).get('x',[-.45,.45])
+            turning_radius=max(math.hypot(float(px),float(py))
+                               for px in x_bounds for py in bounds)
+            safety=float(self.cfg.get('stage6',{}).get(
+                'local_pass_safety_margin_m',0.35))
+            cid=decision['conflict_id']
+            if self.local_pass_conflict!=cid:
+                self.local_pass_conflict=cid
+                self.emit('NEGOTIATION_LOCAL_PASS_AUTHORIZED',event_id=cid+':local-pass',
+                          conflict_id=cid,winner=self.robot_id,loser=rid,
+                          required_lateral_m=round(2.0*turning_radius+safety,3))
+            return dict(state='PROCEED_LOCAL_PASS',zone=decision['conflict_id'].split(':',1)[0],
+                        conflict_id=cid,winner=self.robot_id,loser=rid,
+                        reason='YIELDED_PEER_TEMPORARY_OBSTACLE',
+                        decision_version=decision.get('decision_version'),
+                        temporary_peer_obstacle=dict(robot_id=rid,
+                            x=float(peer['x']),y=float(peer['y']),
+                            half_width=half_width,turning_radius=turning_radius,
+                            safety_margin=safety),
+                        required_lateral_m=round(2.0*turning_radius+safety,3),
+                        distance_m=round(distance,2))
         return dict(state='SAFE_WAIT',zone='PHYSICAL_OCCUPANCY',
                     conflict_id='PHYSICAL:'+':'.join(sorted((self.robot_id,rid))),
                     winner=decision['winner'] if decision else '',
                     loser=decision['loser'] if decision else '',
                     reason='PEER_FOOTPRINT_BLOCKED',distance_m=round(distance,2))
+
+    def physical_encounter_decision(self, own, rid, peer):
+        """Return the canonical owner, or a deterministic proximity owner.
+
+        The fallback is intentionally limited to a close encounter that the
+        zone/path predictors did not put in the shared decision book.  This
+        prevents two anonymous SAFE_WAIT commands when active task traffic
+        meets a lower-priority parking/charge-return robot.  Equal-priority
+        encounters remain fail-safe and are not arbitrated here.
+        """
+        canonical=next((item for item in self.book.values()
+            if {item['winner'],item['loser']}=={self.robot_id,rid}),None)
+        if canonical is not None:
+            return canonical
+        own_priority=int(own.get('task_priority',0))
+        peer_priority=int(peer.get('task_priority',0))
+        if own_priority==peer_priority:
+            return None
+        winner,loser=((self.robot_id,rid) if own_priority>peer_priority else
+                      (rid,self.robot_id))
+        return dict(conflict_id='PROXIMITY:'+':'.join(sorted((self.robot_id,rid))),
+                    winner=winner,loser=loser,decision_version=1,
+                    decision_basis='PHYSICAL_PRIORITY_FALLBACK')
 
     def relocation_command(self, own, unavailable, command):
         """Let only the loser move to a checked pocket during an emergency hold."""
@@ -420,6 +485,11 @@ class PeerState(Node):
         loser=(decision['loser'] if decision else
                self.robot_id if should_yield_for_path(own,peer) else rid)
         if loser!=self.robot_id:
+            return command
+        # Wide-corridor negotiation demos use the yielded body as the
+        # winner's temporary obstacle.  Moving that body into a second pocket
+        # would make both AMRs maneuver and invalidate the locked encounter.
+        if self.cfg.get('stage6',{}).get('stationary_negotiation_yield',False):
             return command
         if early_yield:
             winner_path=[[peer['x'],peer['y']]]+(peer.get('remaining_route') or [])
@@ -502,7 +572,46 @@ class PeerState(Node):
                 route_invalidated=(old['conflict_id'] not in self.detector.active and
                                    now-old['decision_time']>1.0 and
                                    (not self.path_guard_enabled or separation>5.0))
-                if ((old['winner_entered_zone'] and outside_with_margin(winner_state,zone,self.exit_margin))
+                zone_exit=(old['winner_entered_zone'] and
+                           outside_with_margin(winner_state,zone,self.exit_margin))
+                if self.cfg.get('stage6',{}).get('stationary_negotiation_yield',False):
+                    # A zone exit alone is insufficient for a head-on pass:
+                    # the yielded peer can still be directly ahead outside
+                    # the circle. Keep the canonical decision locked until
+                    # the winner's complete longitudinal footprint is beyond
+                    # the loser. This lets physical_guard authorize the same
+                    # encounter as a controlled local pass instead of turning
+                    # it into an anonymous PHYSICAL hold for both robots.
+                    x_bounds=self.cfg.get('amr_collision_bounds_m',{}).get(
+                        'x',[-.45,.45])
+                    half_length=max(abs(float(value)) for value in x_bounds)
+                    margin=float(self.cfg.get('stage6',{}).get(
+                        'local_pass_safety_margin_m',.35))
+                    position=(float(winner_state['x']),float(winner_state['y']))
+                    route_target=next((point for point in
+                        (winner_state.get('remaining_route') or [])
+                        if math.dist(position,point)>.50),None)
+                    # The winner is deliberately offset from its route and
+                    # may currently be travelling laterally.  Measure pass
+                    # progress on the committed route axis, not its temporary
+                    # bypass heading and not the diagonal from the offset pose
+                    # back to the route.  The yielded peer remains on that
+                    # route, so peer -> retained target is the stable axis.
+                    yaw=(math.atan2(float(route_target[1])-float(loser_state['y']),
+                                    float(route_target[0])-float(loser_state['x']))
+                         if route_target is not None and loser_state is not None else
+                         float(winner_state.get('yaw',0.0)))
+                    peer_ahead=((float(loser_state['x'])-float(winner_state['x']))*
+                                math.cos(yaw)+
+                                (float(loser_state['y'])-float(winner_state['y']))*
+                                math.sin(yaw)) if loser_state else math.inf
+                    complete_pass=(peer_ahead<=-(2.0*half_length+margin))
+                    zone_exit=zone_exit and complete_pass
+                    # Prediction-window disappearance is expected while the
+                    # winner is moving laterally. It is not route invalidation
+                    # until the physical pass has completed.
+                    route_invalidated=route_invalidated and complete_pass
+                if (zone_exit
                         or route_invalidated):
                     reason=('WINNER_CLEARED' if old['winner_entered_zone'] else
                             'ROUTE_INVALIDATED')

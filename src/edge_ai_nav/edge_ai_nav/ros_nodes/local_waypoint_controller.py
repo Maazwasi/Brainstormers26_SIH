@@ -115,6 +115,9 @@ class LocalController(Node):
         self.large_platform = bool(config.get('scale_speed_upgrade', {}).get('experimental', False))
         bounds=config.get('amr_collision_bounds_m',{'x':[-.45,.45],'y':[-.38,.38]})
         self.physical_half_width=max(abs(v) for v in bounds['y'])
+        self.physical_turning_radius=max(
+            math.hypot(float(px),float(py))
+            for px in bounds['x'] for py in bounds['y'])
         self.lidar_x=float(config.get('scale_speed_upgrade',{}).get('lidar_pose_m',[.12,0,.33])[0])
         self.low_lidar_x=float(config.get('scale_speed_upgrade',{}).get('low_lidar_pose_m',[1.04,0,.35])[0])
         self.front_overhang=max(bounds['x'])-self.lidar_x
@@ -198,6 +201,7 @@ class LocalController(Node):
         self.metric_last_error=0.0
         self.metric_last_moving=False
         self.action_events=set()
+        self.negotiation_trace_signature=None
         self.pub = self.create_publisher(TwistStamped, 'cmd_vel', 10)
         self.status = self.create_publisher(String, 'local_status', 10)
         self.mission_pub = self.create_publisher(String, '/fleet/mission_routes', 10)
@@ -378,7 +382,11 @@ class LocalController(Node):
         return True
 
     def begin_local_bypass(self, left, right, front):
-        safety=float(self.p['bypass_clearance_margin'])
+        peer_obstacle=(self.coordination_command.get('temporary_peer_obstacle')
+                       if self.coordination_command.get('state')=='PROCEED_LOCAL_PASS'
+                       else None)
+        safety=max(float(self.p['bypass_clearance_margin']),
+                   float((peer_obstacle or {}).get('safety_margin',0.0)))
         base_required=self.physical_half_width+safety
         candidates=[]
         if left is not None and left>=base_required: candidates.append((left,1,'LEFT'))
@@ -389,11 +397,23 @@ class LocalController(Node):
             return False
         clearance,side,label=max(candidates,key=lambda item:(item[0],item[1]))
         x,y,yaw=self.pose
-        obstacle_min,obstacle_max=self.obstacle_lateral_extent(yaw)
+        if peer_obstacle:
+            normal=(-math.sin(yaw),math.cos(yaw))
+            peer_lateral=((float(peer_obstacle['x'])-x)*normal[0]+
+                          (float(peer_obstacle['y'])-y)*normal[1])
+            peer_half_width=float(peer_obstacle['half_width'])
+            obstacle_min,obstacle_max=(peer_lateral-peer_half_width,
+                                       peer_lateral+peer_half_width)
+        else:
+            obstacle_min,obstacle_max=self.obstacle_lateral_extent(yaw)
         obstacle_edge=obstacle_max if side>0 else obstacle_min
         required=(obstacle_edge+base_required if side>0 else
                   -obstacle_edge+base_required)
         required=max(base_required,required)
+        if peer_obstacle:
+            peer_turning=float(peer_obstacle.get('turning_radius',
+                peer_obstacle.get('half_width',0.0)))
+            required=max(required,self.physical_turning_radius+peer_turning+safety)
         usable_forward=max(.12,min(3.0,front-self.front_overhang-safety))
         exit_angle=max(.61,min(1.48,math.atan2(required,usable_forward)))
         segment_start=(self.route[self.index-1] if self.index>0 else (x,y))
@@ -409,6 +429,10 @@ class LocalController(Node):
                          exit_angle=exit_angle,actual_lateral=0.0,
                          minimum_side_clearance=None,parallel_start=None,
                          clear_pose=None,rejoin=None)
+        if peer_obstacle:
+            self.bypass.update(kind='NEGOTIATION_LOCAL_PASS',
+                conflict_id=self.coordination_command.get('conflict_id',''),
+                peer_id=peer_obstacle.get('robot_id',''),local_pass_announced=True)
         self.obstacle_log('LOCAL_BYPASS_AVAILABLE',side=label,
                           clearance_m=round(clearance,2),
                           obstacle_width_m=round(obstacle_max-obstacle_min,2),
@@ -417,6 +441,13 @@ class LocalController(Node):
         self.obstacle_log('SIDE',selected=label)
         self.change('BYPASS_LATERAL_EXIT')
         self.obstacle_log('LATERAL_EXIT')
+        if peer_obstacle:
+            winner=self.coordination_command.get('winner',self.logical_id)
+            loser=self.coordination_command.get('loser',self.bypass['peer_id'])
+            self.emit('NEGOTIATION_LOCAL_PASS_STARTED',
+                      conflict_id=self.bypass['conflict_id'],
+                      winner=winner,loser=loser,side=label,
+                      required_lateral_m=round(required,2))
         return True
 
     def begin_global_obstacle_reroute(self):
@@ -479,7 +510,30 @@ class LocalController(Node):
             return False
         x,y,yaw=self.pose; data=self.bypass
         # A genuinely new close obstruction always overrides the maneuver.
-        if front < float(self.p['emergency_close_distance']):
+        # During a negotiated pass the raw forward strip can rotate across a
+        # corner of the *known* yielded peer while the winner turns in place.
+        # Accept that return only while both complete turning circles remain
+        # separated; before translating, also prove the swept corridor clear.
+        controlled_peer_clear=False
+        if data.get('kind')=='NEGOTIATION_LOCAL_PASS':
+            peer=self.peer_states.get(data.get('peer_id'))
+            if peer is not None:
+                separation=math.hypot(float(peer['x'])-self.world_pose()[0],
+                                      float(peer['y'])-self.world_pose()[1])
+                stationary=(peer.get('local_nav_state') in
+                    ('COORDINATION_HOLD','OBSTACLE_STOP','YIELD_POCKET') and
+                    abs(float(peer.get('linear_velocity',0.0)))<.08)
+                turning_clearance=2.0*self.physical_turning_radius+data['safety_margin']
+                controlled_peer_clear=stationary and separation>=turning_clearance
+                target=wrap(data['original_heading']+data['side']*data['exit_angle'])
+                turning_in_place=(self.state=='BYPASS_LATERAL_EXIT' and
+                                  abs(wrap(target-yaw))>.08)
+                if controlled_peer_clear and not turning_in_place:
+                    step=(x+.50*math.cos(yaw),y+.50*math.sin(yaw))
+                    controlled_peer_clear=self.corridor_clear(
+                        (x,y),step,data['safety_margin'])
+        if (front < float(self.p['emergency_close_distance']) and
+                not controlled_peer_clear):
             self.obstacle_log('BYPASS_EMERGENCY_STOP',distance_m=round(front,2))
             self.bypass=None; self.new_obstacle_encounter()
             self.change('OBSTACLE_STOP'); self.command(0,0)
@@ -529,6 +583,15 @@ class LocalController(Node):
             if travelled>1.0 and side_clear is not None and side_clear>clear_threshold:
                 data['clear_pose']=data['clear_pose'] or (x,y)
             if data['clear_pose'] is not None and math.dist(data['clear_pose'],(x,y))>=float(self.p['bypass_rear_clearance']):
+                # Keep travelling parallel until the coordination layer has
+                # observed a complete physical pass and released this locked
+                # encounter.  Rejoining earlier turns the winner back into
+                # the stationary loser it has just passed.
+                if (data.get('kind')=='NEGOTIATION_LOCAL_PASS' and
+                        self.coordination_command.get('state')=='PROCEED_LOCAL_PASS'):
+                    error=wrap(data['original_heading']-yaw)
+                    self.command(0.90,heading_rate(error,1.5,turn_limit))
+                    return True
                 selected=self.select_forward_rejoin()
                 if selected is not None:
                     rejoin,rejoin_index,rejoin_tangent=selected
@@ -569,6 +632,15 @@ class LocalController(Node):
             if abs(error)>.08:
                 self.command(0,decisive_turn_rate(error,turn_limit)); return True
             self.obstacle_log('REJOIN_COMPLETE')
+            if data.get('kind')=='NEGOTIATION_LOCAL_PASS':
+                winner=self.coordination_command.get('winner',self.logical_id)
+                loser=self.coordination_command.get('loser',data.get('peer_id'))
+                self.emit('NEGOTIATION_LOCAL_PASS_COMPLETE',
+                          conflict_id=data.get('conflict_id'),winner=winner,
+                          loser=loser,side=data.get('label'),
+                          minimum_side_clearance_m=round(
+                              data.get('minimum_side_clearance') or 0.,2),
+                          forward_only_rejoin=True,rejoin_index=data.get('rejoin_index'))
             self.obstacle_release=dict(
                 encounter_id=data['encounter_id'],rejoin=data['rejoin'],
                 rejoin_index=data['rejoin_index'],tangent=data['rejoin_tangent'],
@@ -593,6 +665,39 @@ class LocalController(Node):
                 self.coordination_received = time.monotonic()
                 action=command.get('state')
                 cid=command.get('conflict_id','')
+                # DDS can deliver the local-pass authorization one controller
+                # tick after LiDAR has created an ordinary bypass. Upgrade
+                # that same encounter in place before it translates, using
+                # the exact peer footprint rather than restarting it.
+                peer_obstacle=command.get('temporary_peer_obstacle')
+                if (action=='PROCEED_LOCAL_PASS' and peer_obstacle and self.bypass and
+                        self.bypass.get('kind')!='NEGOTIATION_LOCAL_PASS' and
+                        self.state in ('CHECK_LOCAL_CLEARANCE','BYPASS_LATERAL_EXIT')):
+                    data=self.bypass
+                    ox,oy=data['origin']; heading=data['original_heading']
+                    normal=(-math.sin(heading),math.cos(heading))
+                    lateral=((float(peer_obstacle['x'])-ox)*normal[0]+
+                             (float(peer_obstacle['y'])-oy)*normal[1])
+                    half=float(peer_obstacle['half_width'])
+                    obstacle_min,obstacle_max=lateral-half,lateral+half
+                    edge=obstacle_max if data['side']>0 else obstacle_min
+                    safety=max(data['safety_margin'],
+                               float(peer_obstacle.get('safety_margin',0.0)))
+                    base=self.physical_half_width+safety
+                    required=(edge+base if data['side']>0 else -edge+base)
+                    peer_turning=float(peer_obstacle.get('turning_radius',half))
+                    data.update(kind='NEGOTIATION_LOCAL_PASS',conflict_id=cid,
+                        peer_id=peer_obstacle.get('robot_id',''),
+                        obstacle_extent=(obstacle_min,obstacle_max),
+                        obstacle_width=2.0*half,obstacle_edge=edge,
+                        safety_margin=safety,
+                        lateral_distance=max(data['lateral_distance'],base,required,
+                            self.physical_turning_radius+peer_turning+safety),
+                        local_pass_announced=True)
+                    self.emit('NEGOTIATION_LOCAL_PASS_STARTED',conflict_id=cid,
+                        winner=command.get('winner',self.logical_id),
+                        loser=command.get('loser',data['peer_id']),side=data['label'],
+                        required_lateral_m=round(data['lateral_distance'],2))
                 if (action=='RESUME' and command.get('resume_route') and
                         command.get('resume_token')!=getattr(self,'last_yield_resume',None)):
                     self.last_yield_resume=command['resume_token']
@@ -830,7 +935,8 @@ class LocalController(Node):
         """Adaptive profile for clear corridors, controlled zones and bends."""
         zone=self.coordination_command.get('zone','')
         if zone=='narrow_aisle_1': base=0.28
-        elif zone.startswith('intersection_') and self.coordination_command.get('state')=='PROCEED': base=0.35
+        elif (zone.startswith('intersection_') and
+              self.coordination_command.get('state') in ('PROCEED','PROCEED_LOCAL_PASS')): base=0.35
         elif self.mission_kind=='CHARGING':
             # Only the final dock is slowed; normal warehouse cruise is untouched.
             target=self.graph.nodes.get(self.parking_target)
@@ -1025,6 +1131,34 @@ class LocalController(Node):
             v=min(v,float(self.p['max_linear_speed']))
             w=max(-float(self.p['max_angular_speed']),min(float(self.p['max_angular_speed']),w))
         self.last_linear_command=float(v)
+        coordination_state=self.coordination_command.get('state','NONE')
+        conflict_id=self.coordination_command.get('conflict_id','')
+        role=('WINNER' if self.coordination_command.get('winner')==self.logical_id else
+              'LOSER' if self.coordination_command.get('loser')==self.logical_id else 'NONE')
+        bypass_state=self.state if self.state.startswith('BYPASS_') else 'INACTIVE'
+        lidar_safety_stop=self.state in ('OBSTACLE_STOP','CHECK_LOCAL_CLEARANCE')
+        if abs(v)<1e-6 and abs(w)<1e-6:
+            if self.state=='COORDINATION_HOLD':
+                zero_reason='COORDINATION_'+coordination_state
+            elif self.state=='OBSTACLE_STOP':
+                zero_reason='LIDAR_EMERGENCY_STOP'
+            elif self.state=='CHECK_LOCAL_CLEARANCE':
+                zero_reason='LOCAL_CLEARANCE_PLANNING'
+            elif self.state.startswith('BYPASS_'):
+                zero_reason='LOCAL_BYPASS_TRANSITION'
+            else:
+                zero_reason=self.state
+        else:
+            zero_reason='MOVING'
+        trace=(conflict_id,role,coordination_state,self.state,bypass_state,
+               lidar_safety_stop,zero_reason,abs(v)>1e-6,abs(w)>1e-6)
+        if conflict_id and trace!=self.negotiation_trace_signature:
+            self.negotiation_trace_signature=trace
+            self.get_logger().info(
+                f'[{conflict_id}] {self.logical_id} ROLE={role} '
+                f'NEGOTIATION={coordination_state} CONTROLLER={self.state} '
+                f'SAFETY_STOP={lidar_safety_stop} BYPASS_STATE={bypass_state} '
+                f'CMD=({v:.3f},{w:.3f}) ZERO_REASON={zero_reason}')
         m = TwistStamped()
         m.header.stamp = self.get_clock().now().to_msg()
         m.header.frame_id = self.rid+'/base_footprint'
@@ -1046,6 +1180,16 @@ class LocalController(Node):
                             task_progress=(100.0 if self.index >= len(self.route) else
                                 100.0*self.index/max(1, len(self.route))),
                             coordination_state=self.coordination_command.get('state', 'NONE'),
+                            negotiation_role=role,
+                            coordination_reason=self.coordination_command.get('reason',''),
+                            obstacle_state=(self.state if self.state in
+                                ('OBSTACLE_STOP','CHECK_LOCAL_CLEARANCE') else 'CLEAR'),
+                            lidar_safety_stop=lidar_safety_stop,
+                            local_bypass_active=self.state.startswith('BYPASS_'),
+                            bypass_state=bypass_state,
+                            zero_command_reason=zero_reason,
+                            active_route_target=(list(self.route[self.index])
+                                if self.index < len(self.route) else None),
                             coordination_hold=self.coordination_holding,
                             route_version=self.route_version,
                             planner=self.route_metadata.get('planner','A*'),

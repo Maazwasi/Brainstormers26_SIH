@@ -1,0 +1,40 @@
+{
+  "amrs": [
+    "ALPHA 1",
+    "ALPHA 3"
+  ],
+  "conflict_id": "MAIN_UPPER_CROSS:ALPHA 1:ALPHA 3",
+  "expected_winner": "ALPHA 1",
+  "expected_loser": "ALPHA 3",
+  "conflict_predicted_before_safety_stop": false,
+  "detection_distance_m": null,
+  "physical_stop_distance_m": 3.18,
+  "decision_agreement": false,
+  "decision_oscillation": false,
+  "loser_yield": false,
+  "loser_stationary": false,
+  "winner_local_pass": false,
+  "pass_side": null,
+  "global_astar_used_for_winner": false,
+  "winner_completely_cleared": false,
+  "winner_forward_only_rejoin": false,
+  "winner_returned_toward_loser": null,
+  "loser_resume": false,
+  "winner_original_goal_retained": false,
+  "loser_original_goal_retained": false,
+  "winner_reached_goal": false,
+  "loser_reached_goal": false,
+  "emergency_safety_preserved": true,
+  "turn_speed_preserved": true,
+  "required_combined_clearance_m": 2.7059286916203558,
+  "minimum_sampled_separation_m": 9.6,
+  "decisions": {
+    "alpha_1": [],
+    "alpha_3": []
+  },
+  "stopped_snapshot": {},
+  "events": [],
+  "log": "/tmp/swarmx-two-amr-h1_vrr47.log",
+  "blocker": "Simulation process exited; inspect /tmp/swarmx-two-amr-h1_vrr47.log",
+  "status": "FAIL"
+}

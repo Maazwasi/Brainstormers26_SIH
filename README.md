@@ -366,3 +366,41 @@ until the final physical and concurrent-fleet gates have passed.
 - `run_swarmx_control_dashboard.sh` — persistent V2 START/STOP/RESTART dashboard.
 - `run_swarmx_v2_large.sh` — manual V2 Gazebo/RViz/fleet launch wrapper.
 - `run_stage6_negotiation.sh` — underlying decentralized coordination launch.
+# Focused two-AMR negotiation demo
+
+This isolated video scenario stages **ALPHA 1** and **ALPHA 3** on opposing
+routes in the wide central aisle through `MAIN_UPPER_CROSS`. ALPHA 1 has
+priority 4, ALPHA 3 has priority 2. The loser remains
+stationary while the winner treats it as a temporary, footprint-sized local
+obstacle and uses the normal LiDAR bypass. The normal five-AMR launch is not
+modified.
+
+Run these commands in an **Ubuntu Terminal** (not the VS Code terminal):
+
+```bash
+cd /home/maaz-wasi/amr_ws
+source /opt/ros/lyrical/setup.bash
+colcon build --symlink-install --packages-select amr_simulation edge_ai_nav
+source install/local_setup.bash
+python3 validate_two_amr_negotiation.py
+```
+
+Gazebo and RViz open automatically. The script writes its evidence to
+`SWARMX_TWO_AMR_NEGOTIATION_RESULT.json` and cleans up only the simulation it
+started. Stop any existing Gazebo/SWARMX instance first. For a non-visual
+verification, add `--headless`.
+# Deterministic two-AMR negotiation recording
+
+Run this from an Ubuntu Terminal with no other Gazebo instance running:
+
+```bash
+cd /home/maaz-wasi/amr_ws
+./run_swarmx_negotiation_demo.sh
+```
+
+The command opens Gazebo and RViz and stages ALPHA 1 and ALPHA 3 head-on in the
+wide center aisle. It then waits 15 seconds, with a terminal countdown, so the
+recording windows can be arranged before assigning both routes automatically.
+ALPHA 1 has priority 4 and ALPHA 3 priority 2. The terminal prints negotiation
+milestones and keeps Gazebo/RViz open after both goals are reached; press
+`Ctrl+C` to close them.
